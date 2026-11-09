@@ -99,3 +99,90 @@ img {
     font-size: 16px;
   }
 }
+
+
+/* Microinteracciones sutiles de CineFlow: conservan la estructura actual. */
+.cf-card {
+  position: relative;
+  isolation: isolate;
+  transition:
+    transform 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease,
+    background-color 220ms ease;
+}
+
+.cf-card:hover {
+  transform: translateY(-3px);
+  border-color: rgb(167 139 250 / 0.32);
+  box-shadow: 0 14px 36px rgb(0 0 0 / 0.2), 0 0 24px rgb(139 92 246 / 0.06);
+}
+
+.cf-card:focus-within {
+  border-color: rgb(167 139 250 / 0.48);
+  box-shadow: 0 0 0 1px rgb(167 139 250 / 0.12);
+}
+
+.cf-media {
+  overflow: hidden;
+}
+
+.cf-media img {
+  transition: transform 500ms cubic-bezier(0.2, 0.75, 0.25, 1);
+}
+
+.cf-card:hover .cf-media img {
+  transform: scale(1.035);
+}
+
+.cf-action {
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease;
+}
+
+.cf-action:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgb(139 92 246 / 0.16);
+}
+
+.cf-action:active {
+  transform: translateY(0) scale(0.985);
+}
+
+.cf-progress-fill {
+  transform-origin: left center;
+  animation: cf-progress-enter 900ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+
+.cf-fade-up {
+  animation: cf-fade-up 420ms ease both;
+}
+
+@keyframes cf-progress-enter {
+  from { transform: scaleX(0.15); opacity: 0.55; }
+  to { transform: scaleX(1); opacity: 1; }
+}
+
+@keyframes cf-fade-up {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 2px solid rgb(167 139 250 / 0.9);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
