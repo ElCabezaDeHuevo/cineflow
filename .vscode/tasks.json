@@ -1,0 +1,1113 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "CineFlow build",
+			"type": "shell",
+			"command": "npm run build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "CineFlow build (Node explícito)",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\npm.cmd run build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "CineFlow build (ruta Node)",
+			"type": "shell",
+			"command": "& 'C:\\Program Files\\nodejs\\npm.cmd' run build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "CineFlow build (PATH corregido)",
+			"type": "shell",
+			"command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\npm.cmd' run build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "CineFlow git status",
+			"type": "shell",
+			"command": "git status --short",
+			"isBackground": false
+		},
+		{
+			"label": "Inspeccionar rutas app",
+			"type": "shell",
+			"command": "Get-ChildItem .\\app -Force | Select-Object Name,FullName,PSIsContainer",
+			"isBackground": false
+		},
+		{
+			"label": "Limpiar caché generada de Next.js",
+			"type": "shell",
+			"command": "$target = Join-Path (Get-Location) '.next'; if (-not (Test-Path -LiteralPath $target -PathType Container)) { throw 'La carpeta .next no existe en el workspace esperado.' }; Remove-Item -LiteralPath $target -Recurse -Force",
+			"isBackground": false
+		},
+		{
+			"label": "Verificar build de CineFlow",
+			"type": "shell",
+			"command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\npm.cmd' run build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Verificar build final de CineFlow",
+			"type": "shell",
+			"command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\npm.cmd' run build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Revisar build tras ajuste Next 16",
+			"type": "shell",
+			"command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\npm.cmd' run build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Build final CineFlow",
+			"type": "shell",
+			"command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\npm.cmd' run build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Lint final de CineFlow",
+			"type": "shell",
+			"command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\npm.cmd' run lint",
+			"isBackground": false,
+			"problemMatcher": [
+				"$eslint-stylish"
+			]
+		},
+		{
+			"label": "Lint corregido de CineFlow",
+			"type": "shell",
+			"command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\npm.cmd' run lint",
+			"isBackground": false,
+			"problemMatcher": [
+				"$eslint-stylish"
+			]
+		},
+		{
+			"label": "Verificar edición desde proyectos en curso",
+			"type": "shell",
+			"command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\npm.cmd' run lint",
+			"isBackground": false,
+			"problemMatcher": [
+				"$eslint-stylish"
+			]
+		},
+		{
+			"label": "Validar edición de proyectos en curso",
+			"type": "shell",
+			"command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\npm.cmd' run lint",
+			"isBackground": false,
+			"problemMatcher": [
+				"$eslint-stylish"
+			]
+		},
+		{
+			"label": "Validar proyectos reales en dashboard",
+			"type": "shell",
+			"command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\npm.cmd' run lint",
+			"isBackground": false,
+			"problemMatcher": [
+				"$eslint-stylish"
+			]
+		},
+		{
+			"label": "Build con edición real de proyectos",
+			"type": "shell",
+			"command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\npm.cmd' run build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Revisar página de proyecto",
+			"type": "shell",
+			"command": "Get-Item -LiteralPath '.\\app\\proyectos\\[id]\\page.tsx' | Select-Object FullName,Length,Attributes",
+			"isBackground": false
+		},
+		{
+			"label": "Validar perfil y equipo de CineFlow",
+			"type": "shell",
+			"command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\npm.cmd' run build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Build final de perfil y seguridad",
+			"type": "shell",
+			"command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\npm.cmd' run build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Verificar perfil, equipo y seguridad",
+			"type": "shell",
+			"command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\npm.cmd' run build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Lint de perfil y equipo",
+			"type": "shell",
+			"command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\npm.cmd' run lint",
+			"isBackground": false,
+			"problemMatcher": [
+				"$eslint-stylish"
+			]
+		},
+		{
+			"label": "Verificar creación y edición inmediata",
+			"type": "shell",
+			"command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\npm.cmd' run build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Lint de creación y edición",
+			"type": "shell",
+			"command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\npm.cmd' run lint",
+			"isBackground": false,
+			"problemMatcher": [
+				"$eslint-stylish"
+			]
+		},
+		{
+			"label": "Verificar formulario nuevo editable",
+			"type": "shell",
+			"command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\npm.cmd' run build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Iniciar CineFlow para verificación",
+			"type": "shell",
+			"command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\npm.cmd' run dev",
+			"isBackground": true
+		},
+		{
+			"label": "Iniciar CineFlow",
+			"type": "shell",
+			"command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\npm.cmd' run dev",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Revisar autenticación y RLS",
+			"type": "shell",
+			"command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\rg.exe' -n \"createSupabase|auth\\.getUser|from\\(\\\"projects\\\"\\)|created_by|signIn\" app lib middleware.ts supabase",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Buscar clientes Supabase",
+			"type": "shell",
+			"command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\rg.exe' -n createSupabase app lib middleware.ts supabase",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspeccionar fuentes Supabase",
+			"type": "shell",
+			"command": "Get-ChildItem -Path app,lib -Recurse -File -Include *.ts,*.tsx | Select-String -Pattern 'createSupabase|auth.getUser|created_by|from\\(\"projects\"\\)|signIn'",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Leer cliente SSR",
+			"type": "shell",
+			"command": "Get-Content -Raw lib/supabase/server.ts; Get-Content -Raw app/auth/actions.ts; Get-Content -Raw app/proyectos/actions.ts",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Leer middleware de sesión",
+			"type": "shell",
+			"command": "Get-Content -Raw middleware.ts",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Leer página de proyectos",
+			"type": "shell",
+			"command": "Get-Content -Raw app/proyectos/page.tsx",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspeccionar inserción exacta",
+			"type": "shell",
+			"command": "Select-String -Path app/proyectos/actions.ts -Pattern 'export async function createProject'",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Leer bloque de inserción",
+			"type": "shell",
+			"command": "Get-Content app/proyectos/actions.ts | Select-Object -Skip 19 -First 10",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verificar build CineFlow",
+			"type": "shell",
+			"command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\npm.cmd' run build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Revisar layout de sesión",
+			"type": "shell",
+			"command": "Get-Content -Raw app/layout.tsx",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Leer layout actual",
+			"type": "shell",
+			"command": "powershell -NoProfile -Command \"Get-Content -Raw app/layout.tsx\""
+		},
+		{
+			"label": "Inspeccionar bloque logout",
+			"type": "shell",
+			"command": "powershell -NoProfile -Command \"$lines=Get-Content app/layout.tsx; $lines[25..45] | ConvertTo-Json\""
+		},
+		{
+			"label": "Verificar build tras quitar logout en login",
+			"type": "shell",
+			"command": "npm run build"
+		},
+		{
+			"label": "Revisar flujo de creación",
+			"type": "shell",
+			"command": "powershell -NoProfile -Command \"Get-Content app/proyectos/actions.ts; Write-Output '---PAGE---'; Get-Content app/proyectos/page.tsx\""
+		},
+		{
+			"label": "Revisar menú principal",
+			"type": "shell",
+			"command": "powershell -NoProfile -Command \"Get-Content app/page.tsx\""
+		},
+		{
+			"label": "Inspeccionar panel y esquema",
+			"type": "shell",
+			"command": "powershell -NoProfile -Command \"Get-Content app/page.tsx; Write-Output '---SQL---'; Get-Content supabase/projects.sql\""
+		},
+		{
+			"label": "Revisar métricas del panel",
+			"type": "shell",
+			"command": "powershell -NoProfile -Command \"Select-String -Path app/page.tsx -Pattern 'Proyectos activos|En produ|postprodu|Tareas pendientes'\""
+		},
+		{
+			"label": "Revisar redirección de login",
+			"type": "shell",
+			"command": "powershell -NoProfile -Command \"Get-Content app/auth/actions.ts; Write-Output '---LOGIN---'; Get-Content app/Login/page.tsx\""
+		},
+		{
+			"label": "Revisar cambios para guardar",
+			"type": "shell",
+			"command": "git status --short"
+		},
+		{
+			"label": "Comprobar Git instalado",
+			"type": "shell",
+			"command": "powershell -NoProfile -Command \"@('C:\\Program Files\\Git\\cmd\\git.exe','C:\\Program Files\\Git\\bin\\git.exe') | ForEach-Object { if (Test-Path $_) { $_ } }\""
+		},
+		{
+			"label": "Iniciar Cineflow",
+			"type": "shell",
+			"command": "npm run dev",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Iniciar Cineflow (npm.cmd)",
+			"type": "shell",
+			"command": "npm.cmd run dev",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Reiniciar Cineflow en red",
+			"type": "shell",
+			"command": "npm.cmd run dev",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Detener Cineflow anterior",
+			"type": "shell",
+			"command": "taskkill /PID 13480 /F",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Cineflow accesible en red",
+			"type": "shell",
+			"command": "npm.cmd run dev",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Consultar IP local",
+			"type": "shell",
+			"command": "ipconfig",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Leer componente login",
+			"type": "shell",
+			"command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"Get-Content -Raw 'app/Login/page.tsx'\" ",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspeccionar cabecera del login",
+			"type": "shell",
+			"command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"$s=Get-Content -Raw 'app/Login/page.tsx'; $i=$s.IndexOf('<Link'); $s.Substring($i,[Math]::Min(220,$s.Length-$i))\" ",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspeccionar enlace del login",
+			"type": "shell",
+			"command": "Select-String -Path app\\Login\\page.tsx -Pattern '<Link'",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Leer login en formato editable",
+			"type": "shell",
+			"command": "Get-Content -Raw app\\Login\\page.tsx | ConvertTo-Json -Compress",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Auditar estructura de Cineflow",
+			"type": "shell",
+			"command": "Get-ChildItem app -Recurse -File | Select-Object -ExpandProperty FullName; Write-Output '---LIB---'; Get-ChildItem lib -Recurse -File | Select-Object -ExpandProperty FullName; Write-Output '---SUPABASE---'; Get-ChildItem supabase -Recurse -File | Select-Object -ExpandProperty FullName",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Leer páginas principales",
+			"type": "shell",
+			"command": "Get-Content -Raw app\\layout.tsx; Write-Output '---PAGE---'; Get-Content -Raw app\\page.tsx; Write-Output '---PROJECTS---'; Get-Content -Raw app\\proyectos\\page.tsx",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Auditar datos y formularios",
+			"type": "shell",
+			"command": "Write-Output '---SQL---'; Get-Content -Raw supabase\\projects.sql; Write-Output '---PROJECT ACTIONS---'; Get-Content -Raw app\\proyectos\\actions.ts; Write-Output '---PROFILE---'; Get-Content -Raw app\\perfil\\page.tsx; Write-Output '---PROFILE ACTIONS---'; Get-Content -Raw app\\perfil\\actions.ts",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Consultar guía App Router de Next",
+			"type": "shell",
+			"command": "Get-ChildItem node_modules\\next\\dist\\docs\\01-app -File | Select-Object -ExpandProperty Name",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Leer guía App Router de Next",
+			"type": "shell",
+			"command": "Get-Content -Raw node_modules\\next\\dist\\docs\\01-app\\index.md",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspeccionar menú principal",
+			"type": "shell",
+			"command": "$lines=Get-Content app\\page.tsx; $start=($lines | Select-String '<nav className=\"space-y-2\">').LineNumber; $lines[($start-1)..($start+18)]",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Localizar navegación del panel",
+			"type": "shell",
+			"command": "Select-String -Path app\\page.tsx -Pattern '<nav|Panel principal|LÃnea de tiempo|Equipo'",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Leer bloque de navegación",
+			"type": "shell",
+			"command": "Get-Content app\\page.tsx | Select-Object -Skip 89 -First 20",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validar build de Cineflow",
+			"type": "shell",
+			"command": "npm.cmd run build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspeccionar error de TypeScript",
+			"type": "shell",
+			"command": "Get-Content app\\page.tsx | Select-Object -Skip 54 -First 10",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Revalidar build de Cineflow",
+			"type": "shell",
+			"command": "npm.cmd run build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Confirmar build de Cineflow",
+			"type": "shell",
+			"command": "npm.cmd run build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Revisar autenticación y configuración",
+			"type": "shell",
+			"command": "Write-Output '---AUTH---'; Get-Content -Raw app\\auth\\actions.ts; Write-Output '---SUPABASE---'; Get-Content -Raw lib\\supabase\\server.ts; Write-Output '---ENV NAMES---'; Select-String -Path .env.local -Pattern '^[A-Z0-9_]+=' | ForEach-Object { ($_ -split '=')[0] }; Write-Output '---PACKAGES---'; Get-Content -Raw package.json",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Consultar guía de Server Actions",
+			"type": "shell",
+			"command": "Get-ChildItem node_modules\\next\\dist\\docs -Recurse -File | Where-Object { $_.Name -match 'server|action|form' } | Select-Object -First 30 -ExpandProperty FullName",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Leer guía de Server Actions",
+			"type": "shell",
+			"command": "Get-Content -Raw node_modules\\next\\dist\\docs\\01-app\\02-guides\\server-actions.md",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Localizar encabezado del equipo",
+			"type": "shell",
+			"command": "Select-String -Path app\\equipo\\page.tsx -Pattern 'PRODUCCIÓN / COLABORACIÓN|<header|</header>' -Context 2,5",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validar administración de usuarios",
+			"type": "shell",
+			"command": "npm.cmd run build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validar rangos cinematográficos",
+			"type": "shell",
+			"command": "npm.cmd run build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspeccionar perfil del usuario",
+			"type": "shell",
+			"command": "Select-String -Path app\\perfil\\page.tsx -Pattern 'displayName|avatar|bio|Perfil' -Context 2,5",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validar administración final",
+			"type": "shell",
+			"command": "npm.cmd run build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verificar correo administrador",
+			"type": "shell",
+			"command": "Select-String -Path .env.local -Pattern '^CINEFLOW_ADMIN_EMAIL=' | ForEach-Object { $_.Line.Split('=')[0] + '=configurado' }",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Localizar servidor de Cineflow",
+			"type": "shell",
+			"command": "Get-CimInstance Win32_Process -Filter \"Name = 'node.exe'\" | Where-Object { $_.CommandLine -like '*cineflow*' -or $_.CommandLine -like '*next dev*' } | Select-Object ProcessId,CommandLine",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Reiniciar Cineflow con administrador",
+			"type": "shell",
+			"command": "npm.cmd run dev",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Detener servidor anterior",
+			"type": "shell",
+			"command": "taskkill /PID 13184 /F",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Cineflow con correo administrador",
+			"type": "shell",
+			"command": "npm.cmd run dev",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Verificar configuración segura",
+			"type": "shell",
+			"command": "$names=@('NEXT_PUBLIC_SUPABASE_URL','NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY','SUPABASE_SERVICE_ROLE_KEY','CINEFLOW_ADMIN_EMAIL'); foreach($name in $names){$line=Select-String -Path .env.local -Pattern \"^$name=\"; if($line){$value=($line.Line -split '=',2)[1]; Write-Output ($name + '=' + ($(if([string]::IsNullOrWhiteSpace($value)){'faltante'}else{'configurado'}))) } else { Write-Output ($name + '=faltante') }}",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Reiniciar Cineflow",
+			"type": "shell",
+			"command": "npm.cmd run dev",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Detener servidor para cargar configuración",
+			"type": "shell",
+			"command": "taskkill /PID 18096 /F",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Cineflow listo",
+			"type": "shell",
+			"command": "npm.cmd run dev",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Diagnosticar clave Supabase",
+			"type": "shell",
+			"command": "$lines=Get-Content .env.local; foreach($name in @('NEXT_PUBLIC_SUPABASE_URL','NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY','SUPABASE_SERVICE_ROLE_KEY','CINEFLOW_ADMIN_EMAIL')){$line=$lines | Where-Object {$_ -match \"^$name=\"} | Select-Object -First 1; if($line){$value=$line.Substring($name.Length+1); $trim=$value.Trim(); $quote=($trim.StartsWith('\"') -or $trim.StartsWith(\"'\")); $prefix=if($trim.Length -ge 3){$trim.Substring(0,3)}else{$trim}; Write-Output ($name + ': length=' + $trim.Length + ', prefix=' + $prefix + ', quoted=' + $quote)}else{Write-Output ($name + ': missing')}}",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Revisar formato de variables",
+			"type": "shell",
+			"command": "Get-Content .env.local | ForEach-Object { $parts=$_ -split '=',2; if($parts.Count -eq 2 -and $parts[0] -in @('NEXT_PUBLIC_SUPABASE_URL','NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY','SUPABASE_SERVICE_ROLE_KEY','CINEFLOW_ADMIN_EMAIL')) { Write-Output ($parts[0] + ' length=' + $parts[1].Trim().Length) } }",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Cineflow dev server",
+			"type": "shell",
+			"command": "npm.cmd run dev -- --hostname 0.0.0.0",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Reiniciar Cineflow anterior",
+			"type": "shell",
+			"command": "taskkill /PID 21684 /F",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspeccionar Cineflow",
+			"type": "shell",
+			"command": "Get-ChildItem app -Recurse -File | Select-Object FullName; Get-ChildItem lib -Recurse -File | Select-Object FullName; Get-Content AGENTS.md; Get-ChildItem node_modules/next/dist/docs -Recurse -File | Select-Object -First 15 FullName",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Leer guía Next.js",
+			"type": "shell",
+			"command": "Get-Content node_modules/next/dist/docs/01-app/01-getting-started/05-server-and-client-components.md; Get-Content node_modules/next/dist/docs/01-app/01-getting-started/06-fetching-data.md; Get-Content node_modules/next/dist/docs/01-app/01-getting-started/07-mutating-data.md; Get-Content node_modules/next/dist/docs/01-app/01-getting-started/08-caching.md",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Leer módulos actuales",
+			"type": "shell",
+			"command": "Get-Content app/proyectos/actions.ts; Get-Content app/proyectos/page.tsx; Get-Content app/proyectos/ProjectForm.tsx; Get-Content 'app/proyectos/[id]/page.tsx'; Get-Content app/timeline/page.tsx; Get-Content supabase/projects.sql; Get-Content lib/supabase/server.ts; Get-Content lib/supabase.ts; Get-Content app/layout.tsx; Get-Content app/globals.css",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Leer proyectos y esquema",
+			"type": "shell",
+			"command": "Get-Content app/proyectos/page.tsx; Write-Output '---FORM---'; Get-Content app/proyectos/ProjectForm.tsx; Write-Output '---SQL---'; Get-Content supabase/projects.sql; Write-Output '---ID---'; Get-Content -LiteralPath 'app/proyectos/[id]/page.tsx'",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspeccionar lógica de proyectos",
+			"type": "shell",
+			"command": "$p='app/proyectos/page.tsx'; $s=[IO.File]::ReadAllText($p); $s=$s -replace ';', \";`n\"; $s; Write-Output '---FORM---'; $p='app/proyectos/ProjectForm.tsx'; $s=[IO.File]::ReadAllText($p); $s=$s -replace ';', \";`n\"; $s; Write-Output '---SQL---'; Get-Content supabase/projects.sql",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspeccionar lógica de proyectos v2",
+			"type": "shell",
+			"command": "$p='app/proyectos/page.tsx'; $s=[IO.File]::ReadAllText($p); $s=$s.Replace([char]59, [Environment]::NewLine); $s; Write-Output '---FORM---'; $p='app/proyectos/ProjectForm.tsx'; $s=[IO.File]::ReadAllText($p); $s=$s.Replace([char]59, [Environment]::NewLine); $s; Write-Output '---SQL---'; Get-Content supabase/projects.sql",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspeccionar detalle de proyectos",
+			"type": "shell",
+			"command": "Get-ChildItem -LiteralPath app/proyectos -Recurse -Force | Select-Object FullName; Get-Content -LiteralPath 'app/proyectos/[id]/page.tsx' -ErrorAction SilentlyContinue; Get-Content app/proyectos/actions.ts",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Leer cliente Supabase",
+			"type": "shell",
+			"command": "Get-Content lib/supabase/server.ts; Get-Content app/timeline/page.tsx; Get-Content app/page.tsx; Get-Content middleware.ts",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Obtener detalle de proyectos con líneas",
+			"type": "shell",
+			"command": "$i=0; Get-Content -LiteralPath 'app/proyectos/[id]/page.tsx' | ForEach-Object { $i++; Write-Output (\"{0}: {1}\" -f $i,$_) }",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Medir páginas",
+			"type": "shell",
+			"command": "(Get-Content app/page.tsx).Count; (Get-Content app/proyectos/page.tsx).Count; (Get-Content app/proyectos/[id]/page.tsx).Count; (Get-Content app/timeline/page.tsx).Count",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Ver página de proyectos",
+			"type": "shell",
+			"command": "Get-Content app/proyectos/page.tsx | Select-Object -First 12",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Ver JSX de proyectos",
+			"type": "shell",
+			"command": "Get-Content app/proyectos/page.tsx | Select-Object -Skip 12",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Ver navegación principal",
+			"type": "shell",
+			"command": "Select-String -Path app/page.tsx -Pattern 'proyectos|timeline|usuarios|equipo|href' -Context 2,2",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Comprobar Cineflow",
+			"type": "shell",
+			"command": "npm.cmd run build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Revisar permisos de Cineflow",
+			"type": "shell",
+			"command": "Get-Content app/usuarios/actions.ts; Get-Content lib/supabase/admin.ts; Get-Content app/proyectos/operations.ts; Select-String -Path 'app/proyectos/seguimiento/[id]/page.tsx' -Pattern 'tasks|activity|createTask|updateTask|canEdit' -Context 1,1",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspeccionar seguimiento y esquema",
+			"type": "shell",
+			"command": "Get-Content -LiteralPath 'app/proyectos/seguimiento/[id]/page.tsx'; Get-Content -LiteralPath 'supabase/operations.sql'",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspeccionar seguimiento y esquema 2",
+			"type": "shell",
+			"command": "Get-Content -LiteralPath 'app/proyectos/seguimiento/[id]/page.tsx'; Get-Content -LiteralPath 'supabase/operations.sql'",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Localizar botón de tareas",
+			"type": "shell",
+			"command": "Select-String -LiteralPath 'app/proyectos/seguimiento/[id]/page.tsx' -Pattern 'Actualizar|project_tasks|canEdit|Actualizar' -Context 2,2",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Formatear seguimiento Cineflow",
+			"type": "shell",
+			"command": "npx.cmd prettier --write \"app/proyectos/seguimiento/[id]/page.tsx\" \"app/proyectos/operations.ts\"",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Comprobar formateador local",
+			"type": "shell",
+			"command": "Test-Path \"node_modules/.bin/prettier.cmd\"; Get-Content package.json",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Formatear seguimiento Cineflow 2",
+			"type": "shell",
+			"command": "cmd /c \"echo y|npx.cmd prettier --write app/proyectos/seguimiento/[id]/page.tsx app/proyectos/operations.ts\"",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Revisar vista formateada",
+			"type": "shell",
+			"command": "Select-String -LiteralPath 'app/proyectos/seguimiento/[id]/page.tsx' -Pattern 'Actualizar|canEdit|isAdmin|operations' -Context 3,4",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validar borrado y bitácora",
+			"type": "shell",
+			"command": "npm.cmd run build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			]
+		},
+		{
+			"label": "Confirmar cambios Cineflow",
+			"type": "shell",
+			"command": "git diff --stat; git status --short",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Iniciar Cineflow ahora",
+			"type": "shell",
+			"command": "npm.cmd run dev",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Diagnosticar acceso de red Cineflow",
+			"type": "shell",
+			"command": "Get-NetTCPConnection -LocalPort 3000 -State Listen | Format-Table -AutoSize; Get-NetIPAddress -AddressFamily IPv4 | Where-Object {$_.IPAddress -like '192.168.*'} | Select-Object IPAddress,InterfaceAlias; Get-NetFirewallRule -DisplayName '*Node*' -ErrorAction SilentlyContinue | Select-Object DisplayName,Enabled,Direction,Action",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Probar puerto Cineflow",
+			"type": "shell",
+			"command": "Test-NetConnection 192.168.1.67 -Port 3000 | Select-Object ComputerName,RemotePort,TcpTestSucceeded",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Revisar red y firewall Cineflow",
+			"type": "shell",
+			"command": "Get-NetConnectionProfile | Select-Object Name,InterfaceAlias,NetworkCategory,IPv4Connectivity; Get-NetIPAddress -AddressFamily IPv4 | Where-Object {$_.IPAddress -like '192.168.*'} | Select-Object IPAddress,InterfaceAlias; Get-NetFirewallProfile | Select-Object Name,Enabled,DefaultInboundAction; Invoke-WebRequest -UseBasicParsing http://192.168.1.67:3000/login | Select-Object StatusCode",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Revisar módulos de proyectos",
+			"type": "shell",
+			"command": "Get-ChildItem -Recurse -File app,lib,supabase | Select-Object -ExpandProperty FullName; Get-Content app/page.tsx; Get-Content app/proyectos/actions.ts; Get-Content app/proyectos/ProjectForm.tsx; Get-Content app/horarios/page.tsx; Get-Content app/timeline/page.tsx",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspeccionar esquema de proyectos",
+			"type": "shell",
+			"command": "Get-Content supabase/projects.sql; Get-Content supabase/operations.sql; Get-Content app/timeline/page.tsx",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Localizar formularios de cambios",
+			"type": "shell",
+			"command": "Select-String -LiteralPath 'app/horarios/page.tsx','app/timeline/page.tsx','app/proyectos/page.tsx','app/proyectos/seguimiento/[id]/page.tsx' -Pattern '<form|clockIn|clockOut|href=\"/timeline\"|Ver etapas|projectForm' -Context 2,4",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Formatear acciones de proyectos",
+			"type": "shell",
+			"command": "cmd /c \"echo y|npx.cmd prettier --write app/proyectos/actions.ts app/proyectos/ProjectForm.tsx app/horarios/page.tsx app/timeline/page.tsx app/page.tsx\"",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Leer acciones de proyectos formateadas",
+			"type": "shell",
+			"command": "Get-Content app/proyectos/actions.ts",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validar estructura de seguimiento",
+			"type": "shell",
+			"command": "Get-Content -LiteralPath 'app/proyectos/seguimiento/[id]/page.tsx' | Select-Object -First 120",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Ubicar encabezado de seguimiento",
+			"type": "shell",
+			"command": "Select-String -LiteralPath 'app/proyectos/seguimiento/[id]/page.tsx' -Pattern '</header>|Etapa actual' -Context 5,5",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Leer línea de tiempo",
+			"type": "shell",
+			"command": "Get-Content app/timeline/page.tsx",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Leer contenido de línea de tiempo 2",
+			"type": "shell",
+			"command": "Get-Content app/timeline/page.tsx | Select-Object -Skip 35",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Medir línea de tiempo",
+			"type": "shell",
+			"command": "(Get-Content app/timeline/page.tsx).Count; Get-Content app/timeline/page.tsx | Select-Object -Last 1 | Out-String -Width 3000",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Localizar tarjetas de timeline",
+			"type": "shell",
+			"command": "Select-String -LiteralPath 'app/timeline/page.tsx' -Pattern 'projects.map|project.name|stageTone|</section>|timeline' -Context 2,3",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Leer tarjetas de timeline",
+			"type": "shell",
+			"command": "$lines=Get-Content app/timeline/page.tsx; $lines[70..160]",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Localizar acciones del panel",
+			"type": "shell",
+			"command": "Select-String -LiteralPath app/page.tsx -Pattern 'Gestionar proyectos|Revisar mi perfil' -Context 2,3",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Localizar enlace de timeline",
+			"type": "shell",
+			"command": "Select-String -LiteralPath app/page.tsx -Pattern 'timeline|Ver etapas' -Context 2,2",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Comprobar confirmación de borrado",
+			"type": "shell",
+			"command": "$lines=Get-Content -LiteralPath 'app/proyectos/seguimiento/[id]/page.tsx'; $lines[270..305]",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Comprobar confirmación de borrado 2",
+			"type": "shell",
+			"command": "$lines=Get-Content -LiteralPath 'app/proyectos/seguimiento/[id]/page.tsx'; $lines[305..325]",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Localizar formulario de proyecto",
+			"type": "shell",
+			"command": "Select-String -LiteralPath app/proyectos/ProjectForm.tsx -Pattern 'Descripci|<button' -Context 2,3",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Leer inicio del formulario",
+			"type": "shell",
+			"command": "$lines=Get-Content app/proyectos/ProjectForm.tsx; $lines[30..105]",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Leer etiqueta form",
+			"type": "shell",
+			"command": "$lines=Get-Content app/proyectos/ProjectForm.tsx; $lines[15..32]",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validar formularios de seguimiento",
+			"type": "shell",
+			"command": "$lines=Get-Content -LiteralPath 'app/proyectos/seguimiento/[id]/page.tsx'; $lines[230..315]",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Compilar nuevas funciones Cineflow",
+			"type": "shell",
+			"command": "npm.cmd run build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			]
+		},
+		{
+			"label": "Compilar nuevas funciones Cineflow 2",
+			"type": "shell",
+			"command": "npm.cmd run build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			]
+		},
+		{
+			"label": "Revisar autenticación y cierre de sesión",
+			"type": "shell",
+			"command": "Get-Content app/LogoutButton.tsx; Get-Content app/auth/signout-actions.ts; Get-Content app/layout.tsx; Get-Content app/auth/actions.ts; Get-Content app/horarios/actions.ts; Get-Content middleware.ts",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Revisar acciones editables restantes",
+			"type": "shell",
+			"command": "Get-Content app/perfil/actions.ts; Get-Content app/usuarios/actions.ts | Select-Object -First 180; Get-Content app/proyectos/operations.ts | Select-Object -First 260",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Localizar controles de proyecto",
+			"type": "shell",
+			"command": "Select-String -LiteralPath app/proyectos/actions.ts -Pattern 'if \\(!context\\)' -Context 0,2",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Localizar perfil del panel",
+			"type": "shell",
+			"command": "$lines=Get-Content app/page.tsx; $lines[40..75]",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validar requisito de entrada",
+			"type": "shell",
+			"command": "npm.cmd run build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			]
+		},
+		{
+			"label": "Leer botón de cierre",
+			"type": "shell",
+			"command": "Get-Content app/LogoutButton.tsx; Get-Content app/layout.tsx | Select-Object -First 60",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validar ventana de cierre",
+			"type": "shell",
+			"command": "npm.cmd run build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			]
+		},
+		{
+			"label": "Revisar botón de salida",
+			"type": "shell",
+			"command": "Get-Content app/LogoutButton.tsx; Get-Content app/layout.tsx; Get-NetTCPConnection -LocalPort 3000 -State Listen | Select-Object OwningProcess",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Detener servidor Cineflow antiguo",
+			"type": "shell",
+			"command": "taskkill /PID 18120 /F",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Reiniciar servidor Cineflow actualizado",
+			"type": "shell",
+			"command": "npm.cmd run dev",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Comprobar cierre visual Cineflow",
+			"type": "shell",
+			"command": "npm.cmd run build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			]
+		}
+	]
+}
