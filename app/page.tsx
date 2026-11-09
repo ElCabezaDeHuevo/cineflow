@@ -339,7 +339,7 @@ async function HomeContent({
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Link
               href="/proyectos"
-              className="rounded-xl bg-violet-500 px-5 py-3 text-center font-semibold transition hover:bg-violet-400"
+              className="cf-action rounded-xl bg-violet-500 px-5 py-3 text-center font-semibold transition hover:bg-violet-400"
             >
               + Nuevo proyecto
             </Link>
@@ -371,14 +371,14 @@ async function HomeContent({
           ].map(([titulo, valor, detalle]) => (
             <article
               key={titulo}
-              className="rounded-2xl border border-white/10 bg-[#14151c] p-5"
+              className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5"
             >
               <p className="text-sm text-gray-400">{titulo}</p>
               <p className="my-3 text-4xl font-bold">{valor}</p>
               <p className="text-xs text-gray-500">{detalle}</p>
             </article>
           ))}
-          <article className="rounded-2xl border border-white/10 bg-[#14151c] p-5">
+          <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5">
             <p className="text-sm text-gray-400">Próximas entregas</p>
             <p className="my-3 text-4xl font-bold">
               <UpcomingDeliveryCount
@@ -391,7 +391,7 @@ async function HomeContent({
         </div>
 
         <section className="mb-10 grid gap-5 lg:grid-cols-[1.4fr_1fr]">
-          <article className="rounded-2xl border border-white/10 bg-[#14151c] p-6">
+          <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-6">
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-widest text-violet-300">
@@ -439,7 +439,7 @@ async function HomeContent({
               />
             </div>
           </article>
-          <article className="rounded-2xl border border-white/10 bg-[#14151c] p-6">
+          <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-6">
             <p className="text-xs uppercase tracking-widest text-violet-300">
               Centro de acción
             </p>
@@ -451,7 +451,7 @@ async function HomeContent({
             <div className="mt-6 grid gap-3">
               <Link
                 href="/proyectos"
-                className="rounded-xl bg-violet-500 px-4 py-3 text-center text-sm font-semibold transition hover:bg-violet-400"
+                className="cf-action rounded-xl bg-violet-500 px-4 py-3 text-center text-sm font-semibold transition hover:bg-violet-400"
               >
                 Gestionar proyectos
               </Link>
@@ -504,7 +504,7 @@ async function HomeContent({
             {etapaResumen.map((etapa, index) => (
               <article
                 key={etapa.nombre}
-                className="rounded-xl border border-white/10 bg-white/[0.03] p-4"
+                className="cf-card rounded-xl border border-white/10 bg-white/[0.03] p-4"
               >
                 <div className="flex items-start gap-3">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-500/15 text-sm font-semibold text-violet-300">
@@ -539,7 +539,7 @@ async function HomeContent({
                     aria-valuenow={etapa.progress}
                   >
                     <div
-                      className="h-full rounded-full bg-emerald-400 transition-all"
+                      className="cf-progress-fill h-full rounded-full bg-emerald-400 transition-all"
                       style={{ width: `${etapa.progress}%` }}
                     />
                   </div>
@@ -577,7 +577,7 @@ async function HomeContent({
 
         <section
           id="equipo"
-          className="rounded-2xl border border-white/10 bg-[#14151c] p-6"
+          className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-6"
         >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
