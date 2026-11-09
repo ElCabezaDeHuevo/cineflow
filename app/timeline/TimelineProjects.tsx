@@ -81,7 +81,7 @@ export default function TimelineProjects({
                 setSortBy(value);
               }
             }}
-            className="rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-white outline-none focus:border-violet-400"
+            className="rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-white outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-400/20"
           >
             <option value="date">Fecha de inicio</option>
             <option value="type">Tipo</option>
@@ -95,7 +95,7 @@ export default function TimelineProjects({
             <Link
               key={project.id}
               href={`/proyectos/seguimiento/${project.id}`}
-              className="grid gap-4 p-6 transition hover:bg-white/[0.03] md:grid-cols-[1.5fr_1fr_1fr_1fr_1.4fr] md:items-center"
+              className="cf-card grid gap-4 p-6 transition hover:bg-white/[0.03] md:grid-cols-[1.5fr_1fr_1fr_1fr_1.4fr]"
             >
               <div>
                 <p className="text-xs uppercase tracking-widest text-violet-300">
@@ -139,7 +139,7 @@ export default function TimelineProjects({
                 </div>
                 <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
                   <div
-                    className="h-full rounded-full bg-violet-500"
+                    className="cf-progress-fill h-full rounded-full bg-violet-500"
                     style={{ width: `${project.progress}%` }}
                   />
                 </div>
