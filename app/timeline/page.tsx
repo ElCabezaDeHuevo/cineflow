@@ -53,18 +53,18 @@ async function TimelineContent() {
           </div>
           <Link
             href="/proyectos"
-            className="rounded-xl bg-violet-500 px-5 py-3 text-sm font-semibold transition hover:bg-violet-400"
+            className="cf-action rounded-xl bg-violet-500 px-5 py-3 text-sm font-semibold transition hover:bg-violet-400"
           >
             + Nuevo proyecto
           </Link>
         </header>
 
         <section className="mt-8 grid gap-4 sm:grid-cols-3">
-          <article className="rounded-2xl border border-white/10 bg-[#14151c] p-5">
+          <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5">
             <p className="text-sm text-gray-400">Proyectos planificados</p>
             <p className="mt-3 text-3xl font-bold">{projects?.length ?? 0}</p>
           </article>
-          <article className="rounded-2xl border border-white/10 bg-[#14151c] p-5">
+          <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5">
             <p className="text-sm text-gray-400">En producción</p>
             <p className="mt-3 text-3xl font-bold">
               {projects?.filter(
@@ -74,7 +74,7 @@ async function TimelineContent() {
               ).length ?? 0}
             </p>
           </article>
-          <article className="rounded-2xl border border-white/10 bg-[#14151c] p-5">
+          <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5">
             <p className="text-sm text-gray-400">Próximas entregas</p>
             <p className="mt-3 text-3xl font-bold">
               {projects?.filter(
@@ -85,7 +85,7 @@ async function TimelineContent() {
           </article>
         </section>
 
-        <section className="mt-8 overflow-hidden rounded-2xl border border-white/10 bg-[#14151c]">
+        <section className="cf-card mt-8 overflow-hidden rounded-2xl border border-white/10 bg-[#14151c]">
           <TimelineProjects
             projects={(projects ?? []).map((project) => ({
               ...project,
@@ -94,7 +94,7 @@ async function TimelineContent() {
           />
         </section>
 
-        <section className="mt-8 overflow-hidden rounded-2xl border border-white/10 bg-[#14151c]">
+        <section className="cf-card mt-8 overflow-hidden rounded-2xl border border-white/10 bg-[#14151c]">
           <div className="border-b border-white/10 p-6"><h2 className="text-xl font-semibold">Historial de actividad</h2><p className="mt-1 text-sm text-gray-400">Quién hizo cada cambio y cuándo.</p></div>
           <div className="divide-y divide-white/10">
             {activity?.length ? activity.map((event) => {
