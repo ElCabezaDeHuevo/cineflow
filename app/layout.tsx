@@ -42,6 +42,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         .maybeSingle()
     : { data: null };
   const isAdmin = isCineflowAdmin(user);
+  console.log("[v0] admin check:", {
+    email: user?.email ?? null,
+    appRole: user?.app_metadata?.cineflow_role ?? null,
+    userMetadataRole: user?.user_metadata?.cineflow_role ?? user?.user_metadata?.role ?? null,
+    isAdmin,
+  });
 
   return (
     <html
