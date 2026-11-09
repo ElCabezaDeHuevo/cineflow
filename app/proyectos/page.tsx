@@ -247,7 +247,7 @@ export default async function ProjectsPage({
         )}
 
         {ownedProjectIds.length > 0 && (
-          <section className="mb-8 space-y-6 rounded-2xl border border-violet-400/20 bg-[#14151c] p-5 sm:p-6">
+          <section className="cf-card mb-8 space-y-6 rounded-2xl border border-violet-400/20 bg-[#14151c] p-5 sm:p-6">
             <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
               <div>
                 <h2 className="text-xl font-semibold">Solicitudes para unirse</h2>
@@ -367,7 +367,7 @@ export default async function ProjectsPage({
         )}
 
         <div className="grid gap-8 lg:grid-cols-[1.1fr_.9fr]">
-          <section className="rounded-2xl border border-white/10 bg-[#14151c] p-5 sm:p-6">
+          <section className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5 sm:p-6">
             <h2 className="mb-5 text-xl font-semibold">Proyectos disponibles</h2>
             <div className="space-y-3">
               {projects?.length ? (
@@ -378,7 +378,7 @@ export default async function ProjectsPage({
                   return (
                     <article
                       key={project.id}
-                      className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] sm:flex"
+                      className="cf-card overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] sm:flex"
                     >
                       {coverUrl ? (
                         <Image
@@ -467,7 +467,7 @@ export default async function ProjectsPage({
             </div>
           </section>
 
-          <section className="rounded-2xl border border-white/10 bg-[#14151c] p-5 sm:p-6">
+          <section className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5 sm:p-6">
             <h2 className="mb-1 text-xl font-semibold">
               {selectedProject ? "Editar proyecto" : "Nuevo proyecto"}
             </h2>
