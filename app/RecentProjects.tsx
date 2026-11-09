@@ -61,7 +61,7 @@ export default function RecentProjects({
       {orderedProjects.map((project) => (
         <article
           key={project.id}
-          className="rounded-2xl border border-white/10 bg-[#14151c] p-5"
+          className="cf-card cf-fade-up rounded-2xl border border-white/10 bg-[#14151c] p-5"
         >
           {project.coverUrl ? (
             <Image
@@ -70,7 +70,7 @@ export default function RecentProjects({
               width={640}
               height={360}
               unoptimized
-              className="mb-5 h-40 w-full rounded-xl object-cover sm:h-28"
+              className="cf-media mb-5 h-40 w-full rounded-xl object-cover sm:h-28"
             />
           ) : (
             <div className="mb-5 flex h-40 items-center justify-center rounded-xl bg-gradient-to-br from-violet-950 via-[#20202b] to-black text-4xl sm:h-28">
@@ -84,7 +84,7 @@ export default function RecentProjects({
           <p className="mt-1 text-sm text-gray-400">{project.stage}</p>
           <Link
             href={`/proyectos/seguimiento/${project.id}`}
-            className="mt-4 inline-flex text-sm text-violet-300 hover:text-violet-200"
+            className="cf-action mt-4 inline-flex text-sm text-violet-300 hover:text-violet-200"
           >
             Ver seguimiento y bitácora →
           </Link>
@@ -94,7 +94,7 @@ export default function RecentProjects({
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
             <div
-              className="h-full rounded-full bg-violet-500 transition-all"
+              className="cf-progress-fill h-full rounded-full bg-violet-500 transition-all"
               style={{ width: `${project.progress}%` }}
             />
           </div>
