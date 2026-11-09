@@ -35,16 +35,16 @@ export default async function TeamPage() {
           <div><p className="text-sm text-violet-300">PRODUCCIÓN / COLABORACIÓN</p>
           <h1 className="mt-2 text-3xl font-bold md:text-4xl">Equipo de producción</h1>
           <p className="mt-2 max-w-2xl text-gray-400">Consulta quién participa en cada proyecto y qué nivel de acceso tiene.</p></div>
-          {isAdmin && <Link href="/usuarios" className="rounded-xl bg-violet-500 px-5 py-3 text-sm font-semibold transition hover:bg-violet-400">Administrar cuentas</Link>}
+          {isAdmin && <Link href="/usuarios" className="cf-action rounded-xl bg-violet-500 px-5 py-3 text-sm font-semibold transition hover:bg-violet-400">Administrar cuentas</Link>}
         </header>
 
         <section className="mt-8 grid gap-4 sm:grid-cols-3">
-          <article className="rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Colaboradores</p><p className="mt-3 text-3xl font-bold">{userIds.length}</p></article>
-          <article className="rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Proyectos compartidos</p><p className="mt-3 text-3xl font-bold">{projects?.length ?? 0}</p></article>
-          <article className="rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Tu acceso</p><p className="mt-3 text-3xl font-bold">{memberships?.some((member) => member.user_id === user.id && member.role === "owner") ? "Owner" : "Miembro"}</p></article>
+          <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Colaboradores</p><p className="mt-3 text-3xl font-bold">{userIds.length}</p></article>
+          <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Proyectos compartidos</p><p className="mt-3 text-3xl font-bold">{projects?.length ?? 0}</p></article>
+          <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Tu acceso</p><p className="mt-3 text-3xl font-bold">{memberships?.some((member) => member.user_id === user.id && member.role === "owner") ? "Owner" : "Miembro"}</p></article>
         </section>
 
-        <section className="mt-8 overflow-hidden rounded-2xl border border-white/10 bg-[#14151c]">
+        <section className="cf-card mt-8 overflow-hidden rounded-2xl border border-white/10 bg-[#14151c]">
           <div className="border-b border-white/10 p-6">
             <h2 className="text-xl font-semibold">Directorio de perfiles</h2>
             <p className="mt-1 text-sm text-gray-400">
@@ -63,7 +63,7 @@ export default async function TeamPage() {
                   <Link
                     key={profile.id}
                     href={`/usuarios/${profile.id}`}
-                    className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/10 p-4 transition hover:border-violet-400/30 hover:bg-violet-400/5"
+                    className="cf-card flex items-center gap-3 rounded-xl border border-white/10 bg-black/10 p-4 transition hover:border-violet-400/30 hover:bg-violet-400/5"
                   >
                     <UserAvatar name={name} avatarUrl={profile.avatar_url} />
                     <span className="min-w-0">
@@ -81,7 +81,7 @@ export default async function TeamPage() {
           )}
         </section>
 
-        <section className="mt-8 overflow-hidden rounded-2xl border border-white/10 bg-[#14151c]">
+        <section className="cf-card mt-8 overflow-hidden rounded-2xl border border-white/10 bg-[#14151c]">
           <div className="border-b border-white/10 p-6"><h2 className="text-xl font-semibold">Miembros y responsabilidades</h2><p className="mt-1 text-sm text-gray-400">Los permisos se aplican por proyecto.</p></div>
           {memberships?.length ? (
             <div className="divide-y divide-white/10">
