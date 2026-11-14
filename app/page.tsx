@@ -76,6 +76,7 @@ async function HomeContent({
       .from("work_sessions")
       .select("user_id,clock_in")
       .is("clock_out", null)
+      .is("deleted_at", null)
       .order("clock_in", { ascending: true });
   if (activeSessionsError) {
     throw new Error(
