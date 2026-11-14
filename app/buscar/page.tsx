@@ -2,8 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export const dynamic = "force-dynamic";
-
 type SearchPageProps = { searchParams: Promise<{ q?: string }> };
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
