@@ -2,8 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export const dynamic = "force-dynamic";
-
 const labels: Record<string, string> = {
   task_created: "Tarea creada", task_updated: "Tarea actualizada",
   task_completed: "Tarea completada", task_deleted: "Tarea eliminada",
