@@ -44,7 +44,7 @@ export default async function AdminWorkHoursPage({
     : { data: [] };
   const profileById = new Map((profiles ?? []).map(p => [p.id, p]));
   const emailById = new Map(users.map(u => [u.id, u.email ?? "Sin correo"]));
-  const pending = (sessions ?? []).filter(s => s.review_status === "pending_review").length;
+  const pending = (sessions ?? []).filter(s => !s.deleted_at && s.review_status === "pending_review").length;
   return (
     <main className="min-h-screen bg-[#0b0c10] text-white">
       <section className="mx-auto max-w-7xl p-5 md:p-10">
@@ -73,7 +73,7 @@ export default async function AdminWorkHoursPage({
                     <div><h3 className="font-semibold">{name}</h3><p className="text-xs text-gray-500">{emailById.get(session.user_id)} · Entrada {displayTime(session.clock_in)}</p></div>
                     <div className="flex flex-wrap gap-2"><span className={session.deleted_at ? "rounded-full bg-rose-400/10 px-3 py-1 text-xs font-semibold text-rose-200" : session.review_status === "pending_review" ? "rounded-full bg-amber-400/10 px-3 py-1 text-xs font-semibold text-amber-200" : session.review_status === "reviewed" ? "rounded-full bg-emerald-400/10 px-3 py-1 text-xs text-emerald-200" : "rounded-full bg-white/5 px-3 py-1 text-xs text-gray-300"}>{session.deleted_at ? "Eliminado" : statusLabel[session.review_status] ?? session.review_status}</span>{session.deleted_at && <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-gray-400">Conservado en historial</span>}</div>
                   </div>
-                  <form action={updateWorkSession} className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+                  {!session.deleted_at && <form action={updateWorkSession} className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
                     <input type="hidden" name="session_id" value={session.id} />
                     <label className="text-xs text-gray-400">Entrada<input required type="datetime-local" name="clock_in" defaultValue={localInput(session.clock_in)} className="mt-1 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white" /></label>
                     <label className="text-xs text-gray-400">Salida (vacía = abierta)<input type="datetime-local" name="clock_out" defaultValue={localInput(session.clock_out)} className="mt-1 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white" /></label>
