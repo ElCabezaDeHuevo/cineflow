@@ -178,7 +178,7 @@ export default async function HorariosPage() {
                     className="grid gap-3 p-4 sm:grid-cols-[minmax(0,1.2fr)_repeat(3,minmax(0,1fr))] sm:items-center"
                   >
                     <p className="text-sm font-semibold text-gray-200">
-                      {formatTime(session.clock_in)}
+                      {formatTime(session.clock_in)} {session.deleted_at ? <span className="ml-2 rounded-full bg-rose-400/10 px-2 py-1 text-xs font-semibold text-rose-200">Eliminado</span> : null}
                     </p>
                     <div className="flex items-center justify-between gap-2 sm:block">
                       <p className="text-xs text-gray-500">Entrada</p>
@@ -206,7 +206,7 @@ export default async function HorariosPage() {
                         {duration}
                       </p>
                     </div>
-                    {session.deleted_at && <p className="text-xs text-rose-200 sm:col-span-4">Este registro fue marcado como eliminado por administración. Motivo: {session.deleted_reason || "No especificado"}.</p>}\n                    {session.note && (
+                    {session.deleted_at && <p className="text-xs text-rose-200 sm:col-span-4">Este registro fue marcado como eliminado por administración. Motivo: {session.deleted_reason || "No especificado"}.</p>}\n                    {session.deleted_at && <p className="text-xs text-rose-200 sm:col-span-4">Registro marcado como eliminado por administración. Motivo: {session.deleted_reason || "No especificado"}.</p>}\n                    {session.note && (
                       <p className="text-xs text-gray-500 sm:col-span-4">
                         Nota: {session.note}
                       </p>
