@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { clockIn, clockOut } from "./actions";
 
+const reviewLabel: Record<string, string> = { normal: "Normal", pending_review: "Pendiente por revisar", reviewed: "Revisada" };
+
 export const instant = false;
 
 const formatTime = (value: string | null) =>
@@ -31,7 +33,7 @@ export default async function HorariosPage() {
   for (let from = 0; ; from += pageSize) {
     const { data, error } = await supabase
       .from("work_sessions")
-      .select("id,clock_in,clock_out,note")
+      .select("id,clock_in,clock_out,note,review_status,admin_note")
       .eq("user_id", user.id)
       .order("clock_in", { ascending: false })
       .order("id", { ascending: true })
