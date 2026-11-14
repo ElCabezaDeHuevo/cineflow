@@ -60,8 +60,9 @@ export async function updateWorkSession(formData: FormData) {
     redirect("/admin/horarios?error=La%20salida%20no%20puede%20ser%20anterior%20a%20la%20entrada");
   }
   const { data: existing, error: lookupError } = await admin
-    .from("work_sessions").select("id,user_id").eq("id", id).maybeSingle();
+    .from("work_sessions").select("id,user_id,deleted_at").eq("id", id).maybeSingle();
   if (lookupError || !existing) redirect("/admin/horarios?error=No%20se%20encontr%C3%B3%20la%20jornada");
+  if (existing.deleted_at) redirect("/admin/horarios?error=" + encodeURIComponent("No se pueden modificar jornadas eliminadas."));
   const { error } = await admin.from("work_sessions").update({
     clock_in: clockIn,
     clock_out: clockOut,
@@ -71,7 +72,7 @@ export async function updateWorkSession(formData: FormData) {
     reviewed_by: reviewStatus === "reviewed" ? user.id : null,
     reviewed_at: reviewStatus === "reviewed" ? new Date().toISOString() : null,
     updated_at: new Date().toISOString(),
-  }).eq("id", id);
+  }).eq("id", id).is("deleted_at", null);
   if (error) redirect("/admin/horarios?error=" + encodeURIComponent(error.message));
   revalidatePath("/admin/horarios");
   revalidatePath("/horarios");
@@ -87,7 +88,7 @@ export async function markWorkSessionReviewed(formData: FormData) {
     reviewed_by: user.id,
     reviewed_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-  }).eq("id", id).eq("review_status", "pending_review");
+  }).eq("id", id).eq("review_status", "pending_review").is("deleted_at", null);
   if (error) redirect("/admin/horarios?error=" + encodeURIComponent(error.message));
   revalidatePath("/admin/horarios");
   revalidatePath("/horarios");
