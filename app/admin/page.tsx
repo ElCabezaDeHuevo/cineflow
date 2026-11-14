@@ -156,6 +156,16 @@ export default async function AdminDashboard() {
             </p>
           </Link>
           <Link
+            href="/admin/horarios"
+            className="rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.05] p-5 transition hover:border-emerald-300/40"
+          >
+            <p className="text-sm text-emerald-200">Asistencia</p>
+            <h2 className="mt-2 text-xl font-semibold">Control de horarios</h2>
+            <p className="mt-2 text-sm text-gray-400">
+              Corregir entradas y salidas, revisar cierres automáticos y ajustar horas por usuario.
+            </p>
+          </Link>
+          <Link
             href="/proyectos"
             className="rounded-2xl border border-sky-400/20 bg-sky-400/[0.05] p-5 transition hover:border-sky-300/40"
           >
