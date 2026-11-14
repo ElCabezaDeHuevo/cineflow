@@ -273,6 +273,9 @@ async function HomeContent({
           >
             ♙ &nbsp; Equipo
           </Link>
+          <Link href="/buscar" className="block rounded-xl px-4 py-3 text-gray-400 hover:bg-white/5">⌕ &nbsp; Buscar</Link>
+          <Link href="/calendario" className="block rounded-xl px-4 py-3 text-gray-400 hover:bg-white/5">▦ &nbsp; Calendario</Link>
+          <Link href="/actividad" className="block rounded-xl px-4 py-3 text-gray-400 hover:bg-white/5">◷ &nbsp; Actividad reciente</Link>
           {myActiveSession ? (
             <Link
               href="/horarios"
