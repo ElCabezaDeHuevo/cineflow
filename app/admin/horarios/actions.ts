@@ -93,3 +93,20 @@ export async function markWorkSessionReviewed(formData: FormData) {
   revalidatePath("/horarios");
   redirect("/admin/horarios?success=Jornada%20marcada%20como%20revisada");
 }
+
+export async function deleteWorkSession(formData: FormData) {
+  const { admin, user } = await requireAdmin();
+  const id = String(formData.get("session_id") ?? "");
+  const reason = String(formData.get("deleted_reason") ?? "").trim();
+  if (!id || reason.length < 5) redirect("/admin/horarios?error=" + encodeURIComponent("Debes escribir una razón de al menos 5 caracteres."));
+  if (reason.length > 1000) redirect("/admin/horarios?error=" + encodeURIComponent("La razón no puede superar 1000 caracteres."));
+  const { data: session, error: lookupError } = await admin.from("work_sessions").select("id,deleted_at").eq("id", id).maybeSingle();
+  if (lookupError || !session) redirect("/admin/horarios?error=" + encodeURIComponent("No se encontró la jornada."));
+  if (session.deleted_at) redirect("/admin/horarios?error=" + encodeURIComponent("Este registro ya estaba eliminado."));
+  const { error } = await admin.from("work_sessions").update({
+    deleted_at: new Date().toISOString(), deleted_reason: reason, deleted_by: user.id, updated_at: new Date().toISOString(),
+  }).eq("id", id).is("deleted_at", null);
+  if (error) redirect("/admin/horarios?error=" + encodeURIComponent(error.message));
+  revalidatePath("/admin/horarios"); revalidatePath("/horarios");
+  redirect("/admin/horarios?success=" + encodeURIComponent("Registro marcado como eliminado y conservado en el historial."));
+}
