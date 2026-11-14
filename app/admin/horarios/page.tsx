@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isCineflowAdmin } from "@/lib/admin";
-import { markWorkSessionReviewed, updateWorkSession } from "./actions";
+import { deleteWorkSession, markWorkSessionReviewed, updateWorkSession } from "./actions";
 
 export const instant = false;
 
@@ -31,7 +31,7 @@ export default async function AdminWorkHoursPage({
   const admin = createSupabaseAdminClient();
   if (!admin) throw new Error("Falta configurar SUPABASE_SERVICE_ROLE_KEY.");
   const [{ data: sessions, error }, { data: usersData }, params] = await Promise.all([
-    admin.from("work_sessions").select("id,user_id,clock_in,clock_out,note,review_status,admin_note,reviewed_at")
+    admin.from("work_sessions").select("id,user_id,clock_in,clock_out,note,review_status,admin_note,reviewed_at,deleted_at,deleted_reason")
       .order("clock_in", { ascending: false }).limit(300),
     admin.auth.admin.listUsers({ page: 1, perPage: 100 }),
     searchParams,
@@ -71,7 +71,7 @@ export default async function AdminWorkHoursPage({
                 <article key={session.id} className="p-5">
                   <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                     <div><h3 className="font-semibold">{name}</h3><p className="text-xs text-gray-500">{emailById.get(session.user_id)} · Entrada {displayTime(session.clock_in)}</p></div>
-                    <span className={session.review_status === "pending_review" ? "rounded-full bg-amber-400/10 px-3 py-1 text-xs font-semibold text-amber-200" : session.review_status === "reviewed" ? "rounded-full bg-emerald-400/10 px-3 py-1 text-xs text-emerald-200" : "rounded-full bg-white/5 px-3 py-1 text-xs text-gray-300"}>{statusLabel[session.review_status] ?? session.review_status}</span>
+                    <div className="flex flex-wrap gap-2"><span className={session.deleted_at ? "rounded-full bg-rose-400/10 px-3 py-1 text-xs font-semibold text-rose-200" : session.review_status === "pending_review" ? "rounded-full bg-amber-400/10 px-3 py-1 text-xs font-semibold text-amber-200" : session.review_status === "reviewed" ? "rounded-full bg-emerald-400/10 px-3 py-1 text-xs text-emerald-200" : "rounded-full bg-white/5 px-3 py-1 text-xs text-gray-300"}>{session.deleted_at ? "Eliminado" : statusLabel[session.review_status] ?? session.review_status}</span>{session.deleted_at && <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-gray-400">Conservado en historial</span>}</div>
                   </div>
                   <form action={updateWorkSession} className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
                     <input type="hidden" name="session_id" value={session.id} />
@@ -86,6 +86,13 @@ export default async function AdminWorkHoursPage({
                     </div>
                   </form>
                   <p className="mt-3 text-xs text-gray-500">Entrada: {displayTime(session.clock_in)} · Salida: {session.clock_out ? displayTime(session.clock_out) : "En curso"}{session.reviewed_at ? " · Revisada el " + displayTime(session.reviewed_at) : ""}</p>
+                  {session.deleted_at ? <p className="mt-2 rounded-lg border border-rose-400/20 bg-rose-400/5 p-3 text-xs text-rose-200">Eliminado el {displayTime(session.deleted_at)}. Motivo: {session.deleted_reason}</p> : (
+                    <form action={deleteWorkSession} className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end">
+                      <input type="hidden" name="session_id" value={session.id} />
+                      <label className="flex-1 text-xs text-gray-400">Razón obligatoria para eliminar<textarea required minLength={5} maxLength={1000} name="deleted_reason" rows={2} placeholder="Explica por qué debe marcarse como eliminado..." className="mt-1 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white" /></label>
+                      <button className="rounded-lg border border-rose-400/30 px-4 py-2 text-sm font-semibold text-rose-200 hover:bg-rose-400/10">Eliminar registro</button>
+                    </form>
+                  )}
                 </article>
               );
             })}
