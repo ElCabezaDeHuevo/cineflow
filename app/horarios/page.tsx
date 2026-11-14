@@ -33,7 +33,7 @@ export default async function HorariosPage() {
   for (let from = 0; ; from += pageSize) {
     const { data, error } = await supabase
       .from("work_sessions")
-      .select("id,clock_in,clock_out,note,review_status,admin_note")
+      .select("id,clock_in,clock_out,note,review_status,admin_note,deleted_at,deleted_reason")
       .eq("user_id", user.id)
       .order("clock_in", { ascending: false })
       .order("id", { ascending: true })
@@ -206,7 +206,7 @@ export default async function HorariosPage() {
                         {duration}
                       </p>
                     </div>
-                    {session.note && (
+                    {session.deleted_at && <p className="text-xs text-rose-200 sm:col-span-4">Este registro fue marcado como eliminado por administración. Motivo: {session.deleted_reason || "No especificado"}.</p>}\n                    {session.note && (
                       <p className="text-xs text-gray-500 sm:col-span-4">
                         Nota: {session.note}
                       </p>
