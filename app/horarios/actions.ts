@@ -18,6 +18,7 @@ export async function clockIn() {
     .select("id")
     .eq("user_id", current.user.id)
     .is("clock_out", null)
+    .is("deleted_at", null)
     .maybeSingle();
   if (activeError) {
     throw new Error(`No se pudo consultar tu jornada activa: ${activeError.message}`);
@@ -48,6 +49,7 @@ export async function clockOut(formData: FormData) {
     .eq("id", id)
     .eq("user_id", current.user.id)
     .is("clock_out", null)
+    .is("deleted_at", null)
     .select("id")
     .maybeSingle();
   if (error) {
