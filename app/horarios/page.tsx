@@ -12,6 +12,7 @@ const formatTime = (value: string | null) =>
     ? new Intl.DateTimeFormat("es-MX", {
         dateStyle: "medium",
         timeStyle: "short",
+        timeZone: "America/Tijuana",
       }).format(new Date(value))
     : "En curso";
 
@@ -47,7 +48,7 @@ export default async function HorariosPage() {
   const sessions = allSessions.slice(0, 100);
   const totalPersonalHours = allSessions.reduce(
     (total, session) =>
-      session.clock_out
+      !session.deleted_at && session.clock_out
         ? total +
           Math.max(
             0,
@@ -206,7 +207,13 @@ export default async function HorariosPage() {
                         {duration}
                       </p>
                     </div>
-                    {session.deleted_at && <p className="text-xs text-rose-200 sm:col-span-4">Este registro fue marcado como eliminado por administración. Motivo: {session.deleted_reason || "No especificado"}.</p>}\n                    {session.deleted_at && <p className="text-xs text-rose-200 sm:col-span-4">Registro marcado como eliminado por administración. Motivo: {session.deleted_reason || "No especificado"}.</p>}\n                    {session.note && (
+                    {session.deleted_at && (
+                      <p className="text-xs text-rose-200 sm:col-span-4">Registro eliminado por administración. Motivo: {session.deleted_reason || "No especificado"}.</p>
+                    )}
+                    {session.review_status === "pending_review" && !session.deleted_at && (
+                      <p className="text-xs text-amber-200 sm:col-span-4">Pendiente por revisar por administración.</p>
+                    )}
+                    {session.note && (
                       <p className="text-xs text-gray-500 sm:col-span-4">
                         Nota: {session.note}
                       </p>
