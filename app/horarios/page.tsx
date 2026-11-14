@@ -58,7 +58,7 @@ export default async function HorariosPage() {
         : total,
     0,
   );
-  const active = allSessions.find((session) => !session.clock_out);
+  const active = allSessions.find((session) => !session.clock_out && !session.deleted_at);
   const latestPersonalSession = allSessions[0];
   return (
     <main className="min-h-screen bg-[#0b0c10] text-white">
