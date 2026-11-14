@@ -84,7 +84,7 @@ export default async function AdminWorkHoursPage({
                       <button className="rounded-lg bg-violet-500 px-4 py-2 text-sm font-semibold hover:bg-violet-400">Guardar corrección</button>
                       {session.review_status === "pending_review" && <button formAction={markWorkSessionReviewed} formNoValidate className="rounded-lg border border-emerald-400/30 px-4 py-2 text-sm font-semibold text-emerald-200 hover:bg-emerald-400/10">Marcar revisada</button>}
                     </div>
-                  </form>
+                  </form>}
                   <p className="mt-3 text-xs text-gray-500">Entrada: {displayTime(session.clock_in)} · Salida: {session.clock_out ? displayTime(session.clock_out) : "En curso"}{session.reviewed_at ? " · Revisada el " + displayTime(session.reviewed_at) : ""}</p>
                   {session.deleted_at ? <p className="mt-2 rounded-lg border border-rose-400/20 bg-rose-400/5 p-3 text-xs text-rose-200">Eliminado el {displayTime(session.deleted_at)}. Motivo: {session.deleted_reason}</p> : (
                     <form action={deleteWorkSession} className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end">
