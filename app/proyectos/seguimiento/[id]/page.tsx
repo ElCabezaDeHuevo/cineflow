@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { hasOpenWorkSession } from "@/lib/attendance";
+import { isCineflowAdmin } from "@/lib/admin";
 import UserAvatar from "@/lib/UserAvatar";
 import ScreenshotCard from "../ScreenshotCard";
 import StageWindows from "../StageWindows";
@@ -67,6 +68,7 @@ export default async function ProjectTrackingPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
   const activeSession = await hasOpenWorkSession(supabase, user.id);
+  const isAdmin = isCineflowAdmin(user);
   const [
     { data: project },
     { data: tasks },
@@ -720,7 +722,7 @@ export default async function ProjectTrackingPage({
                             ) : (
                               <ConfirmSubmit
                                 action={requestTaskDeletion}
-                                message="¿Enviar una solicitud para eliminar esta parte? El propietario tendrá que aprobarla."
+                                message="¿Enviar una solicitud para eliminar esta parte? El jefe del proyecto o un administrador tendrá que aprobarla."
                               >
                                 <input
                                   type="hidden"
@@ -739,12 +741,13 @@ export default async function ProjectTrackingPage({
                                 </button>
                               </ConfirmSubmit>
                             ))}
-                          {members?.some(
+                          {(isAdmin || members?.some(
                             (member) =>
                               member.user_id === user.id &&
                               member.role === "owner",
-                          ) &&
-                            deletionRequest?.status === "pending" && (
+                          )) &&
+                            deletionRequest?.status === "pending" &&
+                            deletionRequest.user_id !== user.id && (
                               <>
                                 <form action={approveTaskDeletionRequest}>
                                   <input
