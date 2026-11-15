@@ -141,8 +141,21 @@ export async function sendProjectMessage(formData: FormData) {
     .eq("user_id", context.user.id).maybeSingle();
   if (membershipError) throw new Error(membershipError.message);
   if (!membership) throw new Error("No perteneces a este proyecto.");
+  let mentionedUserIds: string[] = [];
+  try {
+    const raw = String(formData.get("mentioned_user_ids") ?? "[]");
+    const parsed: unknown = JSON.parse(raw);
+    if (Array.isArray(parsed)) mentionedUserIds = parsed.filter((value): value is string => typeof value === "string").slice(0, 30);
+  } catch { throw new Error("La lista de menciones no es válida."); }
+  if (mentionedUserIds.length) {
+    const { data: validMembers, error: membersError } = await context.supabase
+      .from("project_members").select("user_id").eq("project_id", projectId).in("user_id", mentionedUserIds);
+    if (membersError) throw new Error(membersError.message);
+    const validIds = new Set((validMembers ?? []).map((member) => member.user_id));
+    if (mentionedUserIds.some((id) => !validIds.has(id))) throw new Error("Solo puedes mencionar integrantes del proyecto.");
+  }
   const { error } = await context.supabase.from("project_messages").insert({
-    project_id: projectId, sender_id: context.user.id, body,
+    project_id: projectId, sender_id: context.user.id, body, mentioned_user_ids: mentionedUserIds,
   });
   if (error) throw new Error(`No se pudo enviar el mensaje: ${error.message}`);
   revalidatePath(`/proyectos/seguimiento/${projectId}`);
