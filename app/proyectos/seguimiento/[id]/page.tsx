@@ -19,6 +19,7 @@ import {
   rejectTaskDeletionRequest,
   requestTaskDeletion,
   requestTaskAssignment,
+  sendProjectMessage,
   uploadTaskFile,
   uploadProjectMedia,
   updateTask,
@@ -74,6 +75,7 @@ export default async function ProjectTrackingPage({
     { data: tasks },
     { data: activity },
     { data: members },
+    { data: messages },
   ] = await Promise.all([
     supabase.from("projects").select("*").eq("id", id).single(),
     supabase
@@ -93,6 +95,7 @@ export default async function ProjectTrackingPage({
       .from("project_members")
       .select("user_id,role")
       .eq("project_id", id),
+    supabase.from("project_messages").select("id,sender_id,body,created_at").eq("project_id", id).order("created_at", { ascending: false }).limit(60),
   ]);
   if (!project) notFound();
   const mediaSelect = () =>
@@ -307,6 +310,23 @@ export default async function ProjectTrackingPage({
             />
           </div>
         </div>
+        <section className="mb-8 rounded-2xl border border-white/10 bg-[#14151c] p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div><h2 className="text-2xl font-semibold">Chat del equipo</h2><p className="mt-1 text-sm text-gray-400">Mensajes compartidos con las personas del proyecto.</p></div>
+            <span className="rounded-full bg-white/10 px-3 py-1 text-xs text-gray-300">{messages?.length ?? 0} mensajes recientes</span>
+          </div>
+          <form action={sendProjectMessage} className="mt-5 flex flex-col gap-3">
+            <input type="hidden" name="project_id" value={id}/>
+            <textarea name="body" required maxLength={5000} rows={3} placeholder="Escribe un mensaje para el equipo..." className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white"/>
+            <button className="self-end rounded-xl bg-violet-500 px-5 py-3 text-sm font-semibold">Enviar mensaje</button>
+          </form>
+          <div className="mt-5 max-h-96 space-y-3 overflow-y-auto">
+            {(messages ?? []).length ? messages?.map(message => <article key={message.id} className="rounded-xl border border-white/10 bg-black/10 p-3">
+              <div className="flex flex-wrap justify-between gap-2"><strong className="text-sm">{nameOf(message.sender_id)}</strong><time className="text-xs text-gray-500">{fmt(message.created_at)}</time></div>
+              <p className="mt-2 whitespace-pre-wrap break-words text-sm text-gray-200">{message.body}</p>
+            </article>) : <p className="text-sm text-gray-400">Todavía no hay mensajes. Inicia la conversación.</p>}
+          </div>
+        </section>
         <div className="grid gap-8 xl:grid-cols-[1.4fr_.8fr]">
           <section className="space-y-6">
             <div className="rounded-2xl border border-white/10 bg-[#14151c] p-6">
