@@ -63,7 +63,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="min-h-full flex flex-col">
         <ServiceWorkerRegister />
-        {children}
+        <div className="cf-app-enter">{children}</div>
         {user && (
           <>
             <RouteAutoRefresh />
