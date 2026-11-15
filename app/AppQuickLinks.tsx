@@ -20,6 +20,11 @@ export default function AppQuickLinks({ isAdmin }: { isAdmin: boolean }) {
           Inicio
         </Link>
       )}
+      {pathname !== "/centro" && (
+        <Link href="/centro" className="rounded-lg border border-violet-400/30 bg-[#14151c]/95 px-3 py-2 text-xs font-semibold text-violet-200 shadow-lg backdrop-blur transition hover:bg-violet-500/20 sm:pointer-events-auto">
+          Centro
+        </Link>
+      )}
       {isAdmin && pathname !== "/admin" && (
         <Link
           href="/admin"
