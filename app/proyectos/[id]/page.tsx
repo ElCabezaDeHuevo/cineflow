@@ -38,7 +38,7 @@ export default async function ProjectDetailPage({
   const admin = createSupabaseAdminClient();
   const { data: cover, error: coverError } = await (admin ?? supabase)
     .from("project_media")
-    .select("public_url")
+    .select("storage_path")
     .eq("project_id", id)
     .eq("media_type", "cover")
     .order("created_at", { ascending: false })
@@ -47,6 +47,9 @@ export default async function ProjectDetailPage({
   if (coverError) {
     throw new Error(`No se pudo cargar la portada del proyecto: ${coverError.message}`);
   }
+  const coverUrl = cover?.storage_path && admin
+    ? (await admin.storage.from("project-media").createSignedUrl(cover.storage_path, 60 * 60)).data?.signedUrl ?? null
+    : null;
   const { data: membershipRequests, error: requestsError } =
     admin && isOwner
       ? await admin
@@ -83,9 +86,9 @@ export default async function ProjectDetailPage({
             Edita los datos que tu rol permita modificar.
           </p>
         </header>
-        {cover?.public_url && (
+        {coverUrl && (
           <Image
-            src={cover.public_url}
+            src={coverUrl}
             alt={`Portada de ${project.name}`}
             width={1600}
             height={900}
