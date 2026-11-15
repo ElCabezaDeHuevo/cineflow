@@ -58,7 +58,11 @@ export async function scheduleFilmScene(formData: FormData) {
   if (!day || !scene) throw new Error("La escena y la jornada deben pertenecer al mismo proyecto.");
   const { error } = await supabase.from("shoot_day_scenes").insert({ shoot_day_id: shootDayId, scene_id: sceneId });
   if (error) throw new Error(error.message);
-  await supabase.from("film_scenes").update({ status: "scheduled" }).eq("id", sceneId);
+  const { error: statusError } = await supabase.from("film_scenes").update({ status: "scheduled" }).eq("id", sceneId).eq("project_id", projectId);
+  if (statusError) {
+    await supabase.from("shoot_day_scenes").delete().eq("shoot_day_id", shootDayId).eq("scene_id", sceneId);
+    throw new Error(`No se pudo actualizar el estado de la escena: ${statusError.message}`);
+  }
   revalidatePath("/rodaje");
 }
 
@@ -70,7 +74,11 @@ export async function unscheduleFilmScene(formData: FormData) {
   if (!uuidValue(shootDayId) || !uuidValue(sceneId)) throw new Error("Escena o jornada no válida.");
   const { error } = await supabase.from("shoot_day_scenes").delete().eq("shoot_day_id", shootDayId).eq("scene_id", sceneId);
   if (error) throw new Error(error.message);
-  const { data: remaining } = await supabase.from("shoot_day_scenes").select("shoot_day_id").eq("scene_id", sceneId).limit(1);
-  if (!remaining?.length) await supabase.from("film_scenes").update({ status: "unscheduled" }).eq("id", sceneId).eq("project_id", projectId);
+  const { data: remaining, error: remainingError } = await supabase.from("shoot_day_scenes").select("shoot_day_id").eq("scene_id", sceneId).limit(1);
+  if (remainingError) throw new Error(`Se quitó la escena de la jornada, pero no se pudo verificar su programación: ${remainingError.message}`);
+  if (!remaining?.length) {
+    const { error: statusError } = await supabase.from("film_scenes").update({ status: "unscheduled" }).eq("id", sceneId).eq("project_id", projectId);
+    if (statusError) throw new Error(`Se quitó la escena, pero no se pudo actualizar su estado: ${statusError.message}`);
+  }
   revalidatePath("/rodaje");
 }
