@@ -10,6 +10,7 @@ import UserAvatar from "@/lib/UserAvatar";
 import DeleteErrorReportForm, {
   ErrorReportCard,
 } from "@/app/error-reports/DeleteErrorReportForm";
+import { approveProjectDeletionRequest, rejectProjectDeletionRequest } from "@/app/proyectos/actions";
 
 export const instant = false;
 
@@ -55,6 +56,7 @@ export default async function AdminDashboard() {
     { data: reports, error: reportsError },
     { count: pendingAssignments, error: assignmentsError },
     { count: accountCount, error: accountsError },
+    { data: deletionRequests, error: deletionRequestsError },
   ] = await Promise.all([
     admin
       .from("error_reports")
@@ -67,8 +69,13 @@ export default async function AdminDashboard() {
       .select("id", { count: "exact", head: true })
       .eq("status", "pending"),
     admin.from("profiles").select("id", { count: "exact", head: true }),
+    admin.from("project_deletion_requests").select("id,project_id,project_name,requester_id,reason,created_at")
+      .eq("status", "pending").order("created_at", { ascending: true }),
   ]);
-  const userIds = [...new Set((reports ?? []).map((report) => report.user_id))];
+  const userIds = [...new Set([
+    ...(reports ?? []).map((report) => report.user_id),
+    ...(deletionRequests ?? []).map((request) => request.requester_id),
+  ])];
   const { data: profiles, error: profilesError } = userIds.length
     ? await admin
         .from("profiles")
@@ -115,15 +122,63 @@ export default async function AdminDashboard() {
           </p>
         </header>
 
-        {(reportsError || assignmentsError || accountsError || profilesError) && (
+        {(reportsError || assignmentsError || accountsError || profilesError || deletionRequestsError) && (
           <p className="mb-6 rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-200">
             No se pudo cargar toda la información:{" "}
             {reportsError?.message ??
               assignmentsError?.message ??
               accountsError?.message ??
-              profilesError?.message}
+              profilesError?.message ??
+              deletionRequestsError?.message}
           </p>
         )}
+
+        <section className="mb-8 overflow-hidden rounded-2xl border border-rose-400/20 bg-[#14151c]">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 p-5">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-rose-300">Revisión administrativa</p>
+              <h2 className="mt-1 text-xl font-semibold">Solicitudes de eliminación de proyectos</h2>
+              <p className="mt-1 text-sm text-gray-400">Solo se elimina un proyecto cuando un administrador aprueba la solicitud del propietario.</p>
+            </div>
+            <span className="rounded-full bg-rose-400/10 px-3 py-1 text-sm text-rose-200">{deletionRequests?.length ?? 0} pendientes</span>
+          </div>
+          {deletionRequestsError ? (
+            <p className="p-5 text-sm text-rose-200">No se pudieron cargar las solicitudes: {deletionRequestsError.message}</p>
+          ) : deletionRequests?.length ? (
+            <div className="divide-y divide-white/10">
+              {deletionRequests.map((request) => {
+                const profile = profileById.get(request.requester_id);
+                return (
+                  <article key={request.id} className="space-y-4 p-5">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <h3 className="font-semibold">{request.project_name}</h3>
+                        <p className="mt-1 text-xs text-gray-400">Solicitado por {profile?.full_name || "Propietario"} · {dateTime(request.created_at)}</p>
+                      </div>
+                      <span className="rounded-full bg-amber-400/10 px-3 py-1 text-xs text-amber-200">Pendiente</span>
+                    </div>
+                    <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Motivo</p>
+                      <p className="mt-2 whitespace-pre-wrap text-sm text-gray-200">{request.reason}</p>
+                    </div>
+                    <form className="grid gap-3 md:grid-cols-[1fr_auto_auto]" action={approveProjectDeletionRequest}>
+                      <input type="hidden" name="request_id" value={request.id} />
+                      <input name="admin_note" maxLength={1000} placeholder="Nota administrativa (opcional)" className="min-w-0 rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white" />
+                      <button className="rounded-lg bg-rose-500 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-400">Aprobar y eliminar proyecto</button>
+                    </form>
+                    <form action={rejectProjectDeletionRequest} className="flex flex-wrap gap-2">
+                      <input type="hidden" name="request_id" value={request.id} />
+                      <input name="admin_note" maxLength={1000} placeholder="Motivo del rechazo (opcional)" className="min-w-0 flex-1 rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white" />
+                      <button className="rounded-lg border border-white/15 px-4 py-2 text-sm text-gray-300 hover:bg-white/5">Rechazar solicitud</button>
+                    </form>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="p-6 text-sm text-gray-400">No hay solicitudes de eliminación pendientes.</p>
+          )}
+        </section>
 
         <section
           aria-label="Herramientas de administración"
