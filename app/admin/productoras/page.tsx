@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isCineflowAdmin } from "@/lib/admin";
 import { createCompany, recordCompanyPayment, setCompanyAccess } from "./actions";
+import ConfirmSubmit from "@/app/ConfirmSubmit";
 
 const dateLabel = (value?: string | null) => value ? new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeZone: "America/Tijuana" }).format(new Date(value)) : "—";
 const money = (value: number) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(value);
@@ -69,7 +70,7 @@ export default async function CompaniesAdmin({ searchParams }: { searchParams: P
                 <label className="text-xs text-gray-400">Referencia<input name="reference" maxLength={160} placeholder="Folio / referencia" className="mt-1 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white" /></label>
                 <button className="self-end rounded-lg bg-emerald-500 px-3 py-2 text-sm font-semibold text-black hover:bg-emerald-400">Registrar pago</button>
               </form>
-              <div className="flex flex-wrap gap-2"><form action={setCompanyAccess}><input type="hidden" name="organization_id" value={company.id} /><input type="hidden" name="mode" value="suspend" /><button className="rounded-lg border border-rose-400/30 px-3 py-2 text-xs text-rose-200 hover:bg-rose-400/10">Suspender</button></form><form action={setCompanyAccess}><input type="hidden" name="organization_id" value={company.id} /><input type="hidden" name="mode" value="reactivate" /><button className="rounded-lg border border-sky-400/30 px-3 py-2 text-xs text-sky-200 hover:bg-sky-400/10">Reactivar</button></form></div>
+              <div className="flex flex-wrap gap-2"><ConfirmSubmit action={setCompanyAccess} message={`¿Suspender el acceso de ${company.name}? Sus integrantes no podrán trabajar hasta reactivarlo.`}><input type="hidden" name="organization_id" value={company.id} /><input type="hidden" name="mode" value="suspend" /><button className="rounded-lg border border-rose-400/30 px-3 py-2 text-xs text-rose-200 hover:bg-rose-400/10">Suspender</button></ConfirmSubmit><ConfirmSubmit action={setCompanyAccess} message={`¿Reactivar el acceso de ${company.name}? Se habilitará nuevamente su espacio de trabajo.`}><input type="hidden" name="organization_id" value={company.id} /><input type="hidden" name="mode" value="reactivate" /><button className="rounded-lg border border-sky-400/30 px-3 py-2 text-xs text-sky-200 hover:bg-sky-400/10">Reactivar</button></ConfirmSubmit></div>
             </div>
           </article>;
         })}
