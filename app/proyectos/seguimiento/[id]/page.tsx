@@ -575,7 +575,7 @@ export default async function ProjectTrackingPage({
                           </button>
                         </form>
                       )}
-                      {media?.some((item) => item.task_id === task.id) ? (
+                      {signedMedia.some((item) => item.task_id === task.id) ? (
                         <div className="grid gap-3 sm:grid-cols-2">
                           {media
                             .filter((item) => item.task_id === task.id)
