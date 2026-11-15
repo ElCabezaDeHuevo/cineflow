@@ -37,7 +37,7 @@ const statuses = ["pendiente", "en curso", "bloqueada", "completada"];
 type ProjectMediaItem = {
   id: string;
   task_id: string | null;
-  public_url: string;
+  storage_path: string;
   caption: string | null;
   media_type: string;
   uploaded_by: string | null;
@@ -101,7 +101,7 @@ export default async function ProjectTrackingPage({
   const mediaSelect = () =>
     supabase
       .from("project_media")
-      .select("id,task_id,public_url,caption,media_type,uploaded_by,created_at")
+      .select("id,task_id,storage_path,caption,media_type,uploaded_by,created_at")
       .eq("project_id", id)
       .order("created_at", { ascending: false });
   let media: ProjectMediaItem[] = [];
@@ -116,7 +116,7 @@ export default async function ProjectTrackingPage({
     mediaTaskColumnAvailable = false;
     const { data: legacyMedia, error: legacyMediaError } = await supabase
       .from("project_media")
-      .select("id,public_url,caption,media_type,uploaded_by,created_at")
+      .select("id,storage_path,caption,media_type,uploaded_by,created_at")
       .eq("project_id", id)
       .order("created_at", { ascending: false });
     if (legacyMediaError) {
@@ -130,6 +130,11 @@ export default async function ProjectTrackingPage({
     media = (linkedMedia ?? []) as ProjectMediaItem[];
   }
   const admin = createSupabaseAdminClient();
+  const signedMedia = await Promise.all(media.map(async (item) => {
+    if (!admin) return { ...item, signedUrl: null as string | null };
+    const { data, error } = await admin.storage.from("project-media").createSignedUrl(item.storage_path, 60 * 60);
+    return { ...item, signedUrl: error ? null : data?.signedUrl ?? null };
+  }));
   const { data: taskFiles, error: taskFilesError } =
     admin && tasks?.length
       ? await admin
@@ -407,12 +412,12 @@ export default async function ProjectTrackingPage({
                     Capturas sin parte asociada
                   </summary>
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    {media.filter((item) => !item.task_id).map((item) => (
+                    {signedMedia.filter((item) => !item.task_id).map((item) => (
                       <ScreenshotCard
                         key={item.id}
                         id={item.id}
                         projectId={id}
-                        publicUrl={item.public_url}
+                        publicUrl={item.signedUrl ?? ""}
                         caption={item.caption}
                         uploadedByName={nameOf(item.uploaded_by)}
                         uploadedByAvatar={profileOf(item.uploaded_by)?.avatar_url}
@@ -579,7 +584,7 @@ export default async function ProjectTrackingPage({
                                 key={item.id}
                                 id={item.id}
                                 projectId={id}
-                                publicUrl={item.public_url}
+                                publicUrl={item.signedUrl ?? ""}
                                 caption={item.caption}
                                 uploadedByName={nameOf(item.uploaded_by)}
                                 uploadedByAvatar={
