@@ -57,13 +57,17 @@ async function authenticatedClient() {
 async function saveProjectMedia(projectId: string, userId: string, file: File, mediaType: "cover" | "screenshot", caption: string) {
   const admin = createSupabaseAdminClient();
   if (!admin || !file.size) return;
+  if (!file.type.startsWith("image/") || file.size > 10 * 1024 * 1024) return "La portada debe ser una imagen de hasta 10 MB.";
   const extension = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
   const storagePath = `${projectId}/${crypto.randomUUID()}.${extension}`;
-  const upload = await admin.storage.from("project-media").upload(storagePath, await file.arrayBuffer(), { contentType: file.type || "application/octet-stream", upsert: false });
+  const upload = await admin.storage.from("project-media").upload(storagePath, await file.arrayBuffer(), { contentType: file.type, upsert: false });
   if (upload.error) return upload.error.message;
-  const { data } = admin.storage.from("project-media").getPublicUrl(storagePath);
-  const { error } = await admin.from("project_media").insert({ project_id: projectId, uploaded_by: userId, storage_path: storagePath, public_url: data.publicUrl, media_type: mediaType, caption });
-  return error?.message;
+  const { error } = await admin.from("project_media").insert({ project_id: projectId, uploaded_by: userId, storage_path: storagePath, public_url: "", media_type: mediaType, caption });
+  if (error) {
+    await admin.storage.from("project-media").remove([storagePath]);
+    return error.message;
+  }
+  return undefined;
 }
 
 export async function createProject(
@@ -83,7 +87,10 @@ export async function createProject(
     .insert({ id: projectId, ...values, created_by: context.user.id });
   if (error) return { error: error.message };
   const cover = formData.get("cover");
-  if (cover instanceof File && cover.size) await saveProjectMedia(projectId, context.user.id, cover, "cover", "Portada del proyecto");
+  if (cover instanceof File && cover.size) {
+    const mediaError = await saveProjectMedia(projectId, context.user.id, cover, "cover", "Portada del proyecto");
+    if (mediaError) return { error: `El proyecto se creó, pero no se pudo guardar la portada: ${mediaError}` };
+  }
   revalidatePath("/");
   revalidatePath("/proyectos");
   redirect("/?created=1");
@@ -107,7 +114,10 @@ export async function updateProject(
     .eq("id", projectId);
   if (error) return { error: error.message };
   const cover = formData.get("cover");
-  if (cover instanceof File && cover.size) await saveProjectMedia(projectId, context.user.id, cover, "cover", "Portada del proyecto");
+  if (cover instanceof File && cover.size) {
+    const mediaError = await saveProjectMedia(projectId, context.user.id, cover, "cover", "Portada del proyecto");
+    if (mediaError) return { error: `Los datos se guardaron, pero no se pudo guardar la portada: ${mediaError}` };
+  }
   revalidatePath("/proyectos");
   revalidatePath(`/proyectos/${projectId}`);
   return { success: "Cambios guardados correctamente." };
