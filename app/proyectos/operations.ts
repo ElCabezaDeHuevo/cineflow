@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { hasOpenWorkSession } from "@/lib/attendance";
+import { isCineflowAdmin } from "@/lib/admin";
 
 const MAX_PROJECT_IMAGE_SIZE = 10 * 1024 * 1024;
 const MAX_TASK_FILE_SIZE = 20 * 1024 * 1024;
@@ -400,7 +401,7 @@ async function reviewTaskDeletionRequest(
 
   const { data: request, error: requestError } = await admin
     .from("project_task_deletion_requests")
-    .select("id,project_id,task_id")
+    .select("id,project_id,task_id,user_id")
     .eq("id", requestId)
     .eq("status", "pending")
     .maybeSingle();
@@ -408,6 +409,26 @@ async function reviewTaskDeletionRequest(
     throw new Error(
       `No se encontró la solicitud pendiente: ${requestError?.message ?? "ya fue atendida"}`,
     );
+  }
+
+  const [{ data: membership, error: membershipError }] = await Promise.all([
+    context.supabase
+      .from("project_members")
+      .select("role")
+      .eq("project_id", request.project_id)
+      .eq("user_id", context.user.id)
+      .maybeSingle(),
+  ]);
+  if (membershipError) {
+    throw new Error(`No se pudieron comprobar los permisos: ${membershipError.message}`);
+  }
+  const isProjectOwner = membership?.role === "owner";
+  const isAdmin = isCineflowAdmin(context.user);
+  if (!isProjectOwner && !isAdmin) {
+    throw new Error("Solo el jefe del proyecto o un administrador puede revisar esta solicitud.");
+  }
+  if (request.user_id === context.user.id) {
+    throw new Error("No puedes aprobar ni rechazar tu propia solicitud de eliminación.");
   }
 
   let taskMedia: { storage_path: string }[] = [];
