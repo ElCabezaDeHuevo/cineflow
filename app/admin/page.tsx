@@ -125,6 +125,18 @@ export default async function AdminDashboard({
             {actionSuccess}
           </p>
         )}
+        <section className="mb-8 grid gap-4 sm:grid-cols-2">
+          <Link href="/admin/productoras" className="rounded-2xl border border-violet-400/30 bg-violet-400/10 p-5 transition hover:bg-violet-400/15">
+            <p className="text-xs font-semibold uppercase tracking-widest text-violet-300">Control comercial</p>
+            <h2 className="mt-2 text-xl font-semibold">Productoras y pagos</h2>
+            <p className="mt-1 text-sm text-gray-400">Registrar empresas, asignar dueños, controlar pruebas, pagos y acceso.</p>
+          </Link>
+          <Link href="/usuarios" className="rounded-2xl border border-white/10 bg-[#14151c] p-5 transition hover:bg-white/5">
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">Administración</p>
+            <h2 className="mt-2 text-xl font-semibold">Cuentas de usuario</h2>
+            <p className="mt-1 text-sm text-gray-400">Gestionar accesos técnicos y cuentas de la plataforma.</p>
+          </Link>
+        </section>
         <header className="mb-8 mt-6">
           <p className="text-sm font-semibold uppercase tracking-widest text-violet-300">
             CineFlow / Administración
