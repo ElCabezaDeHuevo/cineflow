@@ -393,8 +393,12 @@ async function reviewTaskDeletionRequest(
 ) {
   const context = await currentContext();
   const requestId = String(formData.get("request_id") ?? "");
-  if (!context || !context.active || !requestId) {
-    throw new Error("Necesitas iniciar sesión y tener una jornada activa para revisar solicitudes.");
+  if (!context || !requestId) {
+    throw new Error("Inicia sesión para revisar solicitudes.");
+  }
+  const isAdminReviewer = isCineflowAdmin(context.user);
+  if (!context.active && !isAdminReviewer) {
+    throw new Error("Necesitas una jornada activa para revisar solicitudes como jefe del proyecto.");
   }
   const admin = createSupabaseAdminClient();
   if (!admin) throw new Error("Falta configurar el acceso administrativo a Supabase.");
