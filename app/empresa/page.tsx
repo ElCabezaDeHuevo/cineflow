@@ -5,7 +5,6 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isCineflowAdmin } from "@/lib/admin";
 import { inviteCompanyMember } from "./actions";
 
-export const dynamic = "force-dynamic";
 const fmt = (v?: string | null) => v ? new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeZone: "America/Tijuana" }).format(new Date(v)) : "—";
 
 export default async function CompanyPage({ searchParams }: { searchParams: Promise<{ error?: string; success?: string }> }) {
