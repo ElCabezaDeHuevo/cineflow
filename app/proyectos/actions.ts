@@ -490,7 +490,9 @@ async function reviewProjectDeletion(formData: FormData, approve: boolean) {
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(requestId)) {
     redirect("/admin?error=Solicitud%20inválida");
   }
-  const { error } = await context.supabase.rpc("review_project_deletion_request", {
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect("/admin?error=No%20se%20pudo%20conectar%20con%20el%20servicio%20administrativo");
+  const { error } = await admin.rpc("review_project_deletion_request", {
     request_uuid: requestId, approve, admin_note: adminNote || null,
   });
   if (error) redirect("/admin?error=" + encodeURIComponent(error.message));
