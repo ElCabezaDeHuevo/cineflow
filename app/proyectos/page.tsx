@@ -176,7 +176,7 @@ export default async function ProjectsPage({
   const { data: covers, error: coversError } = projectIds.length
     ? await (admin ?? supabase)
         .from("project_media")
-        .select("project_id,public_url,created_at")
+        .select("project_id,storage_path,created_at")
         .eq("media_type", "cover")
         .in("project_id", projectIds)
         .order("created_at", { ascending: false })
@@ -185,9 +185,13 @@ export default async function ProjectsPage({
     throw new Error(`No se pudieron cargar las portadas: ${coversError.message}`);
   }
   const coverByProject = new Map<string, string>();
-  for (const cover of covers ?? []) {
-    if (!coverByProject.has(cover.project_id)) {
-      coverByProject.set(cover.project_id, cover.public_url);
+  if (admin) {
+    for (const cover of covers ?? []) {
+      if (coverByProject.has(cover.project_id)) continue;
+      const { data: signed } = await admin.storage
+        .from("project-media")
+        .createSignedUrl(cover.storage_path, 60 * 60);
+      if (signed?.signedUrl) coverByProject.set(cover.project_id, signed.signedUrl);
     }
   }
   let ownRequests: { project_id: string; status: string; created_at: string }[] = [];
