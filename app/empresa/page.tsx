@@ -1,0 +1,64 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { isCineflowAdmin } from "@/lib/admin";
+import { inviteCompanyMember } from "./actions";
+
+export const dynamic = "force-dynamic";
+const fmt = (v?: string | null) => v ? new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeZone: "America/Tijuana" }).format(new Date(v)) : "—";
+
+export default async function CompanyPage({ searchParams }: { searchParams: Promise<{ error?: string; success?: string }> }) {
+  const { error, success } = await searchParams;
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const { data: memberships } = await supabase.from("organization_members").select("organization_id,role").eq("user_id", user.id);
+  const membership = (memberships ?? []).find((m) => ["owner", "admin"].includes(m.role));
+  if (!membership) redirect("/");
+  const [{ data: organization }, { data: members }, { data: subscription }] = await Promise.all([
+    supabase.from("organizations").select("id,name,slug,billing_email").eq("id", membership.organization_id).single(),
+    supabase.from("organization_members").select("user_id,role,joined_at").eq("organization_id", membership.organization_id).order("joined_at", { ascending: true }),
+    supabase.from("subscriptions").select("status,billing_interval,trial_end,current_period_end,last_manual_payment_at").eq("organization_id", membership.organization_id).maybeSingle(),
+  ]);
+  const admin = createSupabaseAdminClient();
+  const ids = (members ?? []).map((m) => m.user_id);
+  const [{ data: profiles }, { data: authUsers }] = await Promise.all([
+    ids.length ? supabase.from("profiles").select("id,full_name,avatar_url").in("id", ids) : Promise.resolve({ data: [] }),
+    admin ? admin.auth.admin.listUsers({ page: 1, perPage: 1000 }) : Promise.resolve({ data: { users: [] } }),
+  ]);
+  const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
+  const emailMap = new Map((authUsers?.users ?? []).map((a) => [a.id, a.email]));
+  const roleLabel: Record<string,string> = { owner: "Dueño", admin: "Administrador", producer: "Productor", member: "Colaborador", viewer: "Solo lectura" };
+  const status = subscription?.status ?? "Sin plan";
+  const statusLabel = status === "trialing" ? "Prueba gratuita" : status === "active" ? "Servicio activo" : status === "paused" ? "Servicio suspendido" : status === "past_due" ? "Pago pendiente" : status;
+  const validUntil = status === "trialing" ? subscription?.trial_end : subscription?.current_period_end;
+  return (
+    <main className="min-h-screen bg-[#0b0c10] text-white">
+      <section className="mx-auto max-w-5xl p-6 md:p-10">
+        <Link href="/" className="text-sm text-violet-300">← Volver a CineFlow</Link>
+        <header className="mb-8 mt-7"><p className="text-xs font-semibold uppercase tracking-widest text-violet-300">Espacio de empresa</p><h1 className="mt-2 text-3xl font-bold">{organization?.name ?? "Mi productora"}</h1><p className="mt-2 text-sm text-gray-400">Administra a tu equipo y consulta el estado de tu servicio.</p></header>
+        {error && <p role="alert" className="mb-5 rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-200">{error}</p>}
+        {success && <p role="status" className="mb-5 rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-4 text-sm text-emerald-200">{success}</p>}
+        <section className="mb-6 grid gap-4 sm:grid-cols-3">
+          <article className="rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Servicio</p><p className="mt-2 text-xl font-semibold">{statusLabel}</p></article>
+          <article className="rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Vigencia</p><p className="mt-2 text-xl font-semibold">{fmt(validUntil)}</p><p className="mt-1 text-xs text-gray-500">{subscription?.billing_interval === "annual" ? "Anual" : "Mensual"}</p></article>
+          <article className="rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Integrantes</p><p className="mt-2 text-xl font-semibold">{members?.length ?? 0}</p></article>
+        </section>
+        <section className="grid gap-6 lg:grid-cols-[.9fr_1.1fr]">
+          <form action={inviteCompanyMember} className="rounded-2xl border border-white/10 bg-[#14151c] p-6">
+            <h2 className="text-lg font-semibold">Invitar colaborador</h2><p className="mt-1 text-sm text-gray-400">Invítalo con su correo y define qué puede hacer.</p>
+            <label className="mt-5 block text-sm text-gray-300">Correo electrónico<input name="email" type="email" required placeholder="persona@empresa.com" className="mt-2 w-full rounded-lg border border-white/10 bg-black/20 px-3 py-3 text-white" /></label>
+            <label className="mt-4 block text-sm text-gray-300">Permiso<select name="role" className="mt-2 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-3 text-white"><option value="producer">Productor</option><option value="member">Colaborador</option><option value="viewer">Solo lectura</option></select></label>
+            <button disabled={status === "paused" || status === "expired" || status === "canceled"} className="mt-5 w-full rounded-lg bg-violet-500 px-4 py-3 font-semibold hover:bg-violet-400 disabled:cursor-not-allowed disabled:opacity-50">Enviar invitación</button>
+          </form>
+          <section className="overflow-hidden rounded-2xl border border-white/10 bg-[#14151c]">
+            <div className="border-b border-white/10 p-5"><h2 className="text-lg font-semibold">Mi equipo</h2><p className="mt-1 text-sm text-gray-400">Miembros de esta productora.</p></div>
+            <div className="divide-y divide-white/10">{(members ?? []).map((m) => { const p = profileMap.get(m.user_id); return <div key={m.user_id} className="flex items-center justify-between gap-3 p-4"><div className="min-w-0"><p className="truncate font-medium">{p?.full_name || "Integrante"}</p><p className="truncate text-xs text-gray-500">{emailMap.get(m.user_id) ?? ""}</p></div><span className="rounded-full border border-white/10 px-3 py-1 text-xs text-gray-300">{roleLabel[m.role] ?? m.role}</span></div> })}</div>
+          </section>
+        </section>
+        <p className="mt-6 text-xs text-gray-500">Para confirmar pagos, cambiar el plan o solicitar reactivación, contacta al soporte de CineFlow.</p>
+      </section>
+    </main>
+  );
+}
