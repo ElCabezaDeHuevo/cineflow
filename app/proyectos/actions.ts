@@ -81,10 +81,29 @@ export async function createProject(
   if (!context)
     return { error: "Debes iniciar sesión para crear un proyecto." };
   if (!context.active) return { error: attendanceRequiredMessage };
+  const { data: memberships, error: membershipsError } = await context.supabase
+    .from("organization_members")
+    .select("organization_id,role")
+    .eq("user_id", context.user.id);
+
+  if (membershipsError) return { error: membershipsError.message };
+  if (!memberships?.length) {
+    return { error: "Tu cuenta todavía no está vinculada a una productora. Solicita al administrador que te asigne una empresa." };
+  }
+  if (memberships.length > 1) {
+    return { error: "Tu cuenta pertenece a varias productoras. Selecciona la empresa desde el espacio de trabajo antes de crear proyectos." };
+  }
+
+  const organizationId = memberships[0].organization_id;
   const projectId = crypto.randomUUID();
   const { error } = await context.supabase
     .from("projects")
-    .insert({ id: projectId, ...values, created_by: context.user.id });
+    .insert({
+      id: projectId,
+      ...values,
+      organization_id: organizationId,
+      created_by: context.user.id,
+    });
   if (error) return { error: error.message };
   const cover = formData.get("cover");
   if (cover instanceof File && cover.size) {
