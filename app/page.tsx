@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import UpcomingDeliveryCount from "./UpcomingDeliveryCount";
 import RecentProjects from "./RecentProjects";
 import PendingLogbookNotifications from "./PendingLogbookNotifications";
@@ -66,6 +67,7 @@ async function HomeContent({
         .maybeSingle()
     : { data: null };
   const created = (await searchParams).created === "1";
+  const storageAdmin = createSupabaseAdminClient();
   const displayName =
     profile?.full_name || user?.email?.split("@")[0] || "Invitado";
   const isAdmin = isCineflowAdmin(user);
@@ -121,7 +123,7 @@ async function HomeContent({
       projectIds.length > 0
         ? supabase
             .from("project_media")
-            .select("project_id,public_url,created_at")
+            .select("project_id,storage_path,created_at")
             .eq("media_type", "cover")
             .in("project_id", projectIds)
             .order("created_at", { ascending: false })
@@ -148,9 +150,13 @@ async function HomeContent({
       projectName: projectNameById.get(task.project_id) ?? "Proyecto",
     }));
   const coverByProject = new Map<string, string>();
-  for (const cover of projectCovers ?? []) {
-    if (!coverByProject.has(cover.project_id)) {
-      coverByProject.set(cover.project_id, cover.public_url);
+  if (storageAdmin) {
+    for (const cover of projectCovers ?? []) {
+      if (coverByProject.has(cover.project_id)) continue;
+      const { data: signed } = await storageAdmin.storage
+        .from("project-media")
+        .createSignedUrl(cover.storage_path, 60 * 60);
+      if (signed?.signedUrl) coverByProject.set(cover.project_id, signed.signedUrl);
     }
   }
   const tasksByProject = new Map<string, { total: number; completed: number }>();
