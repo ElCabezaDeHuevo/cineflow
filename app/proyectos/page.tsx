@@ -52,18 +52,16 @@ export default async function ProjectsPage({
   }
   const isAdmin = isCineflowAdmin(user);
 
-  const projectsQuery = admin
+  const projectsQuery = isAdmin && admin
     ? admin
         .from("projects")
         .select("id,name,type,stage,delivery_date,created_at,owner_role,start_date,description")
         .order("created_at", { ascending: false })
-    : null;
-  const { data: projects, error: projectsError } = projectsQuery
-    ? await projectsQuery
-    : await supabase
+    : supabase
         .from("projects")
         .select("id,name,type,stage,delivery_date,created_at,owner_role,start_date,description")
         .order("created_at", { ascending: false });
+  const { data: projects, error: projectsError } = await projectsQuery;
   if (projectsError) {
     throw new Error(`No se pudieron cargar los proyectos: ${projectsError.message}`);
   }
