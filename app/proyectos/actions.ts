@@ -417,3 +417,66 @@ export async function approveProjectMembershipRequest(formData: FormData) {
 export async function rejectProjectMembershipRequest(formData: FormData) {
   await reviewProjectMembershipRequest(formData, false);
 }
+
+
+export async function requestProjectDeletion(formData: FormData) {
+  const context = await authenticatedClient();
+  if (!context) redirect("/login");
+  const projectId = String(formData.get("project_id") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(projectId) || reason.length < 10) {
+    redirect("/proyectos?error=Indica%20un%20proyecto%20válido%20y%20un%20motivo%20de%20al%20menos%2010%20caracteres");
+  }
+  const { data: membership, error: membershipError } = await context.supabase
+    .from("project_members").select("role").eq("project_id", projectId)
+    .eq("user_id", context.user.id).maybeSingle();
+  if (membershipError || membership?.role !== "owner") {
+    redirect("/proyectos?error=Solo%20el%20propietario%20puede%20solicitar%20la%20eliminación");
+  }
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect("/proyectos?error=No%20se%20pudo%20conectar%20con%20el%20servicio%20de%20solicitudes");
+  const { data: project, error: projectError } = await admin.from("projects")
+    .select("id,name").eq("id", projectId).maybeSingle();
+  if (projectError || !project) redirect("/proyectos?error=No%20se%20encontró%20el%20proyecto");
+  const { error } = await admin.from("project_deletion_requests").insert({
+    project_id: projectId, project_name: project.name,
+    requester_id: context.user.id, reason,
+  });
+  if (error) {
+    redirect("/proyectos?error=" + encodeURIComponent(
+      error.code === "23505" ? "Ya existe una solicitud pendiente para este proyecto" : error.message
+    ));
+  }
+  revalidatePath("/proyectos");
+  revalidatePath("/admin");
+  redirect("/proyectos?success=Solicitud%20de%20eliminación%20enviada%20a%20administración");
+}
+
+async function reviewProjectDeletion(formData: FormData, approve: boolean) {
+  const context = await authenticatedClient();
+  if (!context) redirect("/login");
+  if (!isCineflowAdmin(context.user)) redirect("/");
+  const requestId = String(formData.get("request_id") ?? "");
+  const adminNote = String(formData.get("admin_note") ?? "").trim();
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i.test(requestId)) {
+    redirect("/admin?error=Solicitud%20inválida");
+  }
+  const { error } = await context.supabase.rpc("review_project_deletion_request", {
+    request_uuid: requestId, approve, admin_note: adminNote || null,
+  });
+  if (error) redirect("/admin?error=" + encodeURIComponent(error.message));
+  revalidatePath("/admin");
+  revalidatePath("/proyectos");
+  revalidatePath("/");
+  redirect("/admin?success=" + encodeURIComponent(
+    approve ? "Proyecto eliminado tras aprobar la solicitud." : "Solicitud de eliminación rechazada."
+  ));
+}
+
+export async function approveProjectDeletionRequest(formData: FormData) {
+  await reviewProjectDeletion(formData, true);
+}
+
+export async function rejectProjectDeletionRequest(formData: FormData) {
+  await reviewProjectDeletion(formData, false);
+}
