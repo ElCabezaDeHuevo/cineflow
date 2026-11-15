@@ -32,6 +32,8 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
     ? await admin.from("profiles").select("id,full_name,avatar_url").in("id", users.map((account) => account.id))
     : { data: [], error: null };
   const profileById = new Map((profiles ?? []).map((profile) => [profile.id, profile]));
+  const assignedUserIds = new Set((companies ?? []).flatMap((company) => (company.organization_members ?? []).map((member: { user_id: string }) => member.user_id)));
+  const existingUnassignedUsers = users.filter((account) => !assignedUserIds.has(account.id));
 
   return (
     <main className="min-h-screen bg-[#0b0c10] text-white">
@@ -97,6 +99,23 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
             </article>;
           })}
           {!companies?.length && <p className="rounded-xl border border-white/10 p-8 text-center text-sm text-gray-400">No hay empresas registradas todavía.</p>}
+        </section>
+
+        <section className="mt-10 overflow-hidden rounded-2xl border border-amber-400/20 bg-[#14151c]">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 p-5">
+            <div><h2 className="text-xl font-semibold">Cuentas existentes sin empresa</h2><p className="mt-1 text-sm text-gray-400">Usuarios que ya estaban registrados en CineFlow y todavía no pertenecen a ninguna productora.</p></div>
+            <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-sm text-amber-200">{existingUnassignedUsers.length} cuenta{existingUnassignedUsers.length === 1 ? "" : "s"}</span>
+          </div>
+          {existingUnassignedUsers.length ? <div className="divide-y divide-white/10">
+            {existingUnassignedUsers.map((account) => {
+              const profile = profileById.get(account.id);
+              const displayName = profile?.full_name || String(account.user_metadata?.full_name ?? "Sin nombre");
+              return <div key={account.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
+                <div className="min-w-0"><p className="truncate font-medium">{displayName}</p><p className="truncate text-sm text-gray-400">{account.email ?? "Sin correo"}</p><p className="mt-1 text-xs text-gray-500">Cuenta creada: {new Date(account.created_at).toLocaleDateString("es-MX")}</p></div>
+                <span className="rounded-full border border-amber-400/20 px-3 py-1 text-xs text-amber-200">Sin empresa asignada</span>
+              </div>;
+            })}
+          </div> : <p className="p-5 text-sm text-gray-500">No hay cuentas pendientes de asignar.</p>}
         </section>
       </section>
     </main>
