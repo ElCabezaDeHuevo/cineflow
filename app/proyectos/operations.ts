@@ -202,6 +202,7 @@ export async function createTask(formData: FormData) {
       title,
       description: String(formData.get("description") ?? "").trim(),
       stage: String(formData.get("stage") ?? "Desarrollo"),
+      due_date: String(formData.get("due_date") ?? "") || null,
       assigned_to: assignedTo || null,
       created_by: context.user.id,
     })
