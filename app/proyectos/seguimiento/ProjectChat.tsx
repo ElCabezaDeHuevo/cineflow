@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { sendProjectMessage } from "../../operations";
+import { sendProjectMessage } from "../operations";
 
 type Message = { id: string; sender_id: string; body: string; created_at: string };
 type Member = { id: string; name: string };
