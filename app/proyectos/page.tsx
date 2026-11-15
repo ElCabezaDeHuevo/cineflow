@@ -12,6 +12,7 @@ import {
   rejectProjectLeaveRequest,
   rejectProjectMembershipRequest,
   requestProjectMembership,
+  requestProjectDeletion,
   updateProject,
 } from "./actions";
 import ProjectForm from "./ProjectForm";
@@ -98,6 +99,7 @@ export default async function ProjectsPage({
     }
   }
   let ownLeaveRequests: { project_id: string; status: string; created_at: string }[] = [];
+  let ownDeletionRequests: { project_id: string; status: string; created_at: string }[] = [];
   if (admin && projectIds.length) {
     const result = await admin
       .from("project_leave_requests")
@@ -111,10 +113,25 @@ export default async function ProjectsPage({
       ownLeaveRequests = result.data ?? [];
     }
   }
+  if (admin && projectIds.length) {
+    const result = await admin
+      .from("project_deletion_requests")
+      .select("project_id,status,created_at")
+      .eq("requester_id", user.id)
+      .in("project_id", projectIds)
+      .order("created_at", { ascending: false });
+    if (!result.error) ownDeletionRequests = result.data ?? [];
+  }
   const latestLeaveRequestByProject = new Map<string, string>();
   for (const request of ownLeaveRequests) {
     if (!latestLeaveRequestByProject.has(request.project_id)) {
       latestLeaveRequestByProject.set(request.project_id, request.status);
+    }
+  }
+  const latestDeletionRequestByProject = new Map<string, string>();
+  for (const request of ownDeletionRequests) {
+    if (!latestDeletionRequestByProject.has(request.project_id)) {
+      latestDeletionRequestByProject.set(request.project_id, request.status);
     }
   }
   let pendingMembershipRequests: {
@@ -427,6 +444,19 @@ export default async function ProjectsPage({
                             >
                               Abrir timeline →
                             </Link>
+                            {role === "owner" && (
+                              latestDeletionRequestByProject.get(project.id) === "pending" ? (
+                                <span className="rounded-lg border border-amber-400/30 bg-amber-400/10 px-4 py-2 text-center text-xs text-amber-200">Solicitud de eliminación pendiente de administración</span>
+                              ) : (
+                                <ConfirmSubmit action={requestProjectDeletion} message={`Solicitar a administración la eliminación de “${project.name}”. El proyecto no se eliminará hasta que un administrador lo apruebe.`}>
+                                  <input type="hidden" name="project_id" value={project.id} />
+                                  <label className="block text-left text-xs text-gray-400">Motivo de eliminación
+                                    <textarea required minLength={10} maxLength={1000} name="reason" rows={2} placeholder="Explica por qué debe eliminarse este proyecto" className="mt-1 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white" />
+                                  </label>
+                                  <button className="rounded-lg border border-rose-400/30 px-4 py-2 text-center text-xs text-rose-200 hover:bg-rose-400/10">{latestDeletionRequestByProject.get(project.id) === "rejected" ? "Volver a solicitar eliminación" : "Solicitar eliminación"}</button>
+                                </ConfirmSubmit>
+                              )
+                            )}
                             {role !== "owner" && (
                               latestLeaveRequestByProject.get(project.id) === "pending" ? (
                                 <span className="rounded-lg border border-amber-400/30 bg-amber-400/10 px-4 py-2 text-center text-xs text-amber-200">
