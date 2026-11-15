@@ -44,6 +44,27 @@ export default async function AdminWorkHoursPage({
     : { data: [] };
   const profileById = new Map((profiles ?? []).map(p => [p.id, p]));
   const emailById = new Map(users.map(u => [u.id, u.email ?? "Sin correo"]));
+  const sessionsByUser = new Map<string, typeof sessions>();
+  for (const session of sessions ?? []) {
+    const current = sessionsByUser.get(session.user_id) ?? [];
+    current.push(session);
+    sessionsByUser.set(session.user_id, current);
+  }
+  const userGroups = [...sessionsByUser.entries()]
+    .map(([userId, userSessions]) => {
+      const profile = profileById.get(userId);
+      const name = profile?.full_name || emailById.get(userId) || "Usuario";
+      const completedMs = userSessions.reduce((total, session) =>
+        !session.deleted_at && session.clock_out
+          ? total + Math.max(0, new Date(session.clock_out).getTime() - new Date(session.clock_in).getTime())
+          : total, 0);
+      return { userId, name, email: emailById.get(userId) ?? "Sin correo", sessions: userSessions, completedMs };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name, "es"));
+  const formatDuration = (milliseconds: number) => {
+    const minutes = Math.floor(milliseconds / 60_000);
+    return `${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, "0")} min`;
+  };
   const pending = (sessions ?? []).filter(s => !s.deleted_at && s.review_status === "pending_review").length;
   return (
     <main className="min-h-screen bg-[#0b0c10] text-white">
@@ -61,43 +82,57 @@ export default async function AdminWorkHoursPage({
           <article className="rounded-2xl border border-amber-400/20 bg-amber-400/[0.05] p-5"><p className="text-sm text-amber-200">Pendientes por revisar</p><p className="mt-2 text-3xl font-bold">{pending}</p></article>
           <article className="rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Usuarios registrados</p><p className="mt-2 text-3xl font-bold">{users.length}</p></article>
         </div>
-        <section className="overflow-hidden rounded-2xl border border-white/10 bg-[#14151c]">
-          <div className="border-b border-white/10 p-5"><h2 className="text-xl font-semibold">Jornadas del equipo</h2><p className="mt-1 text-sm text-gray-400">Se muestran las últimas 300. Las horas se interpretan en la zona de Tijuana.</p></div>
-          <div className="divide-y divide-white/10">
-            {(sessions ?? []).map(session => {
-              const profile = profileById.get(session.user_id);
-              const name = profile?.full_name || emailById.get(session.user_id) || "Usuario";
-              return (
-                <article key={session.id} className="p-5">
-                  <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                    <div><h3 className="font-semibold">{name}</h3><p className="text-xs text-gray-500">{emailById.get(session.user_id)} · Entrada {displayTime(session.clock_in)}</p></div>
-                    <div className="flex flex-wrap gap-2"><span className={session.deleted_at ? "rounded-full bg-rose-400/10 px-3 py-1 text-xs font-semibold text-rose-200" : session.review_status === "pending_review" ? "rounded-full bg-amber-400/10 px-3 py-1 text-xs font-semibold text-amber-200" : session.review_status === "reviewed" ? "rounded-full bg-emerald-400/10 px-3 py-1 text-xs text-emerald-200" : "rounded-full bg-white/5 px-3 py-1 text-xs text-gray-300"}>{session.deleted_at ? "Eliminado" : statusLabel[session.review_status] ?? session.review_status}</span>{session.deleted_at && <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-gray-400">Conservado en historial</span>}</div>
-                  </div>
-                  {!session.deleted_at && <form action={updateWorkSession} className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-                    <input type="hidden" name="session_id" value={session.id} />
-                    <label className="text-xs text-gray-400">Entrada<input required type="datetime-local" name="clock_in" defaultValue={localInput(session.clock_in)} className="mt-1 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white" /></label>
-                    <label className="text-xs text-gray-400">Salida (vacía = abierta)<input type="datetime-local" name="clock_out" defaultValue={localInput(session.clock_out)} className="mt-1 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white" /></label>
-                    <label className="text-xs text-gray-400">Estado<select name="review_status" defaultValue={session.review_status ?? "normal"} className="mt-1 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white"><option value="normal">Normal</option><option value="pending_review">Pendiente por revisar</option><option value="reviewed">Revisada</option></select></label>
-                    <label className="text-xs text-gray-400 md:col-span-2">Nota del usuario<input name="note" defaultValue={session.note ?? ""} className="mt-1 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white" /></label>
-                    <label className="text-xs text-gray-400 md:col-span-2 xl:col-span-3">Nota administrativa<input name="admin_note" defaultValue={session.admin_note ?? ""} placeholder="Motivo de corrección o revisión" className="mt-1 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white" /></label>
-                    <div className="flex items-end gap-2 xl:col-span-3">
-                      <button className="rounded-lg bg-violet-500 px-4 py-2 text-sm font-semibold hover:bg-violet-400">Guardar corrección</button>
-                      {session.review_status === "pending_review" && <button formAction={markWorkSessionReviewed} formNoValidate className="rounded-lg border border-emerald-400/30 px-4 py-2 text-sm font-semibold text-emerald-200 hover:bg-emerald-400/10">Marcar revisada</button>}
-                    </div>
-                  </form>}
-                  <p className="mt-3 text-xs text-gray-500">Entrada: {displayTime(session.clock_in)} · Salida: {session.clock_out ? displayTime(session.clock_out) : "En curso"}{session.reviewed_at ? " · Revisada el " + displayTime(session.reviewed_at) : ""}</p>
-                  {session.deleted_at ? <p className="mt-2 rounded-lg border border-rose-400/20 bg-rose-400/5 p-3 text-xs text-rose-200">Eliminado el {displayTime(session.deleted_at)}. Motivo: {session.deleted_reason}</p> : (
-                    <form action={deleteWorkSession} className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end">
-                      <input type="hidden" name="session_id" value={session.id} />
-                      <label className="flex-1 text-xs text-gray-400">Razón obligatoria para eliminar<textarea required minLength={5} maxLength={1000} name="deleted_reason" rows={2} placeholder="Explica por qué debe marcarse como eliminado..." className="mt-1 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white" /></label>
-                      <button className="rounded-lg border border-rose-400/30 px-4 py-2 text-sm font-semibold text-rose-200 hover:bg-rose-400/10">Eliminar registro</button>
-                    </form>
-                  )}
-                </article>
-              );
-            })}
-            {!sessions?.length && <p className="p-8 text-center text-sm text-gray-400">Todavía no hay jornadas registradas.</p>}
+        <section className="space-y-4">
+          <div className="rounded-2xl border border-white/10 bg-[#14151c] p-5">
+            <h2 className="text-xl font-semibold">Horarios por usuario</h2>
+            <p className="mt-1 text-sm text-gray-400">Cada integrante tiene su propio historial y resumen. Se muestran las últimas 300 jornadas del equipo, agrupadas por persona y en horario de Tijuana.</p>
           </div>
+          {userGroups.map(group => (
+            <details key={group.userId} open className="overflow-hidden rounded-2xl border border-white/10 bg-[#14151c]">
+              <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-4 p-5 transition hover:bg-white/[0.03]">
+                <div>
+                  <h3 className="font-semibold text-white">{group.name}</h3>
+                  <p className="mt-1 text-xs text-gray-400">{group.email}</p>
+                </div>
+                <div className="flex flex-wrap gap-3 text-xs">
+                  <span className="rounded-full bg-white/5 px-3 py-1.5 text-gray-300">{group.sessions.length} jornadas</span>
+                  <span className="rounded-full bg-violet-400/10 px-3 py-1.5 text-violet-200">{formatDuration(group.completedMs)} acumuladas</span>
+                  <span className="text-gray-500">Ver historial⌄</span>
+                </div>
+              </summary>
+              <div className="divide-y divide-white/10 border-t border-white/10">
+                {group.sessions.map(session => (
+                  <article key={session.id} className="p-5">
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                      <div><h4 className="font-medium">{displayTime(session.clock_in)}</h4><p className="text-xs text-gray-500">Entrada {displayTime(session.clock_in)}</p></div>
+                      <div className="flex flex-wrap gap-2"><span className={session.deleted_at ? "rounded-full bg-rose-400/10 px-3 py-1 text-xs font-semibold text-rose-200" : session.review_status === "pending_review" ? "rounded-full bg-amber-400/10 px-3 py-1 text-xs font-semibold text-amber-200" : session.review_status === "reviewed" ? "rounded-full bg-emerald-400/10 px-3 py-1 text-xs text-emerald-200" : "rounded-full bg-white/5 px-3 py-1 text-xs text-gray-300"}>{session.deleted_at ? "Eliminado" : statusLabel[session.review_status] ?? session.review_status}</span>{session.deleted_at && <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-gray-400">Conservado en historial</span>}</div>
+                    </div>
+                    {!session.deleted_at && <form action={updateWorkSession} className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+                      <input type="hidden" name="session_id" value={session.id} />
+                      <label className="text-xs text-gray-400">Entrada<input required type="datetime-local" name="clock_in" defaultValue={localInput(session.clock_in)} className="mt-1 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white" /></label>
+                      <label className="text-xs text-gray-400">Salida (vacía = abierta)<input type="datetime-local" name="clock_out" defaultValue={localInput(session.clock_out)} className="mt-1 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white" /></label>
+                      <label className="text-xs text-gray-400">Estado<select name="review_status" defaultValue={session.review_status ?? "normal"} className="mt-1 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white"><option value="normal">Normal</option><option value="pending_review">Pendiente por revisar</option><option value="reviewed">Revisada</option></select></label>
+                      <label className="text-xs text-gray-400 md:col-span-2">Nota del usuario<input name="note" defaultValue={session.note ?? ""} className="mt-1 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white" /></label>
+                      <label className="text-xs text-gray-400 md:col-span-2 xl:col-span-3">Nota administrativa<input name="admin_note" defaultValue={session.admin_note ?? ""} placeholder="Motivo de corrección o revisión" className="mt-1 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white" /></label>
+                      <div className="flex items-end gap-2 xl:col-span-3">
+                        <button className="rounded-lg bg-violet-500 px-4 py-2 text-sm font-semibold hover:bg-violet-400">Guardar corrección</button>
+                        {session.review_status === "pending_review" && <button formAction={markWorkSessionReviewed} formNoValidate className="rounded-lg border border-emerald-400/30 px-4 py-2 text-sm font-semibold text-emerald-200 hover:bg-emerald-400/10">Marcar revisada</button>}
+                      </div>
+                    </form>}
+                    <p className="mt-3 text-xs text-gray-500">Entrada: {displayTime(session.clock_in)} · Salida: {session.clock_out ? displayTime(session.clock_out) : "En curso"}{session.reviewed_at ? " · Revisada el " + displayTime(session.reviewed_at) : ""}</p>
+                    {session.deleted_at ? <p className="mt-2 rounded-lg border border-rose-400/20 bg-rose-400/5 p-3 text-xs text-rose-200">Eliminado el {displayTime(session.deleted_at)}. Motivo: {session.deleted_reason}</p> : (
+                      <form action={deleteWorkSession} className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end">
+                        <input type="hidden" name="session_id" value={session.id} />
+                        <label className="flex-1 text-xs text-gray-400">Razón obligatoria para eliminar<textarea required minLength={5} maxLength={1000} name="deleted_reason" rows={2} placeholder="Explica por qué debe marcarse como eliminado..." className="mt-1 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white" /></label>
+                        <button className="rounded-lg border border-rose-400/30 px-4 py-2 text-sm font-semibold text-rose-200 hover:bg-rose-400/10">Eliminar registro</button>
+                      </form>
+                    )}
+                  </article>
+                ))}
+              </div>
+            </details>
+          ))}
+          {!userGroups.length && <p className="rounded-2xl border border-white/10 bg-[#14151c] p-8 text-center text-sm text-gray-400">Todavía no hay jornadas registradas.</p>}
         </section>
       </section>
     </main>
