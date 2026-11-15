@@ -130,6 +130,24 @@ async function ensureTaskMediaColumn(admin: AdminClient) {
   throw new Error(`No se pudo verificar el esquema de capturas: ${error.message}`);
 }
 
+export async function sendProjectMessage(formData: FormData) {
+  const context = await currentContext();
+  const projectId = String(formData.get("project_id") ?? "");
+  const body = String(formData.get("body") ?? "").trim();
+  if (!context || !projectId || !body) return;
+  if (body.length > 5000) throw new Error("El mensaje supera los 5,000 caracteres.");
+  const { data: membership, error: membershipError } = await context.supabase
+    .from("project_members").select("role").eq("project_id", projectId)
+    .eq("user_id", context.user.id).maybeSingle();
+  if (membershipError) throw new Error(membershipError.message);
+  if (!membership) throw new Error("No perteneces a este proyecto.");
+  const { error } = await context.supabase.from("project_messages").insert({
+    project_id: projectId, sender_id: context.user.id, body,
+  });
+  if (error) throw new Error(`No se pudo enviar el mensaje: ${error.message}`);
+  revalidatePath(`/proyectos/seguimiento/${projectId}`);
+}
+
 export async function createTask(formData: FormData) {
   const context = await currentContext();
   const projectId = String(formData.get("project_id") ?? "");
