@@ -50,7 +50,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
 
         <section className="mt-8 rounded-2xl border border-violet-400/20 bg-[#14151c] p-6">
           <h2 className="text-xl font-semibold">Crear usuario dentro de una empresa</h2>
-          <p className="mt-1 text-sm text-gray-400">La cuenta se crea y queda vinculada a la productora seleccionada.</p>
+          <p className="mt-1 text-sm text-gray-400">Se enviará un enlace seguro al correo. La persona elegirá su contraseña al aceptar la invitación.</p>
           <form action={createUser} className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <label className="block text-sm text-gray-300">Empresa / productora
               <select name="organization_id" required defaultValue="" className="mt-2 w-full rounded-xl border border-white/10 bg-[#0b0c10] px-4 py-3 text-white">
@@ -60,7 +60,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
             </label>
             <label className="block text-sm text-gray-300">Nombre completo<input name="full_name" required maxLength={120} className="mt-2 w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white" /></label>
             <label className="block text-sm text-gray-300">Correo electrónico<input name="email" type="email" required className="mt-2 w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white" /></label>
-            <label className="block text-sm text-gray-300">Contraseña temporal<input name="password" type="password" minLength={8} required className="mt-2 w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white" /></label>
+            <div className="rounded-xl border border-violet-400/15 bg-violet-400/5 p-4 text-sm text-gray-300">El usuario recibirá un correo para aceptar la invitación y crear su propia contraseña.</div>
             <label className="block text-sm text-gray-300">Puesto cinematográfico
               <select name="cine_role" required defaultValue="viewer" className="mt-2 w-full rounded-xl border border-white/10 bg-[#0b0c10] px-4 py-3 text-white">
                 {CINE_ROLES.map((role) => <option key={role.value} value={role.value}>{role.department} · {role.label}</option>)}
@@ -71,7 +71,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
                 <option value="owner">Dueño de empresa</option><option value="admin">Administrador de empresa</option><option value="producer">Productor</option><option value="member">Colaborador</option><option value="viewer">Solo lectura</option>
               </select>
             </label>
-            <div className="flex items-end"><button disabled={!companies?.length} className="w-full rounded-xl bg-violet-500 px-5 py-3 font-semibold transition hover:bg-violet-400 disabled:opacity-40">Crear usuario y asignar empresa</button></div>
+            <div className="flex items-end"><button disabled={!companies?.length} className="w-full rounded-xl bg-violet-500 px-5 py-3 font-semibold transition hover:bg-violet-400 disabled:opacity-40">Enviar invitación</button></div>
           </form>
           {!companies?.length && <p className="mt-4 text-sm text-amber-200">Primero registra una productora en <Link href="/admin/productoras" className="underline">Productoras y pagos</Link>.</p>}
         </section>
