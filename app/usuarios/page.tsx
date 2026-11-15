@@ -68,7 +68,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
             </label>
             <label className="block text-sm text-gray-300">Permiso dentro de la empresa
               <select name="organization_role" required defaultValue="member" className="mt-2 w-full rounded-xl border border-white/10 bg-[#0b0c10] px-4 py-3 text-white">
-                <option value="admin">Administrador de empresa</option><option value="producer">Productor</option><option value="member">Colaborador</option><option value="viewer">Solo lectura</option>
+                <option value="owner">Dueño de empresa</option><option value="admin">Administrador de empresa</option><option value="producer">Productor</option><option value="member">Colaborador</option><option value="viewer">Solo lectura</option>
               </select>
             </label>
             <div className="flex items-end"><button disabled={!companies?.length} className="w-full rounded-xl bg-violet-500 px-5 py-3 font-semibold transition hover:bg-violet-400 disabled:opacity-40">Crear usuario y asignar empresa</button></div>
