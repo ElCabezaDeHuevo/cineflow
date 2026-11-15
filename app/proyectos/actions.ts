@@ -458,7 +458,7 @@ async function reviewProjectDeletion(formData: FormData, approve: boolean) {
   if (!isCineflowAdmin(context.user)) redirect("/");
   const requestId = String(formData.get("request_id") ?? "");
   const adminNote = String(formData.get("admin_note") ?? "").trim();
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i.test(requestId)) {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(requestId)) {
     redirect("/admin?error=Solicitud%20inválida");
   }
   const { error } = await context.supabase.rpc("review_project_deletion_request", {
