@@ -23,7 +23,7 @@ const statusLabel: Record<string, string> = {
 
 export default async function AdminWorkHoursPage({
   searchParams,
-}: { searchParams: Promise<{ error?: string; success?: string }> }) {
+}: { searchParams: Promise<{ error?: string; success?: string; usuario?: string }> }) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
@@ -66,6 +66,8 @@ export default async function AdminWorkHoursPage({
     return `${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, "0")} min`;
   };
   const pending = (sessions ?? []).filter(s => !s.deleted_at && s.review_status === "pending_review").length;
+  const selectedUserId = params.usuario && sessionsByUser.has(params.usuario) ? params.usuario : null;
+  const selectedGroup = userGroups.find(group => group.userId === selectedUserId) ?? null;
   return (
     <main className="min-h-screen bg-[#0b0c10] text-white">
       <section className="mx-auto max-w-7xl p-5 md:p-10">
@@ -84,24 +86,34 @@ export default async function AdminWorkHoursPage({
         </div>
         <section className="space-y-4">
           <div className="rounded-2xl border border-white/10 bg-[#14151c] p-5">
-            <h2 className="text-xl font-semibold">Horarios por usuario</h2>
-            <p className="mt-1 text-sm text-gray-400">Cada integrante tiene su propio historial y resumen. Se muestran las últimas 300 jornadas del equipo, agrupadas por persona y en horario de Tijuana.</p>
+            <h2 className="text-xl font-semibold">Selecciona un usuario</h2>
+            <p className="mt-1 text-sm text-gray-400">Elige a un integrante para consultar y administrar exclusivamente sus jornadas. Los historiales no se mezclan.</p>
           </div>
-          {userGroups.map(group => (
-            <details key={group.userId} open className="overflow-hidden rounded-2xl border border-white/10 bg-[#14151c]">
-              <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-4 p-5 transition hover:bg-white/[0.03]">
-                <div>
-                  <h3 className="font-semibold text-white">{group.name}</h3>
-                  <p className="mt-1 text-xs text-gray-400">{group.email}</p>
-                </div>
-                <div className="flex flex-wrap gap-3 text-xs">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {userGroups.map(group => (
+              <Link key={group.userId} href={`/admin/horarios?usuario=${group.userId}`} className={selectedUserId === group.userId ? "rounded-2xl border border-violet-400/50 bg-violet-400/10 p-5" : "rounded-2xl border border-white/10 bg-[#14151c] p-5 transition hover:border-violet-400/40"}>
+                <h3 className="font-semibold text-white">{group.name}</h3>
+                <p className="mt-1 truncate text-xs text-gray-400">{group.email}</p>
+                <div className="mt-4 flex flex-wrap gap-2 text-xs">
                   <span className="rounded-full bg-white/5 px-3 py-1.5 text-gray-300">{group.sessions.length} jornadas</span>
-                  <span className="rounded-full bg-violet-400/10 px-3 py-1.5 text-violet-200">{formatDuration(group.completedMs)} acumuladas</span>
-                  <span className="text-gray-500">Ver historial⌄</span>
+                  <span className="rounded-full bg-violet-400/10 px-3 py-1.5 text-violet-200">{formatDuration(group.completedMs)}</span>
                 </div>
-              </summary>
-              <div className="divide-y divide-white/10 border-t border-white/10">
-                {group.sessions.map(session => (
+                <p className="mt-4 text-xs font-semibold text-violet-200">{selectedUserId === group.userId ? "Usuario seleccionado" : "Ver horario individual →"}</p>
+              </Link>
+            ))}
+          </div>
+          {selectedGroup ? (
+            <section className="overflow-hidden rounded-2xl border border-white/10 bg-[#14151c]">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 p-5">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-violet-300">Horario individual</p>
+                  <h2 className="mt-1 text-xl font-semibold">{selectedGroup.name}</h2>
+                  <p className="mt-1 text-sm text-gray-400">{selectedGroup.email} · {selectedGroup.sessions.length} jornadas · {formatDuration(selectedGroup.completedMs)} acumuladas</p>
+                </div>
+                <Link href="/admin/horarios" className="rounded-lg border border-white/10 px-3 py-2 text-sm text-gray-300 hover:bg-white/5">Cambiar usuario</Link>
+              </div>
+              <div className="divide-y divide-white/10">
+                {selectedGroup.sessions.map(session => (
                   <article key={session.id} className="p-5">
                     <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                       <div><h4 className="font-medium">{displayTime(session.clock_in)}</h4><p className="text-xs text-gray-500">Entrada {displayTime(session.clock_in)}</p></div>
@@ -130,8 +142,10 @@ export default async function AdminWorkHoursPage({
                   </article>
                 ))}
               </div>
-            </details>
-          ))}
+            </section>
+          ) : (
+            <p className="rounded-2xl border border-dashed border-white/15 bg-[#14151c] p-8 text-center text-sm text-gray-400">Selecciona una persona para ver su historial individual.</p>
+          )}
           {!userGroups.length && <p className="rounded-2xl border border-white/10 bg-[#14151c] p-8 text-center text-sm text-gray-400">Todavía no hay jornadas registradas.</p>}
         </section>
       </section>
