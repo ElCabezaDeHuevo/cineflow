@@ -27,7 +27,12 @@ const dateTime = (value: string) =>
     timeZone: "America/Mexico_City",
   }).format(new Date(value));
 
-export default async function AdminDashboard() {
+export default async function AdminDashboard({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; success?: string }>;
+}) {
+  const { error: actionError, success: actionSuccess } = await searchParams;
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -110,6 +115,16 @@ export default async function AdminDashboard() {
         <Link href="/" className="text-sm text-violet-300 hover:text-violet-200">
           ← Panel principal
         </Link>
+        {actionError && (
+          <p role="alert" className="mb-6 rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-200">
+            No se pudo completar la operación: {actionError}
+          </p>
+        )}
+        {actionSuccess && (
+          <p role="status" className="mb-6 rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-4 text-sm text-emerald-200">
+            {actionSuccess}
+          </p>
+        )}
         <header className="mb-8 mt-6">
           <p className="text-sm font-semibold uppercase tracking-widest text-violet-300">
             CineFlow / Administración
