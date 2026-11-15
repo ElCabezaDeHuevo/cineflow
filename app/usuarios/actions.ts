@@ -28,11 +28,10 @@ export async function createUser(formData: FormData) {
   const organizationId = String(formData.get("organization_id") ?? "");
   const fullName = String(formData.get("full_name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  const password = String(formData.get("password") ?? "");
   const cineRole = String(formData.get("cine_role") ?? "");
   const organizationRole = String(formData.get("organization_role") ?? "member");
 
-  if (!organizationId || !fullName || !email || password.length < 8 ||
+  if (!organizationId || !fullName || !email ||
       !CINE_ROLES.some((role) => role.value === cineRole) ||
       !["owner", "admin", "producer", "member", "viewer"].includes(organizationRole)) {
     redirect("/usuarios?error=Revisa%20los%20datos%20del%20usuario");
@@ -58,12 +57,22 @@ export async function createUser(formData: FormData) {
     redirect(`/usuarios?error=${encodeURIComponent(membership ? "Ese usuario ya pertenece a esta empresa." : "Ese correo ya tiene una cuenta. Usa otro correo o solicita vincular la cuenta existente.")}`);
   }
 
-  const { data, error } = await admin.auth.admin.createUser({
-    email, password, email_confirm: true,
-    user_metadata: { full_name: fullName, cine_role: cineRole },
-    app_metadata: { cineflow_role: "user", organization_id: organizationId },
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL;
+  if (!siteUrl) redirect("/usuarios?error=Configura%20NEXT_PUBLIC_SITE_URL%20para%20enviar%20invitaciones");
+
+  const { data, error } = await admin.auth.admin.inviteUserByEmail(email, {
+    redirectTo: `${siteUrl.replace(/\\/$/, "")}/auth/callback?next=/restablecer`,
+    data: { full_name: fullName, cine_role: cineRole },
   });
-  if (error || !data.user) redirect(`/usuarios?error=${message(error?.message ?? "No se pudo crear la cuenta.")}`);
+  if (error || !data.user) redirect(`/usuarios?error=${message(error?.message ?? "No se pudo enviar la invitación.")}`);
+
+  const { error: metadataError } = await admin.auth.admin.updateUserById(data.user.id, {
+    app_metadata: { ...data.user.app_metadata, cineflow_role: "user", organization_id: organizationId, cineflow_onboarding_pending: true },
+  });
+  if (metadataError) {
+    await admin.auth.admin.deleteUser(data.user.id);
+    redirect(`/usuarios?error=${message(metadataError.message)}`);
+  }
 
   const { error: profileError } = await admin.from("profiles").upsert({ id: data.user.id, full_name: fullName });
   if (profileError) {
@@ -87,7 +96,7 @@ export async function createUser(formData: FormData) {
   });
   revalidatePath("/usuarios");
   revalidatePath("/admin/productoras");
-  redirect(`/usuarios?success=${encodeURIComponent(`Usuario creado y agregado a ${company.name}.`)}`);
+  redirect(`/usuarios?success=${encodeURIComponent(`Invitación enviada y usuario agregado a ${company.name}.`)}`);
 }
 
 export async function deleteUser(formData: FormData) {
