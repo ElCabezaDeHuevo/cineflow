@@ -34,13 +34,20 @@ export async function createUser(formData: FormData) {
 
   if (!organizationId || !fullName || !email || password.length < 8 ||
       !CINE_ROLES.some((role) => role.value === cineRole) ||
-      !["admin", "producer", "member", "viewer"].includes(organizationRole)) {
+      !["owner", "admin", "producer", "member", "viewer"].includes(organizationRole)) {
     redirect("/usuarios?error=Revisa%20los%20datos%20del%20usuario");
   }
 
   const { data: company, error: companyError } = await admin.from("organizations")
     .select("id,name").eq("id", organizationId).maybeSingle();
   if (companyError || !company) redirect("/usuarios?error=La%20empresa%20seleccionada%20no%20existe");
+
+  if (organizationRole === "owner") {
+    const { data: currentOwner, error: ownerLookupError } = await admin.from("organization_members")
+      .select("user_id").eq("organization_id", organizationId).eq("role", "owner").maybeSingle();
+    if (ownerLookupError) redirect(`/usuarios?error=${message(ownerLookupError.message)}`);
+    if (currentOwner) redirect("/usuarios?error=Esta empresa ya tiene un dueño. Primero transfiere la propiedad.");
+  }
 
   const { data: existingUsers, error: listError } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
   if (listError) redirect(`/usuarios?error=${message(listError.message)}`);
@@ -87,6 +94,10 @@ export async function deleteUser(formData: FormData) {
   const { admin, user } = await requireAdmin();
   const userId = String(formData.get("user_id") ?? "");
   if (!userId || userId === user.id) redirect("/usuarios?error=No%20puedes%20eliminar%20tu%20propia%20cuenta");
+  const { data: ownership, error: ownershipError } = await admin.from("organization_members")
+    .select("organization_id").eq("user_id", userId).eq("role", "owner").limit(1);
+  if (ownershipError) redirect(`/usuarios?error=${message(ownershipError.message)}`);
+  if (ownership?.length) redirect("/usuarios?error=No puedes eliminar al dueño de una empresa. Transfiere la propiedad primero.");
   const { error } = await admin.auth.admin.deleteUser(userId);
   if (error) redirect(`/usuarios?error=${message(error.message)}`);
   revalidatePath("/usuarios");
