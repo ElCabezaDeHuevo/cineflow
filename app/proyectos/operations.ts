@@ -68,9 +68,7 @@ async function saveTaskScreenshot(
     throw new Error(`No se pudo subir la captura: ${uploadError.message}`);
   }
 
-  const publicUrl = admin.storage
-    .from("project-media")
-    .getPublicUrl(storagePath).data.publicUrl;
+  const publicUrl = "";
   const mediaRecord = {
     project_id: projectId,
     uploaded_by: context.user.id,
@@ -789,7 +787,7 @@ export async function updateProjectMedia(formData: FormData) {
   }
 
   let replacementPath: string | null = null;
-  let publicUrl: string | null = null;
+
   if (replacement) {
     const extension =
       replacement.name
@@ -807,18 +805,14 @@ export async function updateProjectMedia(formData: FormData) {
     if (uploadError) {
       throw new Error(`No se pudo subir la nueva captura: ${uploadError.message}`);
     }
-    publicUrl = admin.storage
-      .from("project-media")
-      .getPublicUrl(replacementPath).data.publicUrl;
+
   }
 
   const { error } = await admin
     .from("project_media")
     .update({
       caption,
-      ...(replacementPath && publicUrl
-        ? { storage_path: replacementPath, public_url: publicUrl }
-        : {}),
+      ...(replacementPath ? { storage_path: replacementPath, public_url: "" } : {}),
     })
     .eq("id", media.id)
     .eq("project_id", projectId);
