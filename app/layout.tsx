@@ -7,6 +7,7 @@ import AppQuickLinks from "./AppQuickLinks";
 import ErrorReportButton from "./ErrorReportButton";
 import FirstLoginIntroduction from "./onboarding/FirstLoginIntroduction";
 import RouteAutoRefresh from "./RouteAutoRefresh";
+import ServiceWorkerRegister from "./ServiceWorkerRegister";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { isCineflowAdmin } from "@/lib/admin";
 
@@ -61,6 +62,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         />
       </head>
       <body className="min-h-full flex flex-col">
+        <ServiceWorkerRegister />
         {children}
         {user && (
           <>
