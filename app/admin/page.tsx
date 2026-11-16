@@ -125,28 +125,19 @@ export default async function AdminDashboard({
             {actionSuccess}
           </p>
         )}
-        <section className="mb-8 grid gap-4 sm:grid-cols-2">
-          <Link href="/admin/productoras" className="rounded-2xl border border-violet-400/30 bg-violet-400/10 p-5 transition hover:bg-violet-400/15">
-            <p className="text-xs font-semibold uppercase tracking-widest text-violet-300">Control comercial</p>
-            <h2 className="mt-2 text-xl font-semibold">Productoras y pagos</h2>
-            <p className="mt-1 text-sm text-gray-400">Registrar empresas, asignar dueños, controlar pruebas, pagos y acceso.</p>
-          </Link>
-          <Link href="/usuarios" className="rounded-2xl border border-white/10 bg-[#14151c] p-5 transition hover:bg-white/5">
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">Administración</p>
-            <h2 className="mt-2 text-xl font-semibold">Cuentas de usuario</h2>
-            <p className="mt-1 text-sm text-gray-400">Gestionar accesos técnicos y cuentas de la plataforma.</p>
-          </Link>
-        </section>
-        <header className="mb-8 mt-6">
-          <p className="text-sm font-semibold uppercase tracking-widest text-violet-300">
-            CineFlow / Administración
-          </p>
-          <h1 className="mt-2 text-3xl font-bold md:text-4xl">
-            Panel de administración
-          </h1>
-          <p className="mt-2 text-gray-400">
-            Cuentas, solicitudes y reportes en un solo lugar.
-          </p>
+        <header className="mb-8 mt-6 rounded-3xl border border-violet-400/15 bg-gradient-to-br from-violet-500/[0.12] via-[#14151c] to-[#14151c] p-6 sm:p-8">
+          <Link href="/" className="text-xs font-medium text-violet-200 hover:text-white">← Volver al espacio de trabajo</Link>
+          <div className="mt-5 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[.2em] text-violet-300">CineFlow / Control global</p>
+              <h1 className="mt-2 text-3xl font-bold tracking-tight md:text-4xl">Administración</h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-400">Gestiona empresas, accesos, solicitudes, horarios y soporte desde un solo lugar.</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link href="/admin/productoras" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-violet-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-400">Productoras y pagos</Link>
+              <Link href="/usuarios" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-white/15 bg-white/[0.04] px-4 py-2.5 text-sm font-semibold text-gray-200 transition hover:bg-white/10">Usuarios</Link>
+            </div>
+          </div>
         </header>
 
         {(reportsError || assignmentsError || accountsError || profilesError || deletionRequestsError) && (
@@ -207,10 +198,7 @@ export default async function AdminDashboard({
           )}
         </section>
 
-        <section
-          aria-label="Herramientas de administración"
-          className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
-        >
+        <section aria-label="Herramientas de administración" className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <Link
             href="/usuarios"
             className="rounded-2xl border border-violet-400/20 bg-violet-400/[0.06] p-5 transition hover:border-violet-300/40"
@@ -348,7 +336,7 @@ export default async function AdminDashboard({
                       <div className="flex flex-wrap items-center gap-2">
                         <form
                           action={updateErrorReportStatus}
-                          className="flex flex-wrap items-center gap-2"
+                          className="grid w-full min-w-0 gap-3 rounded-xl border border-white/10 bg-black/15 p-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(180px,0.8fr)]"
                         >
                           <input
                             type="hidden"
@@ -360,25 +348,25 @@ export default async function AdminDashboard({
                             defaultValue={report.admin_notes ?? ""}
                             rows={2}
                             placeholder="Añade una nota de seguimiento"
-                            className="min-w-[220px] rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-xs text-white"
+                            className="min-h-20 w-full min-w-0 rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white placeholder:text-gray-600 sm:col-span-2"
                           />
                           <input
                             type="file"
                             name="admin_screenshot"
                             accept="image/png,image/jpeg,image/webp"
-                            className="max-w-[180px] rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-xs text-white file:mr-2 file:rounded file:border-0 file:bg-violet-500/20 file:px-2 file:py-1 file:text-xs file:font-semibold file:text-violet-200"
+                            className="w-full min-w-0 rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-xs text-white file:mr-2 file:rounded file:border-0 file:bg-violet-500/20 file:px-2 file:py-1 file:text-xs file:font-semibold file:text-violet-200"
                           />
                           <select
                             name="status"
                             defaultValue={report.status}
                             aria-label={`Estado del reporte ${report.title}`}
-                            className="rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-xs text-white"
+                            className="min-h-10 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white"
                           >
                             <option value="open">Nuevo</option>
                             <option value="reviewing">En revisión</option>
                             <option value="resolved">Resuelto</option>
                           </select>
-                          <button className="rounded-lg border border-violet-400/30 px-3 py-2 text-xs font-semibold text-violet-200 hover:bg-violet-400/10">
+                          <button className="min-h-10 w-full rounded-lg bg-violet-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-400">
                             Guardar
                           </button>
                         </form>
