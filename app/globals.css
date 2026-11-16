@@ -259,3 +259,88 @@ button:disabled { cursor: not-allowed; opacity: .55; }
   .cf-app-enter, .cf-stagger > * { animation: none !important; }
   .cf-shimmer::after { display: none; }
 }
+
+/* Interactive controls refresh — consistent feedback across the whole app. */
+:root {
+  --cf-control-radius: 0.85rem;
+  --cf-control-ease: cubic-bezier(.2,.75,.25,1);
+}
+:where(button, input[type="button"], input[type="submit"], input[type="reset"], [role="button"], a.cf-action) {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+:where(button:not(:disabled), input[type="button"]:not(:disabled), input[type="submit"]:not(:disabled), input[type="reset"]:not(:disabled), [role="button"]:not([aria-disabled="true"]), a.cf-action) {
+  position: relative;
+  transition:
+    transform 190ms var(--cf-control-ease),
+    box-shadow 220ms var(--cf-control-ease),
+    border-color 190ms ease,
+    background-color 190ms ease,
+    color 190ms ease,
+    filter 190ms ease;
+}
+:where(button:not(:disabled), input[type="button"]:not(:disabled), input[type="submit"]:not(:disabled), input[type="reset"]:not(:disabled), [role="button"]:not([aria-disabled="true"]), a.cf-action):hover {
+  filter: brightness(1.08);
+}
+:where(button:not(:disabled), input[type="button"]:not(:disabled), input[type="submit"]:not(:disabled), input[type="reset"]:not(:disabled), [role="button"]:not([aria-disabled="true"]), a.cf-action):active {
+  transform: translateY(1px) scale(.975);
+  filter: brightness(.98);
+  box-shadow: none;
+}
+:where(button:disabled, input:disabled, [role="button"][aria-disabled="true"]) {
+  cursor: not-allowed;
+}
+:where(button, input, select, textarea, [role="button"], a):focus-visible {
+  outline: 2px solid rgb(var(--cf-violet) / .95);
+  outline-offset: 3px;
+}
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="hidden"]), select, textarea) {
+  accent-color: rgb(var(--cf-violet));
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background-color 180ms ease;
+}
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="hidden"]), select, textarea):focus {
+  border-color: rgb(var(--cf-violet) / .72) !important;
+  box-shadow: 0 0 0 3px rgb(var(--cf-violet) / .14);
+}
+:where(input[type="checkbox"], input[type="radio"]) {
+  accent-color: rgb(var(--cf-violet));
+  width: 1.05rem;
+  height: 1.05rem;
+  cursor: pointer;
+  transition: transform 160ms var(--cf-control-ease), filter 160ms ease;
+}
+:where(input[type="checkbox"], input[type="radio"]):active {
+  transform: scale(.88);
+}
+:where(select) {
+  cursor: pointer;
+}
+:where(summary) {
+  cursor: pointer;
+  transition: color 160ms ease, background-color 160ms ease;
+}
+:where(summary:hover) {
+  color: rgb(221 214 254);
+}
+:where(a:not([class*="text-"])) {
+  text-underline-offset: 3px;
+}
+:where(button, [role="button"], a, summary) {
+  user-select: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  :where(button:not(:disabled), input[type="button"]:not(:disabled), input[type="submit"]:not(:disabled), [role="button"]:not([aria-disabled="true"]), a.cf-action):hover {
+    transform: translateY(-2px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :where(button, input, select, textarea, [role="button"], a, summary) {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+  }
+}
+
