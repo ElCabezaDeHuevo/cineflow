@@ -61,7 +61,7 @@ export async function createUser(formData: FormData) {
   if (!siteUrl) redirect("/usuarios?error=Configura%20NEXT_PUBLIC_SITE_URL%20para%20enviar%20invitaciones");
 
   const { data, error } = await admin.auth.admin.inviteUserByEmail(email, {
-    redirectTo: `${siteUrl.replace(/\\/$/, "")}/auth/callback?next=/restablecer`,
+    redirectTo: `${siteUrl.replace(/\/$/, "")}/auth/callback?next=/restablecer`,
     data: { full_name: fullName, cine_role: cineRole },
   });
   if (error || !data.user) redirect(`/usuarios?error=${message(error?.message ?? "No se pudo enviar la invitación.")}`);
