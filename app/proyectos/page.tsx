@@ -262,7 +262,7 @@ export default async function ProjectsPage({
               requestsError ||
               membershipRequestsError ||
               leaveRequestsError ||
-              "Falta configurar SUPABASE_SERVICE_ROLE_KEY para mostrar todos los proyectos y gestionar solicitudes."}
+              "Falta configurar SUPABASE_SERVICE_ROLE_KEY o SUPABASE_SECRET_KEY para mostrar todos los proyectos y gestionar solicitudes."}
           </p>
         )}
         {success && (
