@@ -49,8 +49,7 @@ export default async function AdminDashboard({
             ← Panel principal
           </Link>
           <p className="mt-8 rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-200">
-            Falta configurar SUPABASE_SERVICE_ROLE_KEY para cargar el panel de
-            administración.
+            Configura SUPABASE_SERVICE_ROLE_KEY o SUPABASE_SECRET_KEY en Vercel para cargar el panel de administración. Incluye Preview y Production, y vuelve a desplegar.
           </p>
         </section>
       </main>
