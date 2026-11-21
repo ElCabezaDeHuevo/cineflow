@@ -8,6 +8,7 @@ import ErrorReportButton from "./ErrorReportButton";
 import FirstLoginIntroduction from "./onboarding/FirstLoginIntroduction";
 import RouteAutoRefresh from "./RouteAutoRefresh";
 import ServiceWorkerRegister from "./ServiceWorkerRegister";
+import RouteTransition from "./RouteTransition";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { isCineflowAdmin } from "@/lib/admin";
 
@@ -63,7 +64,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="min-h-full flex flex-col">
         <ServiceWorkerRegister />
-        <div className="cf-app-enter">{children}</div>
+        <RouteTransition>{children}</RouteTransition>
         {user && (
           <>
             <RouteAutoRefresh />
