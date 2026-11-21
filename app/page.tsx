@@ -10,7 +10,6 @@ import RecentProjects from "./RecentProjects";
 import PendingLogbookNotifications from "./PendingLogbookNotifications";
 import UserAvatar from "@/lib/UserAvatar";
 import { isCineflowAdmin } from "@/lib/admin";
-import { clockIn } from "./horarios/actions";
 
 export const instant = false;
 
@@ -85,9 +84,6 @@ async function HomeContent({
       `No se pudo cargar el equipo que está trabajando: ${activeSessionsError.message}`,
     );
   }
-  const myActiveSession = (activeWorkSessions ?? []).find(
-    (session) => session.user_id === user.id,
-  );
   const activeUserIds = (activeWorkSessions ?? []).map(
     (session) => session.user_id,
   );
