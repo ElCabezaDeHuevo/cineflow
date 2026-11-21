@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 
 type Props = { name: string; email: string; avatarUrl?: string | null; isAdmin: boolean };
 
@@ -18,6 +19,7 @@ function NavItems({ pathname, isAdmin }: { pathname: string; isAdmin: boolean })
 
 export default function AppNavigation({ name, email, avatarUrl, isAdmin }: Props) {
   const pathname = usePathname();
+  const [moreOpen, setMoreOpen] = useState(false);
   const initials = name.trim().split(/\\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "CF";
   const primary = [{ href: "/", label: "Inicio", icon: "▦" }, { href: "/proyectos", label: "Proyectos", icon: "▣" }, { href: "/timeline", label: "Timeline", icon: "◷" }, { href: "/equipo", label: "Equipo", icon: "♙" }];
   return <>
@@ -27,6 +29,6 @@ export default function AppNavigation({ name, email, avatarUrl, isAdmin }: Props
       <Link href="/perfil" className="cf-account"><span className="cf-avatar">{avatarUrl ? <img src={avatarUrl} alt="" /> : initials}</span><span className="min-w-0"><strong>{name}</strong><small>{email || "Mi cuenta"}</small></span><span className="ml-auto text-zinc-500">⌄</span></Link>
     </aside>
     <header className="cf-mobile-header md:hidden"><Link href="/" className="cf-brand"><span className="cf-brand-mark">C</span><span>CINE<span>FLOW</span><small>STUDIO</small></span></Link><Link href="/perfil" className="cf-avatar">{initials}</Link></header>
-    <nav className="cf-mobile-nav md:hidden" aria-label="Navegación principal">{primary.map((item) => { const active = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(item.href + "/"); return <Link key={item.href} href={item.href} className={active ? "is-active" : ""}><span>{item.icon}</span><small>{item.label}</small></Link>; })}<Link href="/mas" onClick={(event) => { event.preventDefault(); document.dispatchEvent(new CustomEvent("cineflow:open-more")); }}><span>•••</span><small>Más</small></Link></nav>
+    <nav className="cf-mobile-nav md:hidden" aria-label="Navegación principal">{primary.map((item) => { const active = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(item.href + "/"); return <Link key={item.href} href={item.href} className={active ? "is-active" : ""}><span>{item.icon}</span><small>{item.label}</small></Link>; })}<button type="button" onClick={() => setMoreOpen((open) => !open)} aria-expanded={moreOpen}><span>•••</span><small>Más</small></button></nav>{moreOpen && <div className="cf-more-overlay" onClick={() => setMoreOpen(false)}><section className="cf-more-sheet" onClick={(event) => event.stopPropagation()}><div className="mb-4 flex items-center justify-between"><strong className="text-sm">Más secciones</strong><button type="button" onClick={() => setMoreOpen(false)} aria-label="Cerrar" className="text-zinc-400">✕</button></div><NavItems pathname={pathname} isAdmin={isAdmin}/><Link href="/perfil" onClick={() => setMoreOpen(false)} className="cf-nav-link">Mi cuenta</Link></section></div>}
   </>;
 }
