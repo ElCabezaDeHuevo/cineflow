@@ -384,3 +384,55 @@ body { background-color: var(--cf-bg); color: var(--cf-text); }
 @keyframes cf-login-enter{from{opacity:0;transform:translateY(14px) scale(.985);filter:blur(4px)}to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
 @media(max-width:520px){.cf-login-page{padding:22px 14px 58px}.cf-login-backdrop{background-position:43% center}.cf-login-vignette{background:rgba(5,6,14,.58)}.cf-login-card{padding:28px 22px;border-radius:20px}}
 @media(prefers-reduced-motion:reduce){.cf-login-card{animation:none}.cf-login-form button{transition:none}}
+
+
+/* CineFlow balanced cinematic glass — section-specific atmospheric photography */
+.cf-cinematic-page {
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+  background-color: #0b0c10;
+}
+.cf-cinematic-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(115deg, rgb(7 8 15 / .91) 0%, rgb(9 10 18 / .78) 48%, rgb(8 9 16 / .9) 100%),
+    radial-gradient(ellipse at 14% 4%, rgb(139 92 246 / .19), transparent 38rem),
+    radial-gradient(ellipse at 88% 18%, rgb(34 211 238 / .11), transparent 34rem),
+    var(--cf-section-image);
+  background-position: center, center, center, center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  filter: saturate(.72);
+  opacity: .94;
+}
+.cf-bg-dashboard { --cf-section-image: url("https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=2200&q=80"); }
+.cf-bg-projects { --cf-section-image: url("https://images.unsplash.com/photo-1492619375914-88005aa9e8fb?auto=format&fit=crop&w=2200&q=80"); }
+.cf-bg-timeline { --cf-section-image: url("https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=2200&q=80"); }
+.cf-bg-team { --cf-section-image: url("https://images.unsplash.com/photo-1503095396549-807759245b35?auto=format&fit=crop&w=2200&q=80"); }
+.cf-bg-calendar { --cf-section-image: url("https://images.unsplash.com/photo-1478720568477-152d9b164e26?auto=format&fit=crop&w=2200&q=80"); }
+.cf-bg-shooting { --cf-section-image: url("https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=2200&q=80"); }
+.cf-cinematic-page .cf-card {
+  border-color: rgb(255 255 255 / .13) !important;
+  background: linear-gradient(145deg, rgb(30 27 46 / .76), rgb(13 15 25 / .72)) !important;
+  box-shadow: 0 16px 48px rgb(0 0 0 / .22), inset 0 1px 0 rgb(255 255 255 / .055);
+  backdrop-filter: blur(16px) saturate(125%);
+  -webkit-backdrop-filter: blur(16px) saturate(125%);
+}
+.cf-cinematic-page :is(article, section).rounded-2xl.border-white\/10,
+.cf-cinematic-page .overflow-hidden.rounded-2xl.border-white\/10 {
+  background-color: rgb(18 19 30 / .72);
+  backdrop-filter: blur(13px) saturate(120%);
+  -webkit-backdrop-filter: blur(13px) saturate(120%);
+}
+@media (max-width: 767px) {
+  .cf-cinematic-page::before { background-position: center, center, center, 58% center; opacity: .78; }
+  .cf-cinematic-page .cf-card { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .cf-cinematic-page .cf-card { background: rgb(18 19 30 / .96) !important; backdrop-filter: none; }
+}
