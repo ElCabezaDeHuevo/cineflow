@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { connection } from "next/server";
 import "./globals.css";
 import LogoutButton from "./LogoutButton";
-import AppQuickLinks from "./AppQuickLinks";
 import AppNavigation from "./AppNavigation";
 import ErrorReportButton from "./ErrorReportButton";
 import FirstLoginIntroduction from "./onboarding/FirstLoginIntroduction";
@@ -72,7 +71,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <>
             <RouteAutoRefresh />
             <div className="mobile-action-dock">
-              <AppQuickLinks isAdmin={isAdmin} />
               <ErrorReportButton />
               <LogoutButton hasActiveSession={Boolean(activeSession)} />
             </div>
