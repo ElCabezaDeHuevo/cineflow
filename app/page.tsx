@@ -221,7 +221,7 @@ async function HomeContent({
 
   return (
     <main className="min-h-screen bg-[#0b0c10] text-white">
-      <section className="mx-auto max-w-7xl p-4 sm:p-6 md:ml-64 md:p-10">
+      <section className="mx-auto max-w-7xl p-4 sm:p-6 md:p-10">
         {created && (
           <div className="mb-6 rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-300">
             Proyecto creado correctamente.
