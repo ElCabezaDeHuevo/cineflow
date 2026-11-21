@@ -44,7 +44,7 @@ export default async function AdminReportsPage() {
   const pendingReview = activeSessions.filter((s) => s.review_status === "pending_review").length;
 
   return (
-    <main className="min-h-screen bg-[#0b0c10] px-4 py-8 text-white md:px-8">
+    <main className="cf-cinematic-page cf-bg-admin min-h-screen bg-[#0b0c10] px-4 py-8 text-white md:px-8">
       <section className="mx-auto max-w-6xl">
         <Link href="/admin" className="text-sm text-violet-300">← Administración</Link>
         <header className="mb-8 mt-6"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-300">CineFlow / Administración</p><h1 className="mt-2 text-3xl font-bold">Informes de operación</h1><p className="mt-2 text-gray-400">Resumen de asistencia, carga de trabajo y avance general.</p></header>
