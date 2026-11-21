@@ -8,5 +8,44 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string; next?: string }>;
 }) {
   const { error, next } = await searchParams;
-  return <main className="flex min-h-screen items-center justify-center bg-[#0b0c10] p-6 text-white"><section className="w-full max-w-md rounded-2xl border border-white/10 bg-[#14151c] p-8"><span className="text-sm text-violet-300">CineFlow</span><h1 className="mt-8 text-3xl font-bold">Iniciar sesión</h1><p className="mt-2 text-sm text-gray-400">Accede a tus proyectos y permisos de producción.</p>{error && <p className="mt-5 rounded-xl border border-red-400/30 bg-red-400/10 p-3 text-sm text-red-200">{error}</p>}<form action={signIn} className="mt-6 space-y-5"><input type="hidden" name="next" value={next ?? ""} /><label className="block text-sm text-gray-300">Correo<input name="email" type="email" required autoComplete="email" className="mt-2 w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none focus:border-violet-400" /></label><label className="block text-sm text-gray-300">Contraseña<input name="password" type="password" required autoComplete="current-password" className="mt-2 w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none focus:border-violet-400" /></label><button className="w-full rounded-xl bg-violet-500 px-5 py-3 font-semibold hover:bg-violet-400">Entrar</button></form></section></main>;
+
+  return (
+    <main className="cf-login-page">
+      <div className="cf-login-backdrop" aria-hidden="true" />
+      <div className="cf-login-vignette" aria-hidden="true" />
+      <section className="cf-login-card cf-glass">
+        <div className="cf-login-brand">
+          <span className="cf-login-mark" aria-hidden="true">✦</span>
+          <div>
+            <p className="cf-login-wordmark">CINE<span>FLOW</span></p>
+            <p className="cf-login-studio">STUDIO</p>
+          </div>
+        </div>
+
+        <div className="cf-login-heading">
+          <p className="cf-login-eyebrow">PRODUCTION WORKSPACE</p>
+          <h1>Bienvenido de nuevo</h1>
+          <p>Tu producción, organizada en un solo lugar.</p>
+        </div>
+
+        {error && <p role="alert" className="cf-login-error">{error}</p>}
+
+        <form action={signIn} className="cf-login-form">
+          <input type="hidden" name="next" value={next ?? ""} />
+          <label>
+            <span>Correo electrónico</span>
+            <input name="email" type="email" required autoComplete="email" placeholder="nombre@productora.com" />
+          </label>
+          <label>
+            <span>Contraseña</span>
+            <input name="password" type="password" required autoComplete="current-password" placeholder="Ingresa tu contraseña" />
+          </label>
+          <button type="submit">Iniciar sesión <span aria-hidden="true">↗</span></button>
+        </form>
+
+        <p className="cf-login-footnote">Acceso seguro a tus proyectos y equipos de producción.</p>
+      </section>
+      <p className="cf-login-copyright">CINEFLOW STUDIO <span>·</span> PRODUCTION MANAGEMENT</p>
+    </main>
+  );
 }

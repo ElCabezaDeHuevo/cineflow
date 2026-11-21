@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { connection } from "next/server";
 import "./globals.css";
 import LogoutButton from "./LogoutButton";
-import AppQuickLinks from "./AppQuickLinks";
+import AppNavigation from "./AppNavigation";
 import ErrorReportButton from "./ErrorReportButton";
 import FirstLoginIntroduction from "./onboarding/FirstLoginIntroduction";
 import RouteAutoRefresh from "./RouteAutoRefresh";
@@ -43,6 +43,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         .maybeSingle()
     : { data: null };
   const isAdmin = isCineflowAdmin(user);
+  const { data: navProfile } = user ? await supabase.from("profiles").select("full_name,avatar_url").eq("id", user.id).maybeSingle() : { data: null };
+  const displayName = navProfile?.full_name || user?.email?.split("@")[0] || "Mi cuenta";
   console.log("[v0] admin check:", {
     email: user?.email ?? null,
     appRole: user?.app_metadata?.cineflow_role ?? null,
@@ -63,12 +65,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="min-h-full flex flex-col">
         <ServiceWorkerRegister />
-        <div className="cf-app-enter">{children}</div>
+        {user && <AppNavigation name={displayName} email={user.email ?? ""} avatarUrl={navProfile?.avatar_url} isAdmin={isAdmin} />}
+        <div className={user ? "cf-app-enter cf-app-frame" : "cf-app-enter"}>{children}</div>
         {user && (
           <>
             <RouteAutoRefresh />
             <div className="mobile-action-dock">
-              <AppQuickLinks isAdmin={isAdmin} />
               <ErrorReportButton />
               <LogoutButton hasActiveSession={Boolean(activeSession)} />
             </div>

@@ -28,7 +28,7 @@ export default async function StatisticsPage() {
   }, 0);
   const failed = pError || tError || sError;
 
-  return <main className="min-h-screen bg-[#0b0c10] px-4 py-8 text-white md:px-8"><section className="mx-auto max-w-6xl">
+  return <main className="cf-cinematic-page cf-bg-statistics min-h-screen bg-[#0b0c10] px-4 py-8 text-white md:px-8"><section className="mx-auto max-w-6xl">
     <Link href="/" className="text-sm text-violet-300">← Panel principal</Link>
     <header className="mb-8 mt-6"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-300">CineFlow / Métricas</p><h1 className="mt-2 text-3xl font-bold">Estadísticas</h1><p className="mt-2 text-gray-400">Resumen calculado con los registros a los que tienes acceso.</p></header>
     {failed ? <p role="alert" className="rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-200">No se pudieron cargar todas las métricas. Revisa tus permisos.</p> : <>

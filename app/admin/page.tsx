@@ -43,14 +43,13 @@ export default async function AdminDashboard({
   const admin = createSupabaseAdminClient();
   if (!admin) {
     return (
-      <main className="min-h-screen bg-[#0b0c10] p-6 text-white md:p-10">
+      <main className="cf-cinematic-page cf-bg-admin min-h-screen bg-[#0b0c10] p-6 text-white md:p-10">
         <section className="mx-auto max-w-6xl">
           <Link href="/" className="text-sm text-violet-300">
             ← Panel principal
           </Link>
           <p className="mt-8 rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-200">
-            Falta configurar SUPABASE_SERVICE_ROLE_KEY para cargar el panel de
-            administración.
+            Configura SUPABASE_SERVICE_ROLE_KEY o SUPABASE_SECRET_KEY en Vercel para cargar el panel de administración. Incluye Preview y Production, y vuelve a desplegar.
           </p>
         </section>
       </main>

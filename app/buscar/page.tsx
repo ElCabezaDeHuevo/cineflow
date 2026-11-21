@@ -36,7 +36,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const projectNames = new Map((relatedProjects ?? []).map((project) => [project.id, project.name]));
 
   return (
-    <main className="min-h-screen bg-[#0b0c10] px-4 py-8 text-white md:px-8">
+    <main className="cf-cinematic-page cf-bg-search min-h-screen bg-[#0b0c10] px-4 py-8 text-white md:px-8">
       <section className="mx-auto max-w-5xl">
         <Link href="/" className="text-sm text-violet-300 hover:text-violet-200">← Panel principal</Link>
         <header className="mb-8 mt-6">

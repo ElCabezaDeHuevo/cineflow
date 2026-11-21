@@ -152,7 +152,7 @@ export async function requestProjectMembership(formData: FormData) {
 
   const admin = createSupabaseAdminClient();
   if (!admin) {
-    redirect("/proyectos?error=Falta%20configurar%20SUPABASE_SERVICE_ROLE_KEY");
+    redirect("/proyectos?error=Falta%20configurar%20SUPABASE_SERVICE_ROLE_KEY o SUPABASE_SECRET_KEY");
   }
   const { data: project, error: projectError } = await admin
     .from("projects")
@@ -250,7 +250,7 @@ export async function requestProjectLeave(formData: FormData) {
 
   const admin = createSupabaseAdminClient();
   if (!admin) {
-    redirect("/proyectos?error=Falta%20configurar%20SUPABASE_SERVICE_ROLE_KEY");
+    redirect("/proyectos?error=Falta%20configurar%20SUPABASE_SERVICE_ROLE_KEY o SUPABASE_SECRET_KEY");
   }
   const { data: membership, error: membershipError } = await context.supabase
     .from("project_members")
@@ -308,7 +308,7 @@ async function reviewProjectLeaveRequest(
   }
   const admin = createSupabaseAdminClient();
   if (!admin) {
-    redirect("/proyectos?error=Falta%20configurar%20SUPABASE_SERVICE_ROLE_KEY");
+    redirect("/proyectos?error=Falta%20configurar%20SUPABASE_SERVICE_ROLE_KEY o SUPABASE_SECRET_KEY");
   }
   const { data: request, error: requestError } = await admin
     .from("project_leave_requests")
@@ -359,7 +359,7 @@ export async function leaveProject(formData: FormData) {
 
   const admin = createSupabaseAdminClient();
   if (!admin) {
-    redirect("/proyectos?error=Falta%20configurar%20SUPABASE_SERVICE_ROLE_KEY");
+    redirect("/proyectos?error=Falta%20configurar%20SUPABASE_SERVICE_ROLE_KEY o SUPABASE_SECRET_KEY");
   }
   const { data: membership, error: membershipError } = await context.supabase
     .from("project_members")
@@ -414,7 +414,7 @@ async function reviewProjectMembershipRequest(
   }
   const admin = createSupabaseAdminClient();
   if (!admin) {
-    redirect("/proyectos?error=Falta%20configurar%20SUPABASE_SERVICE_ROLE_KEY");
+    redirect("/proyectos?error=Falta%20configurar%20SUPABASE_SERVICE_ROLE_KEY o SUPABASE_SECRET_KEY");
   }
   const { data: request, error: requestError } = await admin
     .from("project_membership_requests")

@@ -28,7 +28,7 @@ export default async function TeamPage() {
   const projectById = new Map((projects ?? []).map((project) => [project.id, project]));
 
   return (
-    <main className="min-h-screen bg-[#0b0c10] text-white">
+    <main className="cf-cinematic-page cf-bg-team min-h-screen bg-[#0b0c10] text-white">
       <section className="mx-auto max-w-7xl p-6 md:p-10">
         <Link href="/" className="text-sm text-violet-300 hover:text-violet-200">← Volver al panel</Link>
         <header className="mt-8 flex flex-wrap items-end justify-between gap-4">

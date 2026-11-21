@@ -41,7 +41,7 @@ export default async function ProductionCenter() {
   const unread = (notifications ?? []).filter(n=>!n.read_at).length;
   const myTasks = (tasks ?? []).filter(t=>t.assigned_to === user.id);
   const upcoming = (events ?? []).filter(e=>new Date(e.starts_at).getTime()>=Date.now()).slice(0,12);
-  return <main className="min-h-screen bg-[#0b0c10] px-5 py-8 text-white md:px-10">
+  return <main className="cf-cinematic-page cf-bg-team min-h-screen bg-[#0b0c10] px-5 py-8 text-white md:px-10">
     <div className="mx-auto max-w-7xl space-y-8">
       <header><Link href="/" className="text-sm text-violet-300">← Inicio</Link>
         <p className="mt-6 text-xs font-bold uppercase tracking-[0.2em] text-violet-300">CineFlow / Gestión integral</p>

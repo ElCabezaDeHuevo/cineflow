@@ -20,7 +20,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
   if (!isCineflowAdmin(user)) redirect("/");
   const admin = createSupabaseAdminClient();
   const { error, success } = await searchParams;
-  if (!admin) return <main className="min-h-screen bg-[#0b0c10] p-8 text-white">Falta configurar SUPABASE_SERVICE_ROLE_KEY.</main>;
+  if (!admin) return <main className="cf-cinematic-page cf-bg-users min-h-screen bg-[#0b0c10] p-8 text-white">Falta configurar SUPABASE_SERVICE_ROLE_KEY.</main>;
 
   const [{ data: companies, error: companiesError }, { data: usersData, error: usersError }] = await Promise.all([
     admin.from("organizations").select("id,name,slug,organization_members(user_id,role,joined_at)").order("name"),
@@ -36,7 +36,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
   const existingUnassignedUsers = users.filter((account) => !assignedUserIds.has(account.id));
 
   return (
-    <main className="min-h-screen bg-[#0b0c10] text-white">
+    <main className="cf-cinematic-page cf-bg-users min-h-screen bg-[#0b0c10] text-white">
       <section className="mx-auto max-w-7xl p-6 md:p-10">
         <Link href="/admin" className="text-sm text-violet-300 hover:text-violet-200">← Panel de administración</Link>
         <header className="mt-8">

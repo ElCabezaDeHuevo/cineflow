@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { previewCookieOptions } from "@/lib/supabase/cookie-options";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -10,6 +10,13 @@ export async function middleware(request: NextRequest) {
     console.error("[cineflow] Faltan NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY en este entorno.");
     return response;
   }
+  const hasAuthCookie = request.cookies.getAll().some(({ name }) =>
+    name.includes("auth-token") || name === "sb-access-token",
+  );
+  // Static generation and anonymous requests have no session to refresh.
+  // Avoid invoking Supabase Auth (which reads the current clock) in that context.
+  if (!hasAuthCookie) return response;
+
   const supabase = createServerClient(supabaseUrl, supabaseKey, {
     cookieOptions: previewCookieOptions,
     cookies: {
@@ -21,7 +28,9 @@ export async function middleware(request: NextRequest) {
       },
     },
   });
-  await supabase.auth.getUser();
+  // Verify the JWT and refresh the session without a network user lookup.
+  // Supabase recommends getClaims() in Next.js Proxy for SSR session refresh.
+  await supabase.auth.getClaims();
   return response;
 }
 

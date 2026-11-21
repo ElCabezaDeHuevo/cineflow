@@ -34,7 +34,7 @@ export default async function UserProfileDetailPage({
   const admin = createSupabaseAdminClient();
   if (isAdmin && !admin) {
     return (
-      <main className="min-h-screen bg-[#0b0c10] p-6 text-white md:p-10">
+      <main className="cf-cinematic-page cf-bg-users min-h-screen bg-[#0b0c10] p-6 text-white md:p-10">
         <section className="mx-auto max-w-5xl">
           <Link href="/usuarios" className="text-sm text-violet-300">
             ← Volver a usuarios

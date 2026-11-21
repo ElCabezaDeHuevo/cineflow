@@ -29,7 +29,7 @@ export default async function ActivityPage() {
   const projectNames = new Map((projects ?? []).map((project) => [project.id, project.name]));
 
   return (
-    <main className="min-h-screen bg-[#0b0c10] px-4 py-8 text-white md:px-8">
+    <main className="cf-cinematic-page cf-bg-activity min-h-screen bg-[#0b0c10] px-4 py-8 text-white md:px-8">
       <section className="mx-auto max-w-5xl">
         <Link href="/" className="text-sm text-violet-300 hover:text-violet-200">← Panel principal</Link>
         <header className="mb-8 mt-6"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-300">CineFlow / Registro</p><h1 className="mt-2 text-3xl font-bold">Actividad reciente</h1><p className="mt-2 text-gray-400">Últimos movimientos registrados en los proyectos a los que tienes acceso.</p></header>
