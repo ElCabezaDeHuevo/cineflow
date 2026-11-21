@@ -20,7 +20,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
   if (!isCineflowAdmin(user)) redirect("/");
   const admin = createSupabaseAdminClient();
   const { error, success } = await searchParams;
-  if (!admin) return <main className="min-h-screen bg-[#0b0c10] p-8 text-white">Falta configurar SUPABASE_SERVICE_ROLE_KEY.</main>;
+  if (!admin) return <main className="cf-cinematic-page cf-bg-users min-h-screen bg-[#0b0c10] p-8 text-white">Falta configurar SUPABASE_SERVICE_ROLE_KEY.</main>;
 
   const [{ data: companies, error: companiesError }, { data: usersData, error: usersError }] = await Promise.all([
     admin.from("organizations").select("id,name,slug,organization_members(user_id,role,joined_at)").order("name"),
