@@ -10,6 +10,13 @@ export async function proxy(request: NextRequest) {
     console.error("[cineflow] Faltan NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY en este entorno.");
     return response;
   }
+  const hasAuthCookie = request.cookies.getAll().some(({ name }) =>
+    name.includes("auth-token") || name === "sb-access-token",
+  );
+  // Static generation and anonymous requests have no session to refresh.
+  // Avoid invoking Supabase Auth (which reads the current clock) in that context.
+  if (!hasAuthCookie) return response;
+
   const supabase = createServerClient(supabaseUrl, supabaseKey, {
     cookieOptions: previewCookieOptions,
     cookies: {
