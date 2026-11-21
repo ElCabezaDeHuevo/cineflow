@@ -29,7 +29,7 @@ export default async function CompaniesAdmin({ searchParams }: { searchParams: P
   for (const payment of payments ?? []) if (!latestPaymentByOrg.has(payment.organization_id)) latestPaymentByOrg.set(payment.organization_id, payment);
   const activeCount = (subscriptions ?? []).filter((x) => x.status === "active" || x.status === "trialing").length;
   return (
-    <main className="min-h-screen bg-[#0b0c10] text-white"><section className="mx-auto max-w-7xl p-6 md:p-10">
+    <main className="cf-cinematic-page cf-bg-admin min-h-screen bg-[#0b0c10] text-white"><section className="mx-auto max-w-7xl p-6 md:p-10">
       <Link href="/admin" className="text-sm text-violet-300">← Panel técnico</Link>
       <header className="mb-8 mt-6"><p className="text-xs font-semibold uppercase tracking-widest text-violet-300">CineFlow / Control global</p><h1 className="mt-2 text-3xl font-bold">Productoras y pagos</h1><p className="mt-2 text-sm text-gray-400">Administra dueños, pruebas, pagos y acceso de cada empresa.</p></header>
       {error && <p role="alert" className="mb-5 rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-200">{error}</p>}
