@@ -33,7 +33,7 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
   const statusLabel = status === "trialing" ? "Prueba gratuita" : status === "active" ? "Servicio activo" : status === "paused" ? "Servicio suspendido" : status === "past_due" ? "Pago pendiente" : status;
   const validUntil = status === "trialing" ? subscription?.trial_end : subscription?.current_period_end;
   return (
-    <main className="min-h-screen bg-[#0b0c10] text-white">
+    <main className="cf-cinematic-page cf-bg-admin min-h-screen bg-[#0b0c10] text-white">
       <section className="mx-auto max-w-5xl p-6 md:p-10">
         <Link href="/" className="text-sm text-violet-300">← Volver a CineFlow</Link>
         <header className="mb-8 mt-7"><p className="text-xs font-semibold uppercase tracking-widest text-violet-300">Espacio de empresa</p><h1 className="mt-2 text-3xl font-bold">{organization?.name ?? "Mi productora"}</h1><p className="mt-2 text-sm text-gray-400">Administra a tu equipo y consulta el estado de tu servicio.</p></header>
