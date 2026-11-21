@@ -43,7 +43,7 @@ export default async function AdminDashboard({
   const admin = createSupabaseAdminClient();
   if (!admin) {
     return (
-      <main className="min-h-screen bg-[#0b0c10] p-6 text-white md:p-10">
+      <main className="cf-cinematic-page cf-bg-admin min-h-screen bg-[#0b0c10] p-6 text-white md:p-10">
         <section className="mx-auto max-w-6xl">
           <Link href="/" className="text-sm text-violet-300">
             ← Panel principal
