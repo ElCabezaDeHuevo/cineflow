@@ -24,7 +24,7 @@ export default async function AssignmentRequestsPage({
   if (!isCineflowAdmin(user)) redirect("/");
 
   const admin = createSupabaseAdminClient();
-  if (!admin) redirect("/usuarios?error=Falta%20configurar%20SUPABASE_SERVICE_ROLE_KEY");
+  if (!admin) redirect("/usuarios?error=Falta%20configurar%20SUPABASE_SERVICE_ROLE_KEY%20o%20SUPABASE_SECRET_KEY");
   const { error: messageError, success } = await searchParams;
   const { data: requests, error: requestsError } = await admin
     .from("project_assignment_requests")
