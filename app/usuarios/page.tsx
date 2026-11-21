@@ -36,7 +36,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
   const existingUnassignedUsers = users.filter((account) => !assignedUserIds.has(account.id));
 
   return (
-    <main className="min-h-screen bg-[#0b0c10] text-white">
+    <main className="cf-cinematic-page cf-bg-users min-h-screen bg-[#0b0c10] text-white">
       <section className="mx-auto max-w-7xl p-6 md:p-10">
         <Link href="/admin" className="text-sm text-violet-300 hover:text-violet-200">← Panel de administración</Link>
         <header className="mt-8">
