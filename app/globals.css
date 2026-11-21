@@ -476,3 +476,21 @@ body { background-color: var(--cf-bg); color: var(--cf-text); }
 .cf-bg-schedule { --cf-section-image: url("https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=2200&q=80"); }
 .cf-bg-profile { --cf-section-image: url("https://images.unsplash.com/photo-1478720568477-152d9b164e26?auto=format&fit=crop&w=2200&q=80"); }
 .cf-bg-users { --cf-section-image: url("https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=2200&q=80"); }
+
+/* CineFlow Studio — native select menus: keep options readable in dark UI */
+:where(select) {
+  color-scheme: dark;
+  color: #f4f4f5;
+  background-color: #171923;
+}
+:where(select option, select optgroup) {
+  color: #f4f4f5;
+  background-color: #171923;
+}
+:where(select option:checked) {
+  color: #ffffff;
+  background-color: #493477;
+}
+:where(select option:disabled) {
+  color: #858391;
+}
