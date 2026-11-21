@@ -299,7 +299,21 @@ body { background-color: var(--cf-bg); color: var(--cf-text); }
   .cf-app-frame > main { padding-bottom:12px; }
   .cf-mobile-header { display:flex; }
   .cf-app-frame main > section { padding-top:20px; }
-  .mobile-action-dock { bottom:66px !important; z-index:45; padding:5px 10px !important; background:rgb(11 12 16 / .86) !important; }
+  /* Keep utility actions in document flow: the fixed bottom navigation owns the screen edge. */
+  .mobile-action-dock {
+    position:static !important;
+    inset:auto !important;
+    z-index:auto !important;
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    gap:8px;
+    margin:12px 16px calc(76px + env(safe-area-inset-bottom));
+    padding:0 !important;
+    border:0 !important;
+    background:transparent !important;
+    backdrop-filter:none !important;
+  }
   .mobile-quick-links { display:none !important; }
 }
 @media (min-width:768px) {
