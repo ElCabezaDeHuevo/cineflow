@@ -358,7 +358,7 @@ body { background-color: var(--cf-bg); color: var(--cf-text); }
 
 /* CineFlow login: post-production suite backdrop + glassmorphism form */
 .cf-login-page{position:relative;isolation:isolate;display:grid;min-height:100svh;place-items:center;overflow:hidden;padding:32px 18px 64px;background:#080811;color:#f4f4f5}
-.cf-login-backdrop{position:absolute;inset:0;z-index:-3;background-image:url('/login-studio.svg');background-position:center;background-size:cover;transform:scale(1.02)}
+.cf-login-backdrop{position:absolute;inset:0;z-index:-3;background-image:url('https://images.unsplash.com/photo-1744686912094-5a25e7c329b6?auto=format&fit=crop&fm=jpg&ixid=NHwxMjA3fDA%3D&ixlib=rb-4.1.0&q=85&w=2400');background-position:center;background-size:cover;transform:scale(1.02)}
 .cf-login-vignette{position:absolute;inset:0;z-index:-2;background:linear-gradient(90deg,rgba(5,6,14,.52),rgba(5,6,14,.26) 50%,rgba(5,6,14,.55)),linear-gradient(0deg,rgba(5,6,14,.58),transparent 44%,rgba(5,6,14,.3))}
 .cf-login-card{width:min(100%,465px);padding:38px;border:1px solid rgba(255,255,255,.2);border-radius:24px;background:linear-gradient(145deg,rgba(22,18,37,.86),rgba(12,12,24,.76));box-shadow:0 28px 100px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.13),0 0 65px rgba(139,92,246,.14);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);animation:cf-login-enter .6s cubic-bezier(.2,.75,.25,1) both}
 .cf-login-brand{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:32px}
