@@ -21,7 +21,9 @@ export async function proxy(request: NextRequest) {
       },
     },
   });
-  await supabase.auth.getUser();
+  // Verify the JWT and refresh the session without a network user lookup.
+  // Supabase recommends getClaims() in Next.js Proxy for SSR session refresh.
+  await supabase.auth.getClaims();
   return response;
 }
 
