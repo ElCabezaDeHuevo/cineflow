@@ -7,14 +7,17 @@ import { inviteCompanyMember } from "./actions";
 
 const fmt = (v?: string | null) => v ? new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeZone: "America/Tijuana" }).format(new Date(v)) : "—";
 
-export default async function CompanyPage({ searchParams }: { searchParams: Promise<{ error?: string; success?: string }> }) {
-  const { error, success } = await searchParams;
+export default async function CompanyPage({ searchParams }: { searchParams: Promise<{ error?: string; success?: string; organization_id?: string }> }) {
+  const { error, success, organization_id: requestedOrganizationId } = await searchParams;
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
   const { data: memberships } = await supabase.from("organization_members").select("organization_id,role").eq("user_id", user.id);
-  const membership = (memberships ?? []).find((m) => ["owner", "admin"].includes(m.role));
-  if (!membership) redirect("/");
+  const manageableMemberships = (memberships ?? []).filter((m) => ["owner", "admin"].includes(m.role));
+  const membership = requestedOrganizationId ? manageableMemberships.find((m) => m.organization_id === requestedOrganizationId) : manageableMemberships[0];
+  if (!membership) redirect(manageableMemberships.length ? "/empresa?error=No+tienes+acceso+a+esa+productora" : "/");
+  const { data: manageableOrganizations } = manageableMemberships.length ? await supabase.from("organizations").select("id,name").in("id", manageableMemberships.map((m) => m.organization_id)) : { data: [] };
+  const organizationNameById = new Map((manageableOrganizations ?? []).map((item) => [item.id, item.name]));
   const [{ data: organization }, { data: members }, { data: subscription }] = await Promise.all([
     supabase.from("organizations").select("id,name,slug,billing_email").eq("id", membership.organization_id).single(),
     supabase.from("organization_members").select("user_id,role,joined_at").eq("organization_id", membership.organization_id).order("joined_at", { ascending: true }),
@@ -36,7 +39,7 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
     <main className="cf-cinematic-page cf-bg-admin min-h-screen bg-[#0b0c10] text-white">
       <section className="mx-auto max-w-5xl p-6 md:p-10">
         <Link href="/" className="text-sm text-violet-300">← Volver a CineFlow</Link>
-        <header className="mb-8 mt-7"><p className="text-xs font-semibold uppercase tracking-widest text-violet-300">Espacio de empresa</p><h1 className="mt-2 text-3xl font-bold">{organization?.name ?? "Mi productora"}</h1><p className="mt-2 text-sm text-gray-400">Administra a tu equipo y consulta el estado de tu servicio.</p></header>
+        <header className="mb-8 mt-7"><p className="text-xs font-semibold uppercase tracking-widest text-violet-300">Espacio de empresa</p><h1 className="mt-2 text-3xl font-bold">{organization?.name ?? "Mi productora"}</h1><p className="mt-2 text-sm text-gray-400">Administra a tu equipo y consulta el estado de tu servicio.</p>{manageableMemberships.length > 1 && <form method="get" className="mt-5 flex flex-wrap items-end gap-3 rounded-xl border border-white/10 bg-[#14151c] p-4"><label className="min-w-0 flex-1 text-sm text-gray-300">Productora activa<select name="organization_id" defaultValue={membership.organization_id} className="mt-2 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-3 text-white">{manageableMemberships.map((item) => <option key={item.organization_id} value={item.organization_id}>{organizationNameById.get(item.organization_id) ?? "Productora"}</option>)}</select></label><button className="rounded-lg border border-violet-400/30 bg-violet-500/15 px-4 py-3 text-sm font-semibold text-violet-100 hover:bg-violet-500/25">Cambiar empresa</button></form>}</header>
         {error && <p role="alert" className="mb-5 rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-200">{error}</p>}
         {success && <p role="status" className="mb-5 rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-4 text-sm text-emerald-200">{success}</p>}
         <section className="mb-6 grid gap-4 sm:grid-cols-3">
@@ -45,7 +48,7 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
           <article className="rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Integrantes</p><p className="mt-2 text-xl font-semibold">{members?.length ?? 0}</p></article>
         </section>
         <section className="grid gap-6 lg:grid-cols-[.9fr_1.1fr]">
-          <form action={inviteCompanyMember} className="rounded-2xl border border-white/10 bg-[#14151c] p-6">
+          <form action={inviteCompanyMember} className="rounded-2xl border border-white/10 bg-[#14151c] p-6"><input type="hidden" name="organization_id" value={membership.organization_id} />
             <h2 className="text-lg font-semibold">Invitar colaborador</h2><p className="mt-1 text-sm text-gray-400">Invítalo con su correo y define qué puede hacer.</p>
             <label className="mt-5 block text-sm text-gray-300">Correo electrónico<input name="email" type="email" required placeholder="persona@empresa.com" className="mt-2 w-full rounded-lg border border-white/10 bg-black/20 px-3 py-3 text-white" /></label>
             <label className="mt-4 block text-sm text-gray-300">Permiso<select name="role" className="mt-2 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-3 text-white"><option value="producer">Productor</option><option value="member">Colaborador</option><option value="viewer">Solo lectura</option></select></label>

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { createUser } from "./actions";
+import { createUser, assignExistingUser } from "./actions";
 import { CINE_ROLES } from "@/lib/cine-roles";
 import { isCineflowAdmin } from "@/lib/admin";
 
@@ -112,7 +112,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
               const displayName = profile?.full_name || String(account.user_metadata?.full_name ?? "Sin nombre");
               return <div key={account.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
                 <div className="min-w-0"><p className="truncate font-medium">{displayName}</p><p className="truncate text-sm text-gray-400">{account.email ?? "Sin correo"}</p><p className="mt-1 text-xs text-gray-500">Cuenta creada: {new Date(account.created_at).toLocaleDateString("es-MX")}</p></div>
-                <span className="rounded-full border border-amber-400/20 px-3 py-1 text-xs text-amber-200">Sin empresa asignada</span>
+                <form action={assignExistingUser} className="flex flex-wrap items-end gap-2"><input type="hidden" name="user_id" value={account.id} /><label className="min-w-[180px] text-xs text-gray-400">Asignar a<select name="organization_id" required defaultValue="" className="mt-1 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white"><option value="" disabled>Seleccionar productora</option>{(companies ?? []).map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}</select></label><label className="min-w-[150px] text-xs text-gray-400">Permiso<select name="organization_role" defaultValue="member" className="mt-1 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white"><option value="admin">Administrador</option><option value="producer">Productor</option><option value="member">Colaborador</option><option value="viewer">Solo lectura</option></select></label><button disabled={!companies?.length} className="rounded-lg bg-violet-500 px-4 py-2 text-sm font-semibold hover:bg-violet-400 disabled:opacity-40">Vincular cuenta</button></form>
               </div>;
             })}
           </div> : <p className="p-5 text-sm text-gray-500">No hay cuentas pendientes de asignar.</p>}
