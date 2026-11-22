@@ -68,8 +68,8 @@ end;
 $function$;
 
 -- These functions must only be callable by authenticated sessions.
-REVOKE ALL ON FUNCTION public.review_project_membership_request(uuid, uuid, boolean) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.review_project_membership_request(uuid, uuid, boolean) TO authenticated;
+REVOKE ALL ON FUNCTION public.review_project_membership_request(uuid, uuid, boolean) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.review_project_membership_request(uuid, uuid, boolean) TO authenticated, service_role;
 
-REVOKE ALL ON FUNCTION public.review_project_leave_request(uuid, uuid, boolean) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.review_project_leave_request(uuid, uuid, boolean) TO authenticated;
+REVOKE ALL ON FUNCTION public.review_project_leave_request(uuid, uuid, boolean) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.review_project_leave_request(uuid, uuid, boolean) TO authenticated, service_role;
