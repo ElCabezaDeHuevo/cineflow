@@ -51,8 +51,22 @@ export async function GET(request: NextRequest) {
     role: invitation.role,
     invited_by: invitation.invited_by,
   });
-  if (memberError && memberError.code !== "23505") {
-    return loginError(request, "No se pudo activar tu acceso. Contacta al administrador.");
+  if (memberError) {
+    if (memberError.code !== "23505") {
+      return loginError(request, "No se pudo activar tu acceso. Contacta al administrador.");
+    }
+
+    // A duplicate membership must never silently overwrite an existing role.
+    const { data: existingMembership, error: existingMembershipError } = await admin
+      .from("organization_members")
+      .select("role")
+      .eq("organization_id", invitation.organization_id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (existingMembershipError || !existingMembership || existingMembership.role !== invitation.role) {
+      return loginError(request, "Esta cuenta ya pertenece a la productora con otro permiso. Contacta al administrador.");
+    }
   }
 
   // Keep the auth metadata consistent with accounts created or assigned by admins.
