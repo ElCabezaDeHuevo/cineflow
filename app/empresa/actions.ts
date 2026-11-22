@@ -63,12 +63,24 @@ export async function inviteCompanyMember(formData: FormData) {
       organization_id: organizationId, user_id: existingUser.id, role, invited_by: user.id,
     });
     if (memberError) redirect("/empresa?error=" + encodeURIComponent(memberError.message));
+
+    // Keep the account's active organization metadata consistent with its membership.
+    const previousAppMetadata = existingUser.app_metadata ?? {};
+    const { error: metadataError } = await admin.auth.admin.updateUserById(existingUser.id, {
+      app_metadata: { ...previousAppMetadata, organization_id: organizationId },
+    });
+    if (metadataError) {
+      await admin.from("organization_members").delete().eq("organization_id", organizationId).eq("user_id", existingUser.id);
+      redirect("/empresa?error=" + encodeURIComponent(metadataError.message));
+    }
+
     const { error: auditError } = await admin.from("organization_audit_log").insert({
       organization_id: organizationId, actor_id: user.id, action: "existing_member_added",
       target_type: "user", target_id: existingUser.id, metadata: { email, role },
     });
     if (auditError) {
       await admin.from("organization_members").delete().eq("organization_id", organizationId).eq("user_id", existingUser.id);
+      await admin.auth.admin.updateUserById(existingUser.id, { app_metadata: previousAppMetadata });
       redirect("/empresa?error=" + encodeURIComponent(auditError.message));
     }
     revalidatePath("/empresa");
