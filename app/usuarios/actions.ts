@@ -172,8 +172,8 @@ export async function deleteUser(formData: FormData) {
     ? await admin.from("organization_audit_log").insert(auditEntries)
     : { error: null };
   if (auditError) {
-    await admin.auth.admin.updateUserById(userId, { ban_duration: "none" });
-    redirect(`/usuarios?error=${message("No se pudo registrar la baja. Se reactivó la cuenta.")}`);
+    await admin.auth.admin.updateUserById(userId, { ban_duration: previousBanDuration });
+    redirect(`/usuarios?error=${message("No se pudo registrar la baja. Se restauró el estado de acceso anterior.")}`);
   }
   revalidatePath("/usuarios");
   redirect("/usuarios?success=Cuenta%20desactivada.%20Se%20conservaron%20sus%20registros.");
