@@ -82,8 +82,9 @@ export async function GET(request: NextRequest) {
     return loginError(request, "No se pudo actualizar el acceso de la cuenta. Contacta al administrador.");
   }
 
+  const acceptedAt = new Date().toISOString();
   const { data: acceptedInvitation, error: acceptedError } = await admin.from("organization_invitations")
-    .update({ accepted_at: new Date().toISOString() })
+    .update({ accepted_at: acceptedAt })
     .eq("id", invitation.id)
     .is("accepted_at", null)
     .select("id")
@@ -110,7 +111,9 @@ export async function GET(request: NextRequest) {
     metadata: { email: user.email, role: invitation.role },
   });
   if (auditError) {
-    await admin.from("organization_invitations").update({ accepted_at: null }).eq("id", invitation.id);
+    // Only roll back the acceptance timestamp written by this request.
+    await admin.from("organization_invitations").update({ accepted_at: null })
+      .eq("id", invitation.id).eq("accepted_at", acceptedAt);
     await admin.auth.admin.updateUserById(user.id, { app_metadata: previousAppMetadata });
     if (!memberError) {
       await admin.from("organization_members").delete()
