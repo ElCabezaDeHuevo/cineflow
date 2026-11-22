@@ -67,6 +67,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <ServiceWorkerRegister />
         {user && <AppNavigation name={displayName} email={user.email ?? ""} avatarUrl={navProfile?.avatar_url} isAdmin={isAdmin} />}
+        {user?.app_metadata?.cineflow_force_password_change === true && <ForcedPasswordChange email={user.email ?? ""} />}
         <div className={user ? "cf-app-enter cf-app-frame" : "cf-app-enter"}>{children}</div>
         {user && (
           <>
