@@ -20,7 +20,7 @@ export default async function LoginPage({
     if (user.app_metadata?.cineflow_force_password_change === true) {
       redirect("/auth/reset-password/required");
     }
-    const destination = next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
+    const destination = next && next.startsWith("/") && !next.startsWith("//") && !next.includes("\\\\") && next !== "/login" && !next.startsWith("/auth/") ? next : "/";
     redirect(destination);
   }
 
