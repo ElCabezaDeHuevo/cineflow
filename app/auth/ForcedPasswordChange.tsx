@@ -35,9 +35,9 @@ export default function ForcedPasswordChange({ email }: { email: string }) {
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
       );
-      const { error: refreshError } = await supabase.auth.refreshSession();
-      if (refreshError) throw refreshError;
-      router.replace("/");
+      const { error: signOutError } = await supabase.auth.signOut({ scope: "local" });
+      if (signOutError) throw signOutError;
+      router.replace("/login?success=Contraseña%20actualizada.%20Inicia%20sesión%20con%20tu%20nueva%20contraseña.");
       router.refresh();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "No se pudo cambiar la contraseña.");
