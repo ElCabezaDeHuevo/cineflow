@@ -6,7 +6,6 @@ import LogoutButton from "./LogoutButton";
 import AppNavigation from "./AppNavigation";
 import ErrorReportButton from "./ErrorReportButton";
 import FirstLoginIntroduction from "./onboarding/FirstLoginIntroduction";
-import ForcedPasswordChange from "./auth/ForcedPasswordChange";
 import RouteAutoRefresh from "./RouteAutoRefresh";
 import ServiceWorkerRegister from "./ServiceWorkerRegister";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -67,7 +66,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <ServiceWorkerRegister />
         {user && <AppNavigation name={displayName} email={user.email ?? ""} avatarUrl={navProfile?.avatar_url} isAdmin={isAdmin} />}
-        {user?.app_metadata?.cineflow_force_password_change === true && <ForcedPasswordChange email={user.email ?? ""} />}
         <div className={user ? "cf-app-enter cf-app-frame" : "cf-app-enter"}>{children}</div>
         {user && (
           <>
