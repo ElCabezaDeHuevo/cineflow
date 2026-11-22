@@ -127,7 +127,7 @@ export async function setCompanyAccess(formData: FormData) {
   const mode = String(formData.get("mode") ?? "");
   if (!organizationId || !["suspend", "reactivate"].includes(mode)) fail("Acción no válida.");
   const now = new Date().toISOString();
-  const { data: sub, error } = await admin.from("subscriptions").select("id").eq("organization_id", organizationId).maybeSingle();
+  const { data: sub, error } = await admin.from("subscriptions").select("*").eq("organization_id", organizationId).maybeSingle();
   if (error || !sub) fail(error?.message ?? "No existe una suscripción para esa productora.");
   const { error: updateError } = await admin.from("subscriptions").update({
     status: mode === "suspend" ? "paused" : "active",
@@ -135,11 +135,19 @@ export async function setCompanyAccess(formData: FormData) {
     updated_at: now,
   }).eq("id", sub.id);
   if (updateError) fail(updateError.message);
-  await admin.from("organization_audit_log").insert({
+  const { error: auditError } = await admin.from("organization_audit_log").insert({
     organization_id: organizationId, actor_id: user.id,
     action: mode === "suspend" ? "access_suspended" : "access_reactivated",
     target_type: "subscription", target_id: sub.id, metadata: {},
   });
+  if (auditError) {
+    await admin.from("subscriptions").update({
+      status: sub.status,
+      access_suspended_at: sub.access_suspended_at,
+      updated_at: sub.updated_at,
+    }).eq("id", sub.id);
+    fail(auditError.message);
+  }
   revalidatePath("/admin/productoras");
   redirect("/admin/productoras?success=" + (mode === "suspend" ? "Acceso+suspendido" : "Acceso+reactivado"));
 }
