@@ -5,9 +5,16 @@ import { inviteCompanyMember } from "./actions";
 
 type InviteResult = {
   ok: true;
+  kind: "invitation";
   email: string;
   organizationName: string;
   inviteUrl: string;
+} | {
+  ok: true;
+  kind: "existing";
+  email: string;
+  organizationName: string;
+  loginUrl: string;
 } | {
   ok: false;
   message: string;
