@@ -15,29 +15,13 @@ export async function GET(request: NextRequest) {
   const type = url.searchParams.get("type");
   const invitationId = url.searchParams.get("invitation_id");
 
-  if (!invitationId || (!code && (!tokenHash || type !== "invite"))) {
+  if (!invitationId || !tokenHash || type !== "invite" || code) {
     return loginError(request, "El enlace de invitación no es válido o ha caducado.");
   }
 
   const supabase = await createSupabaseServerClient();
 
-  // generateLink() returns a token hash. Verify it server-side so Supabase
-  // can create the recipient's session cookie before we activate membership.
-  if (tokenHash) {
-    const { error: verifyError } = await supabase.auth.verifyOtp({
-      token_hash: tokenHash,
-      type: "invite",
-    });
-    if (verifyError) {
-      return loginError(request, "No se pudo verificar la invitación. Solicita un enlace nuevo.");
-    }
-  } else if (code) {
-    // Keep compatibility with invitation links created by the previous flow.
-    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-    if (exchangeError) {
-      return loginError(request, "No se pudo verificar el correo. Solicita una nueva invitación.");
-    }
-  }
+  // The invitation token is checked against its database record below before it can be consumed.
 
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user?.email) return loginError(request, "No se pudo verificar la cuenta.");
@@ -47,12 +31,13 @@ export async function GET(request: NextRequest) {
 
   const { data: invitation, error: invitationError } = await admin
     .from("organization_invitations")
-    .select("id,organization_id,email,role,expires_at,accepted_at,invited_by")
+    .select("id,organization_id,email,role,expires_at,accepted_at,invited_by,token_hash")
     .eq("id", invitationId)
     .maybeSingle();
 
   if (invitationError || !invitation) return loginError(request, "La invitación no existe.");
-  if (invitation.accepted_at) return loginError(request, "Esta invitación ya fue utilizada.");
+  if (invitation.accepted_at || !invitation.token_hash) return loginError(request, "Esta invitación ya fue utilizada.");
+  if (invitation.token_hash !== tokenHash) return loginError(request, "La llave no corresponde a esta invitación.");
   if (new Date(invitation.expires_at).getTime() <= Date.now()) {
     return loginError(request, "La invitación ha caducado. Solicita una nueva.");
   }
@@ -70,8 +55,9 @@ export async function GET(request: NextRequest) {
   const acceptedAt = new Date().toISOString();
   const { data: claimedInvitation, error: claimError } = await admin
     .from("organization_invitations")
-    .update({ accepted_at: acceptedAt })
+    .update({ accepted_at: acceptedAt, token_hash: null })
     .eq("id", invitation.id)
+    .eq("token_hash", tokenHash)
     .is("accepted_at", null)
     .select("id")
     .maybeSingle();
@@ -83,9 +69,10 @@ export async function GET(request: NextRequest) {
 
   const releaseClaim = async () => {
     await admin.from("organization_invitations")
-      .update({ accepted_at: null })
+      .update({ accepted_at: null, token_hash: tokenHash })
       .eq("id", invitation.id)
-      .eq("accepted_at", acceptedAt);
+      .eq("accepted_at", acceptedAt)
+      .is("token_hash", null);
   };
 
   const { error: memberError } = await admin.from("organization_members").insert({
