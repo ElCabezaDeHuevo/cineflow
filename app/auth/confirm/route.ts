@@ -45,14 +45,40 @@ export async function GET(request: NextRequest) {
     return loginError(request, "El permiso de esta invitación no es válido.");
   }
 
+  // Claim the invitation before creating membership. This makes concurrent
+  // callbacks mutually exclusive and prevents a losing request from reverting
+  // metadata written by the request that actually accepted the invitation.
+  const acceptedAt = new Date().toISOString();
+  const { data: claimedInvitation, error: claimError } = await admin
+    .from("organization_invitations")
+    .update({ accepted_at: acceptedAt })
+    .eq("id", invitation.id)
+    .is("accepted_at", null)
+    .select("id")
+    .maybeSingle();
+  if (claimError || !claimedInvitation) {
+    return loginError(request, claimError
+      ? "No se pudo completar la aceptación. Contacta al administrador."
+      : "Esta invitación ya fue utilizada.");
+  }
+
+  const releaseClaim = async () => {
+    await admin.from("organization_invitations")
+      .update({ accepted_at: null })
+      .eq("id", invitation.id)
+      .eq("accepted_at", acceptedAt);
+  };
+
   const { error: memberError } = await admin.from("organization_members").insert({
     organization_id: invitation.organization_id,
     user_id: user.id,
     role: invitation.role,
     invited_by: invitation.invited_by,
   });
+  let membershipInserted = !memberError;
   if (memberError) {
     if (memberError.code !== "23505") {
+      await releaseClaim();
       return loginError(request, "No se pudo activar tu acceso. Contacta al administrador.");
     }
 
@@ -65,39 +91,23 @@ export async function GET(request: NextRequest) {
       .maybeSingle();
 
     if (existingMembershipError || !existingMembership || existingMembership.role !== invitation.role) {
+      await releaseClaim();
       return loginError(request, "Esta cuenta ya pertenece a la productora con otro permiso. Contacta al administrador.");
     }
+    membershipInserted = false;
   }
 
-  // Keep the auth metadata consistent with accounts created or assigned by admins.
   const previousAppMetadata = user.app_metadata ?? {};
   const { error: metadataError } = await admin.auth.admin.updateUserById(user.id, {
     app_metadata: { ...previousAppMetadata, organization_id: invitation.organization_id },
   });
   if (metadataError) {
-    if (!memberError) {
+    if (membershipInserted) {
       await admin.from("organization_members").delete()
         .eq("organization_id", invitation.organization_id).eq("user_id", user.id);
     }
+    await releaseClaim();
     return loginError(request, "No se pudo actualizar el acceso de la cuenta. Contacta al administrador.");
-  }
-
-  const acceptedAt = new Date().toISOString();
-  const { data: acceptedInvitation, error: acceptedError } = await admin.from("organization_invitations")
-    .update({ accepted_at: acceptedAt })
-    .eq("id", invitation.id)
-    .is("accepted_at", null)
-    .select("id")
-    .maybeSingle();
-  if (acceptedError || !acceptedInvitation) {
-    await admin.auth.admin.updateUserById(user.id, { app_metadata: previousAppMetadata });
-    if (!memberError) {
-      await admin.from("organization_members").delete()
-        .eq("organization_id", invitation.organization_id).eq("user_id", user.id);
-    }
-    return loginError(request, acceptedError
-      ? "No se pudo completar la aceptación. Contacta al administrador."
-      : "Esta invitación ya fue utilizada.");
   }
 
   const { data: org } = await admin.from("organizations").select("name")
@@ -111,14 +121,12 @@ export async function GET(request: NextRequest) {
     metadata: { email: user.email, role: invitation.role },
   });
   if (auditError) {
-    // Only roll back the acceptance timestamp written by this request.
-    await admin.from("organization_invitations").update({ accepted_at: null })
-      .eq("id", invitation.id).eq("accepted_at", acceptedAt);
     await admin.auth.admin.updateUserById(user.id, { app_metadata: previousAppMetadata });
-    if (!memberError) {
+    if (membershipInserted) {
       await admin.from("organization_members").delete()
         .eq("organization_id", invitation.organization_id).eq("user_id", user.id);
     }
+    await releaseClaim();
     return loginError(request, "No se pudo registrar la aceptación. Contacta al administrador.");
   }
 
