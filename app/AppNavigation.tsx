@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 
-type CompanyRole = "owner" | "admin" | "producer" | "member" | "viewer";\ntype Props = { name: string; email: string; avatarUrl?: string | null; isAdmin: boolean; companyRole: CompanyRole | null };
+type CompanyRole = "owner" | "admin" | "producer" | "member" | "viewer";
+type Props = { name: string; email: string; avatarUrl?: string | null; isAdmin: boolean; companyRole: CompanyRole | null };
 
 const groups = [
   { label: "Espacio de trabajo", items: [{ href: "/", label: "Panel principal", icon: "▦" }] },
@@ -14,8 +15,13 @@ const groups = [
   { label: "Herramientas", items: [{ href: "/buscar", label: "Buscar", icon: "⌕" }, { href: "/admin/informes", label: "Informes", icon: "▥" }, { href: "/centro", label: "Centro de ayuda", icon: "?" }] },
 ];
 
-function NavItems({ pathname, isAdmin, onNavigate }: { pathname: string; isAdmin: boolean; onNavigate?: () => void }) {
-  return <>{groups.map((group) => <div key={group.label} className="mb-6"><p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[.2em] text-zinc-500">{group.label}</p><div className="space-y-1">{group.items.map((item) => { const active = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(item.href + "/"); return <Link key={item.href} href={item.href} onClick={onNavigate} aria-current={active ? "page" : undefined} className={`cf-nav-link ${active ? "is-active" : ""}`}><span className="cf-nav-icon">{item.icon}</span><span>{item.label}</span></Link>; })}</div></div>)}{isAdmin && <div className="mb-6"><p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[.2em] text-zinc-500">Administración</p><Link href="/admin" onClick={onNavigate} className={`cf-nav-link ${pathname.startsWith("/admin") ? "is-active" : ""}`}><span className="cf-nav-icon">⚙</span><span>Panel de administración</span></Link></div>}</>;
+function NavItems({ pathname, isAdmin, companyRole, onNavigate }: { pathname: string; isAdmin: boolean; companyRole: CompanyRole | null; onNavigate?: () => void }) {
+  const canManageCompany = companyRole === "owner" || companyRole === "admin";
+  return <>
+    {groups.map((group) => <div key={group.label} className="mb-6"><p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[.2em] text-zinc-500">{group.label}</p><div className="space-y-1">{group.items.map((item) => { const active = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(item.href + "/"); return <Link key={item.href} href={item.href} onClick={onNavigate} aria-current={active ? "page" : undefined} className={`cf-nav-link ${active ? "is-active" : ""}`}><span className="cf-nav-icon">{item.icon}</span><span>{item.label}</span></Link>; })}</div></div>)}
+    {canManageCompany && <div className="mb-6"><p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[.2em] text-zinc-500">Mi productora</p><Link href="/empresa" onClick={onNavigate} className={`cf-nav-link ${pathname === "/empresa" ? "is-active" : ""}`}><span className="cf-nav-icon">⌂</span><span>Espacio de empresa</span></Link><Link href="/empresa/informes" onClick={onNavigate} className={`cf-nav-link ${pathname.startsWith("/empresa/informes") ? "is-active" : ""}`}><span className="cf-nav-icon">▥</span><span>Informes de empresa</span></Link></div>}
+    {isAdmin && <div className="mb-6"><p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[.2em] text-zinc-500">Administración global</p><Link href="/admin/informes" onClick={onNavigate} className={`cf-nav-link ${pathname === "/admin/informes" ? "is-active" : ""}`}><span className="cf-nav-icon">▥</span><span>Informes globales</span></Link><Link href="/admin" onClick={onNavigate} className={`cf-nav-link ${pathname.startsWith("/admin") && pathname !== "/admin/informes" ? "is-active" : ""}`}><span className="cf-nav-icon">⚙</span><span>Panel de administración</span></Link></div>}
+  </>;
 }
 
 export default function AppNavigation({ name, email, avatarUrl, isAdmin, companyRole }: Props) {
