@@ -404,3 +404,93 @@ export async function completeForcedPasswordChange(newPassword: string) {
   revalidatePath("/login");
   return { success: true };
 }
+
+
+export async function updateOrganizationMemberRole(formData: FormData) {
+  const { admin, user: actor } = await requireAdmin();
+  const organizationId = String(formData.get("organization_id") ?? "").trim();
+  const userId = String(formData.get("user_id") ?? "").trim();
+  const nextRole = String(formData.get("organization_role") ?? "").trim();
+  const allowedRoles = ["owner", "admin", "producer", "member", "viewer"];
+  if (!organizationId || !userId || !allowedRoles.includes(nextRole)) {
+    redirect("/usuarios?error=Selecciona+una+empresa,+cuenta+y+rol+válidos");
+  }
+  if (userId === actor.id) {
+    redirect("/usuarios?error=No+puedes+cambiar+tu+propio+rol+desde+este+panel");
+  }
+
+  const [{ data: company, error: companyError }, { data: target, error: targetError }, { data: memberships, error: membershipsError }] = await Promise.all([
+    admin.from("organizations").select("id,name").eq("id", organizationId).maybeSingle(),
+    admin.from("organization_members").select("role").eq("organization_id", organizationId).eq("user_id", userId).maybeSingle(),
+    admin.from("organization_members").select("user_id,role").eq("organization_id", organizationId),
+  ]);
+  if (companyError || !company) redirect("/usuarios?error=No+se+encontró+la+productora");
+  if (targetError || !target) redirect("/usuarios?error=El+usuario+no+pertenece+a+esta+productora");
+  if (membershipsError || !memberships) redirect("/usuarios?error=No+se+pudo+consultar+el+equipo");
+
+  const previousRole = target.role;
+  if (previousRole === nextRole) redirect("/usuarios?success=El+usuario+ya+tiene+ese+rol");
+
+  const owners = memberships.filter((member) => member.role === "owner");
+  if (previousRole === "owner" && nextRole !== "owner" && owners.length <= 1) {
+    redirect("/usuarios?error=La+productora+debe+conservar+al+menos+un+dueño.+Asigna+otro+dueño+primero");
+  }
+
+  // Ownership is transferred deliberately: the previous owner becomes admin,
+  // then the selected member becomes owner. On failure, restore the previous state.
+  let previousOwnerId: string | null = null;
+  if (nextRole === "owner") {
+    previousOwnerId = owners.find((member) => member.user_id !== userId)?.user_id ?? null;
+    if (previousOwnerId) {
+      const { error: demoteError } = await admin.from("organization_members")
+        .update({ role: "admin" }).eq("organization_id", organizationId).eq("user_id", previousOwnerId).eq("role", "owner");
+      if (demoteError) redirect("/usuarios?error=No+se+pudo+preparar+la+transferencia+de+propiedad");
+    }
+  }
+
+  const { error: updateError } = await admin.from("organization_members")
+    .update({ role: nextRole }).eq("organization_id", organizationId).eq("user_id", userId);
+  if (updateError) {
+    if (previousOwnerId) {
+      await admin.from("organization_members").update({ role: "owner" })
+        .eq("organization_id", organizationId).eq("user_id", previousOwnerId);
+    }
+    redirect("/usuarios?error=" + message(updateError.message));
+  }
+
+  const auditEntries = [{
+    organization_id: organizationId,
+    actor_id: actor.id,
+    action: nextRole === "owner" ? "organization_ownership_transferred" : "organization_member_role_changed",
+    target_type: "user",
+    target_id: userId,
+    metadata: { email: (await admin.auth.admin.getUserById(userId)).data.user?.email ?? null, previous_role: previousRole, new_role: nextRole, previous_owner_id: previousOwnerId },
+  }];
+  if (previousOwnerId) {
+    auditEntries.push({
+      organization_id: organizationId,
+      actor_id: actor.id,
+      action: "organization_member_role_changed",
+      target_type: "user",
+      target_id: previousOwnerId,
+      metadata: { previous_role: "owner", new_role: "admin", transferred_to: userId },
+    });
+  }
+  const { error: auditError } = await admin.from("organization_audit_log").insert(auditEntries);
+  if (auditError) {
+    await admin.from("organization_members").update({ role: previousRole })
+      .eq("organization_id", organizationId).eq("user_id", userId);
+    if (previousOwnerId) {
+      await admin.from("organization_members").update({ role: "owner" })
+        .eq("organization_id", organizationId).eq("user_id", previousOwnerId);
+    }
+    redirect("/usuarios?error=" + message("No se pudo registrar el cambio de rol. Se revirtió la operación."));
+  }
+
+  revalidatePath("/usuarios");
+  revalidatePath("/empresa");
+  revalidatePath("/admin/productoras");
+  redirect("/usuarios?success=" + encodeURIComponent(nextRole === "owner"
+    ? "Propiedad de la productora transferida correctamente."
+    : "Rol del usuario actualizado correctamente."));
+}
