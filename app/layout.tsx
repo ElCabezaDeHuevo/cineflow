@@ -54,6 +54,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           name="viewport"
           content="width=device-width, initial-scale=1, viewport-fit=cover"
         />
+        <style id="cf-native-select-theme">{`
+          select { color-scheme: dark; color: #f4f4f5; background-color: #0b0c10; }
+          select option, select optgroup { color: #f4f4f5; background-color: #14151c; }
+          select option:disabled { color: #9ca3af; }
+          select:disabled { cursor: not-allowed; opacity: .6; }
+        `}</style>
       </head>
       <body className="min-h-full flex flex-col">
         <ServiceWorkerRegister />
