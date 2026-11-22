@@ -25,7 +25,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(login);
   }
 
-  const destination = new URL("/auth/reset-password/change", request.url);
-  destination.searchParams.set("recovery", "1");
+  const destination = new URL("/", request.url);
   return NextResponse.redirect(destination);
 }
