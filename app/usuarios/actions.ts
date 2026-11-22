@@ -1,5 +1,7 @@
 "use server";
 
+import { randomBytes } from "crypto";
+
 import { revalidatePath } from "next/cache";
 import { createClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
@@ -262,6 +264,75 @@ export async function resetUserPassword(formData: FormData) {
 
   revalidatePath("/usuarios");
   redirect(`/usuarios?success=${encodeURIComponent("Se envió el correo de restablecimiento. El usuario deberá cambiar su contraseña antes de entrar a CineFlow.")}`);
+}
+
+
+export async function generateTemporaryPassword(userId: string, reason: string) {
+  const supabase = await createSupabaseServerClient();
+  const { data: { user: actor }, error: actorError } = await supabase.auth.getUser();
+  if (actorError || !actor) return { error: "Inicia sesión nuevamente." };
+  if (!isCineflowAdmin(actor)) return { error: "No tienes permisos para restablecer contraseñas." };
+  const admin = createSupabaseAdminClient();
+  if (!admin) return { error: "Falta configurar el servicio de administración de cuentas." };
+
+  const targetId = String(userId ?? "").trim();
+  const resetReason = String(reason ?? "").trim().slice(0, 300);
+  if (!targetId || targetId === actor.id) return { error: "No puedes restablecer tu propia contraseña desde este panel." };
+  if (resetReason.length < 4) return { error: "Escribe un motivo de al menos 4 caracteres." };
+
+  const [{ data: target, error: targetError }, { data: memberships, error: membershipError }] = await Promise.all([
+    admin.auth.admin.getUserById(targetId),
+    admin.from("organization_members").select("organization_id,role").eq("user_id", targetId),
+  ]);
+  if (targetError || !target?.user?.email) return { error: "No se encontró la cuenta del usuario." };
+  if (membershipError || !memberships?.length) return { error: "El usuario no tiene una productora vinculada para registrar la auditoría." };
+
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+  const random = randomBytes(24);
+  let temporaryPassword = "Aa9!";
+  for (let index = 0; index < random.length; index++) temporaryPassword += alphabet[random[index] % alphabet.length];
+
+  const requestedAt = new Date().toISOString();
+  const previousMetadata = target.user.app_metadata ?? {};
+  const auditRows = memberships.map((membership) => ({
+    organization_id: membership.organization_id,
+    actor_id: actor.id,
+    action: "user_password_reset_requested",
+    target_type: "user",
+    target_id: targetId,
+    metadata: {
+      email: target.user.email,
+      requested_at: requestedAt,
+      reason: resetReason,
+      delivery: "temporary_password_generated",
+      reset_method: "admin_generated_temporary_password",
+    },
+  }));
+  const { error: auditError } = await admin.from("organization_audit_log").insert(auditRows);
+  if (auditError) return { error: "No se pudo registrar el restablecimiento. No se modificó la contraseña." };
+
+  const { error: updateError } = await admin.auth.admin.updateUserById(targetId, {
+    password: temporaryPassword,
+    app_metadata: {
+      ...previousMetadata,
+      cineflow_force_password_change: true,
+      cineflow_password_reset_requested_at: requestedAt,
+      cineflow_password_reset_requested_by: actor.id,
+    },
+  });
+  if (updateError) {
+    await admin.from("organization_audit_log").delete()
+      .eq("action", "user_password_reset_requested")
+      .eq("target_id", targetId)
+      .eq("actor_id", actor.id)
+      .contains("metadata", { requested_at: requestedAt });
+    return { error: "Supabase no pudo actualizar la contraseña: " + updateError.message };
+  }
+
+  await admin.auth.admin.signOut(targetId, "global");
+  revalidatePath("/usuarios");
+  revalidatePath("/admin");
+  return { temporaryPassword, email: target.user.email };
 }
 
 export async function completeForcedPasswordChange(newPassword: string) {
