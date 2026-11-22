@@ -149,6 +149,10 @@ export async function deleteUser(formData: FormData) {
   if (ownership?.length) redirect("/usuarios?error=No puedes eliminar al dueño de una empresa. Transfiere la propiedad primero.");
   const { data: account, error: lookupError } = await admin.auth.admin.getUserById(userId);
   if (lookupError || !account.user) redirect(`/usuarios?error=${message(lookupError?.message ?? "No se encontró la cuenta.")}`);
+  const previousBanUntil = account.user.banned_until ? new Date(account.user.banned_until).getTime() : 0;
+  const previousBanDuration = previousBanUntil > Date.now()
+    ? `${Math.ceil((previousBanUntil - Date.now()) / 1000)}s`
+    : "none";
   const { error: disableError } = await admin.auth.admin.updateUserById(userId, {
     ban_duration: "876000h",
   });
@@ -156,7 +160,7 @@ export async function deleteUser(formData: FormData) {
   const { data: memberships, error: membershipsError } = await admin.from("organization_members")
     .select("organization_id").eq("user_id", userId);
   if (membershipsError) {
-    await admin.auth.admin.updateUserById(userId, { ban_duration: "none" });
+    await admin.auth.admin.updateUserById(userId, { ban_duration: previousBanDuration });
     redirect(`/usuarios?error=${message("No se pudo verificar la empresa del usuario. No se aplicó la baja.")}`);
   }
   const auditEntries = (memberships ?? []).map((membership) => ({
