@@ -42,7 +42,7 @@ export async function inviteCompanyMember(formData: FormData) {
   const { admin, user } = await ownerContext(organizationId);
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const role = String(formData.get("role") ?? "member");
-  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) redirect("/empresa?error=Correo+no+válido");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) redirect("/empresa?error=Correo+no+válido");
   if (!["producer", "member", "viewer"].includes(role)) redirect("/empresa?error=Permiso+no+válido");
   const { data: org, error: orgError } = await admin.from("organizations").select("name").eq("id", organizationId).single();
   if (orgError || !org) redirect("/empresa?error=No+se+encontró+la+productora");
