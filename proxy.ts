@@ -34,7 +34,7 @@ export async function proxy(request: NextRequest) {
   const claims = claimsData?.claims as { app_metadata?: { cineflow_force_password_change?: boolean } } | undefined;
   const forcePasswordChange = claims?.app_metadata?.cineflow_force_password_change === true;
   const pathname = request.nextUrl.pathname;
-  const isPasswordChangeRoute = pathname === "/auth/reset-password/required";
+  const isPasswordChangeRoute = pathname === "/auth/reset-password/required" || pathname === "/auth/reset-password";
   const isSignOutRoute = pathname === "/auth/signout";
   if (forcePasswordChange && !isPasswordChangeRoute && !isSignOutRoute) {
     const destination = request.nextUrl.clone();
