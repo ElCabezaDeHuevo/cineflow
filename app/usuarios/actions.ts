@@ -458,7 +458,7 @@ export async function updateOrganizationMemberRole(formData: FormData) {
     redirect("/usuarios?error=" + message(updateError.message));
   }
 
-  const auditEntries = [{
+  const auditEntries: Array<{ organization_id: string; actor_id: string; action: string; target_type: string; target_id: string; metadata: Record<string, unknown> }> = [{
     organization_id: organizationId,
     actor_id: actor.id,
     action: nextRole === "owner" ? "organization_ownership_transferred" : "organization_member_role_changed",
