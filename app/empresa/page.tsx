@@ -18,6 +18,10 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
     ? manageableMemberships.find((m) => m.organization_id === requestedOrganizationId)
     : manageableMemberships[0];
   if (!membership) redirect(manageableMemberships.length ? "/empresa?error=No+tienes+acceso+a+esa+productora" : "/");
+  const { data: manageableOrganizations } = manageableMemberships.length
+    ? await supabase.from("organizations").select("id,name").in("id", manageableMemberships.map((m) => m.organization_id))
+    : { data: [] };
+  const organizationNameById = new Map((manageableOrganizations ?? []).map((item) => [item.id, item.name]));
   const [{ data: organization }, { data: members }, { data: subscription }] = await Promise.all([
     supabase.from("organizations").select("id,name,slug,billing_email").eq("id", membership.organization_id).single(),
     supabase.from("organization_members").select("user_id,role,joined_at").eq("organization_id", membership.organization_id).order("joined_at", { ascending: true }),
@@ -46,7 +50,7 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
           {manageableMemberships.length > 1 && <form method="get" className="mt-5 flex flex-wrap items-end gap-3 rounded-xl border border-white/10 bg-[#14151c] p-4">
             <label className="min-w-0 flex-1 text-sm text-gray-300">Productora activa
               <select name="organization_id" defaultValue={membership.organization_id} className="mt-2 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-3 text-white">
-                {manageableMemberships.map((item) => <option key={item.organization_id} value={item.organization_id}>{item.organization_id}</option>)}
+                {manageableMemberships.map((item) => <option key={item.organization_id} value={item.organization_id}>{organizationNameById.get(item.organization_id) ?? "Productora"}</option>)}
               </select>
             </label>
             <button className="rounded-lg border border-violet-400/30 bg-violet-500/15 px-4 py-3 text-sm font-semibold text-violet-100 hover:bg-violet-500/25">Cambiar empresa</button>
