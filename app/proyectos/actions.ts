@@ -323,7 +323,7 @@ async function reviewProjectLeaveRequest(
       )}`,
     );
   }
-  const { error } = await admin.rpc("review_project_leave_request", {
+  const { error } = await context.supabase.rpc("review_project_leave_request", {
     request_uuid: request.id,
     reviewer_uuid: context.user.id,
     approve,
@@ -425,7 +425,7 @@ async function reviewProjectMembershipRequest(
   if (requestError || !request) {
     redirect(`/proyectos?error=${encodeURIComponent(requestError?.message ?? "La solicitud ya no está pendiente.")}`);
   }
-  const { error } = await admin.rpc("review_project_membership_request", {
+  const { error } = await context.supabase.rpc("review_project_membership_request", {
     request_uuid: request.id,
     reviewer_uuid: context.user.id,
     approve,
