@@ -49,6 +49,11 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
 BEGIN
+  -- Trusted server-side admin operations use the service_role JWT and remain allowed.
+  IF current_setting('request.jwt.claim.role', true) = 'service_role' THEN
+    RETURN NEW;
+  END IF;
+
   IF NEW.organization_id IS DISTINCT FROM OLD.organization_id
      OR NEW.user_id IS DISTINCT FROM OLD.user_id THEN
     RAISE EXCEPTION 'Organization and user identifiers cannot be changed';
