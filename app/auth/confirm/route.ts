@@ -11,14 +11,33 @@ function loginError(request: NextRequest, message: string) {
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
+  const tokenHash = url.searchParams.get("token_hash");
+  const type = url.searchParams.get("type");
   const invitationId = url.searchParams.get("invitation_id");
-  if (!code || !invitationId) {
+
+  if (!invitationId || (!code && (!tokenHash || type !== "invite"))) {
     return loginError(request, "El enlace de invitación no es válido o ha caducado.");
   }
 
   const supabase = await createSupabaseServerClient();
-  const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-  if (exchangeError) return loginError(request, "No se pudo verificar el correo. Solicita una nueva invitación.");
+
+  // generateLink() returns a token hash. Verify it server-side so Supabase
+  // can create the recipient's session cookie before we activate membership.
+  if (tokenHash) {
+    const { error: verifyError } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: "invite",
+    });
+    if (verifyError) {
+      return loginError(request, "No se pudo verificar la invitación. Solicita un enlace nuevo.");
+    }
+  } else if (code) {
+    // Keep compatibility with invitation links created by the previous flow.
+    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+    if (exchangeError) {
+      return loginError(request, "No se pudo verificar el correo. Solicita una nueva invitación.");
+    }
+  }
 
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user?.email) return loginError(request, "No se pudo verificar la cuenta.");
