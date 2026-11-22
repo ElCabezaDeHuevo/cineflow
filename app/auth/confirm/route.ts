@@ -137,7 +137,7 @@ export async function GET(request: NextRequest) {
     return loginError(request, "No se pudo registrar la aceptación. Contacta al administrador.");
   }
 
-  const destination = new URL("/", request.url);
+  const destination = new URL("/auth/complete-invitation", request.url);
   destination.searchParams.set("welcome", org?.name ?? "CineFlow");
   return NextResponse.redirect(destination);
 }
