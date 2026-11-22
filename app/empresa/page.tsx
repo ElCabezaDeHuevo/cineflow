@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isCineflowAdmin } from "@/lib/admin";
-import { inviteCompanyMember, updateCompanyMemberRole } from "./actions";
+import { updateCompanyMemberRole } from "./actions";
+import InviteMemberForm from "./invite-member-form";
 import { listAllAuthUsers } from "@/lib/supabase/list-all-auth-users";
 
 const fmt = (v?: string | null) => v ? new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeZone: "America/Tijuana" }).format(new Date(v)) : "—";
@@ -55,12 +56,7 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
         </section>
         <section className="mb-6 rounded-2xl border border-white/10 bg-[#14151c] p-5"><h2 className="font-semibold">Información de pagos</h2><p className="mt-1 text-sm text-gray-400">Consulta de solo lectura. Los pagos, planes y reactivaciones los gestiona el equipo de CineFlow.</p><div className="mt-4 grid gap-3 sm:grid-cols-3"><div><p className="text-xs text-gray-500">Último pago</p><p className="mt-1 text-sm">{latestPayment ? fmt(latestPayment.paid_at) : "Sin pagos registrados"}</p></div><div><p className="text-xs text-gray-500">Importe</p><p className="mt-1 text-sm">{latestPayment ? new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(latestPayment.amount_mxn)) : "—"}</p></div><div><p className="text-xs text-gray-500">Método</p><p className="mt-1 text-sm">{latestPayment?.payment_method ?? "—"}</p></div></div></section>
         <section className="grid gap-6 lg:grid-cols-[.9fr_1.1fr]">
-          <form action={inviteCompanyMember} className="rounded-2xl border border-white/10 bg-[#14151c] p-6"><input type="hidden" name="organization_id" value={membership.organization_id} />
-            <h2 className="text-lg font-semibold">Invitar colaborador</h2><p className="mt-1 text-sm text-gray-400">Invítalo con su correo y define qué puede hacer.</p>
-            <label className="mt-5 block text-sm text-gray-300">Correo electrónico<input name="email" type="email" required placeholder="persona@empresa.com" className="mt-2 w-full rounded-lg border border-white/10 bg-black/20 px-3 py-3 text-white" /></label>
-            <label className="mt-4 block text-sm text-gray-300">Permiso<select name="role" className="mt-2 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-3 text-white"><option value="producer">Productor</option><option value="member">Colaborador</option><option value="viewer">Solo lectura</option></select></label>
-            <button disabled={status === "paused" || status === "expired" || status === "canceled"} className="mt-5 w-full rounded-lg bg-violet-500 px-4 py-3 font-semibold hover:bg-violet-400 disabled:cursor-not-allowed disabled:opacity-50">Enviar invitación</button>
-          </form>
+          <InviteMemberForm organizationId={membership.organization_id} organizationName={organization?.name ?? "tu productora"} disabled={status === "paused" || status === "expired" || status === "canceled"} />
           <section className="overflow-hidden rounded-2xl border border-white/10 bg-[#14151c]">
             <div className="border-b border-white/10 p-5"><h2 className="text-lg font-semibold">Mi equipo</h2><p className="mt-1 text-sm text-gray-400">Miembros de esta productora.</p></div>
             <div className="divide-y divide-white/10">{(members ?? []).map((m) => { const p = profileMap.get(m.user_id); const canEdit = m.role !== "owner" && m.user_id !== user.id; return <div key={m.user_id} className="flex flex-wrap items-center justify-between gap-3 p-4"><div className="min-w-0"><p className="truncate font-medium">{p?.full_name || "Integrante"}</p><p className="truncate text-xs text-gray-500">{emailMap.get(m.user_id) ?? ""}</p><span className="mt-1 inline-block rounded-full border border-white/10 px-3 py-1 text-xs text-gray-300">{roleLabel[m.role] ?? m.role}</span></div>{canEdit && <form action={updateCompanyMemberRole} className="flex flex-wrap items-center gap-2"><input type="hidden" name="organization_id" value={membership.organization_id}/><input type="hidden" name="user_id" value={m.user_id}/><select name="role" defaultValue={m.role} className="rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-xs text-white"><option value="admin">Administrador</option><option value="producer">Productor</option><option value="member">Colaborador</option><option value="viewer">Solo lectura</option></select><button className="rounded-lg border border-violet-400/30 bg-violet-500/15 px-3 py-2 text-xs font-semibold text-violet-100 hover:bg-violet-500/25">Guardar rol</button></form>}</div> })}</div>
