@@ -5,6 +5,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isCineflowAdmin } from "@/lib/admin";
 import { createCompany, recordCompanyPayment, setCompanyAccess } from "./actions";
 import ConfirmSubmit from "@/app/ConfirmSubmit";
+import { listAllAuthUsers } from "@/lib/supabase/list-all-auth-users";
 
 const dateLabel = (value?: string | null) => value ? new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeZone: "America/Tijuana" }).format(new Date(value)) : "—";
 const money = (value: number) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(value);
@@ -17,13 +18,15 @@ export default async function CompaniesAdmin({ searchParams }: { searchParams: P
   if (!isCineflowAdmin(user)) redirect("/");
   const admin = createSupabaseAdminClient();
   if (!admin) return <main className="cf-cinematic-page cf-bg-admin min-h-screen bg-[#0b0c10] p-8 text-white">Falta configurar SUPABASE_SERVICE_ROLE_KEY.</main>;
-  const [{ data: companies, error: companiesError }, { data: accounts }, { data: subscriptions }, { data: payments }] = await Promise.all([
+  const [{ data: companies, error: companiesError }, accountsResult, { data: subscriptions }, { data: payments }] = await Promise.all([
     admin.from("organizations").select("id,name,slug,created_at,billing_email,organization_members(user_id,role)").order("created_at", { ascending: false }),
-    admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+    listAllAuthUsers(admin).then((users) => ({ users, error: null })).catch((error: unknown) => ({ users: [], error: error instanceof Error ? error : new Error("No se pudieron consultar todas las cuentas") })),
     admin.from("subscriptions").select("*").order("created_at", { ascending: false }),
     admin.from("organization_manual_payments").select("organization_id,amount_mxn,paid_at,billing_interval,payment_method,reference").order("paid_at", { ascending: false }),
   ]);
-  const accountById = new Map((accounts?.users ?? []).map((x) => [x.id, x]));
+  const accounts = accountsResult.users;
+  const accountsError = accountsResult.error;
+  const accountById = new Map(accounts.map((x) => [x.id, x]));
   const subByOrg = new Map((subscriptions ?? []).map((x) => [x.organization_id, x]));
   const latestPaymentByOrg = new Map<string, { amount_mxn: number; paid_at: string; billing_interval: string; payment_method: string; reference: string | null }>();
   for (const payment of payments ?? []) if (!latestPaymentByOrg.has(payment.organization_id)) latestPaymentByOrg.set(payment.organization_id, payment);
@@ -38,7 +41,7 @@ export default async function CompaniesAdmin({ searchParams }: { searchParams: P
       <div className="mb-8 grid gap-4 sm:grid-cols-3">
         <article className="rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Productoras</p><p className="mt-2 text-3xl font-bold">{companies?.length ?? 0}</p></article>
         <article className="rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Activas o en prueba</p><p className="mt-2 text-3xl font-bold">{activeCount}</p></article>
-        <article className="rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Cuentas disponibles</p><p className="mt-2 text-3xl font-bold">{accounts?.users.length ?? 0}</p></article>
+        <article className="rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Cuentas disponibles</p><p className="mt-2 text-3xl font-bold">{accounts.length}</p></article>
       </div>
       <form action={createCompany} className="mb-8 grid gap-4 rounded-2xl border border-violet-400/20 bg-[#14151c] p-6 md:grid-cols-3">
         <h2 className="text-lg font-semibold md:col-span-3">Registrar productora · 14 días de prueba</h2>
