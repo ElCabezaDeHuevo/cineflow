@@ -28,12 +28,15 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
   const ids = (members ?? []).map((m) => m.user_id);
   const [{ data: profiles }, authUsersResult, paymentResult] = await Promise.all([
     ids.length ? supabase.from("profiles").select("id,full_name,avatar_url").in("id", ids) : Promise.resolve({ data: [] }),
-    admin ? listAllAuthUsers(admin).then((users) => ({ users, error: null })).catch((error: unknown) => ({ users: [], error: error instanceof Error ? error : new Error("No se pudieron consultar todas las cuentas") })) : Promise.resolve({ users: [], error: null }),\n    admin ? admin.from("organization_manual_payments").select("amount_mxn,paid_at,billing_interval,payment_method,reference").eq("organization_id", membership.organization_id).order("paid_at", { ascending: false }).limit(1).maybeSingle() : Promise.resolve({ data: null }),
+    admin ? listAllAuthUsers(admin).then((users) => ({ users, error: null })).catch((error: unknown) => ({ users: [], error: error instanceof Error ? error : new Error("No se pudieron consultar todas las cuentas") })) : Promise.resolve({ users: [], error: null }),
+    admin ? admin.from("organization_manual_payments").select("amount_mxn,paid_at,billing_interval,payment_method,reference").eq("organization_id", membership.organization_id).order("paid_at", { ascending: false }).limit(1).maybeSingle() : Promise.resolve({ data: null }),
   ]);
   const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
   const emailMap = new Map(authUsersResult.users.map((a) => [a.id, a.email]));
   const roleLabel: Record<string,string> = { owner: "Dueño", admin: "Administrador", producer: "Productor", member: "Colaborador", viewer: "Solo lectura" };
-  const latestPayment = paymentResult.data;\n  const isOwner = membership.role === "owner";\n  const status = subscription?.status ?? "Sin plan";
+  const latestPayment = paymentResult.data;
+  const isOwner = membership.role === "owner";
+  const status = subscription?.status ?? "Sin plan";
   const statusLabel = status === "trialing" ? "Prueba gratuita" : status === "active" ? "Servicio activo" : status === "paused" ? "Servicio suspendido" : status === "past_due" ? "Pago pendiente" : status;
   const validUntil = status === "trialing" ? subscription?.trial_end : subscription?.current_period_end;
   return (
@@ -49,7 +52,8 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
           <article className="rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Vigencia</p><p className="mt-2 text-xl font-semibold">{fmt(validUntil)}</p><p className="mt-1 text-xs text-gray-500">{subscription?.billing_interval === "annual" ? "Anual" : "Mensual"}</p></article>
           <article className="rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Integrantes</p><p className="mt-2 text-xl font-semibold">{members?.length ?? 0}</p></article>
         </section>
-        <section className="mb-6 rounded-2xl border border-white/10 bg-[#14151c] p-5"><h2 className="font-semibold">Información de pagos</h2><p className="mt-1 text-sm text-gray-400">Consulta de solo lectura. Los pagos, planes y reactivaciones los gestiona el equipo de CineFlow.</p><div className="mt-4 grid gap-3 sm:grid-cols-3"><div><p className="text-xs text-gray-500">Último pago</p><p className="mt-1 text-sm">{latestPayment ? fmt(latestPayment.paid_at) : "Sin pagos registrados"}</p></div><div><p className="text-xs text-gray-500">Importe</p><p className="mt-1 text-sm">{latestPayment ? new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(latestPayment.amount_mxn)) : "—"}</p></div><div><p className="text-xs text-gray-500">Método</p><p className="mt-1 text-sm">{latestPayment?.payment_method ?? "—"}</p></div></div></section>\n        <section className="grid gap-6 lg:grid-cols-[.9fr_1.1fr]">
+        <section className="mb-6 rounded-2xl border border-white/10 bg-[#14151c] p-5"><h2 className="font-semibold">Información de pagos</h2><p className="mt-1 text-sm text-gray-400">Consulta de solo lectura. Los pagos, planes y reactivaciones los gestiona el equipo de CineFlow.</p><div className="mt-4 grid gap-3 sm:grid-cols-3"><div><p className="text-xs text-gray-500">Último pago</p><p className="mt-1 text-sm">{latestPayment ? fmt(latestPayment.paid_at) : "Sin pagos registrados"}</p></div><div><p className="text-xs text-gray-500">Importe</p><p className="mt-1 text-sm">{latestPayment ? new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(latestPayment.amount_mxn)) : "—"}</p></div><div><p className="text-xs text-gray-500">Método</p><p className="mt-1 text-sm">{latestPayment?.payment_method ?? "—"}</p></div></div></section>
+        <section className="grid gap-6 lg:grid-cols-[.9fr_1.1fr]">
           <form action={inviteCompanyMember} className="rounded-2xl border border-white/10 bg-[#14151c] p-6"><input type="hidden" name="organization_id" value={membership.organization_id} />
             <h2 className="text-lg font-semibold">Invitar colaborador</h2><p className="mt-1 text-sm text-gray-400">Invítalo con su correo y define qué puede hacer.</p>
             <label className="mt-5 block text-sm text-gray-300">Correo electrónico<input name="email" type="email" required placeholder="persona@empresa.com" className="mt-2 w-full rounded-lg border border-white/10 bg-black/20 px-3 py-3 text-white" /></label>
