@@ -153,16 +153,13 @@ export async function deleteUser(formData: FormData) {
   const previousBanDuration = previousBanUntil > Date.now()
     ? `${Math.ceil((previousBanUntil - Date.now()) / 1000)}s`
     : "none";
+  const { data: memberships, error: membershipsError } = await admin.from("organization_members")
+    .select("organization_id").eq("user_id", userId);
+  if (membershipsError) redirect(`/usuarios?error=${message("No se pudo verificar la empresa del usuario. No se aplicó la baja.")}`);
   const { error: disableError } = await admin.auth.admin.updateUserById(userId, {
     ban_duration: "876000h",
   });
   if (disableError) redirect(`/usuarios?error=${message(disableError.message)}`);
-  const { data: memberships, error: membershipsError } = await admin.from("organization_members")
-    .select("organization_id").eq("user_id", userId);
-  if (membershipsError) {
-    await admin.auth.admin.updateUserById(userId, { ban_duration: previousBanDuration });
-    redirect(`/usuarios?error=${message("No se pudo verificar la empresa del usuario. No se aplicó la baja.")}`);
-  }
   const auditEntries = (memberships ?? []).map((membership) => ({
     organization_id: membership.organization_id,
     actor_id: user.id,
