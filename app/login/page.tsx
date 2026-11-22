@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
 import { signIn } from "@/app/auth/actions";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const instant = false;
 
@@ -8,6 +10,19 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string; next?: string }>;
 }) {
   const { error, next } = await searchParams;
+
+  // Do not render the public login form inside an already-authenticated app shell.
+  // This also prevents the sidebar/account chip from showing a different account
+  // alongside a browser-autofilled email from another saved login.
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    if (user.app_metadata?.cineflow_force_password_change === true) {
+      redirect("/auth/reset-password/required");
+    }
+    const destination = next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
+    redirect(destination);
+  }
 
   return (
     <main className="cf-login-page">
@@ -34,7 +49,7 @@ export default async function LoginPage({
           <input type="hidden" name="next" value={next ?? ""} />
           <label>
             <span>Correo electrónico</span>
-            <input name="email" type="email" required autoComplete="email" placeholder="nombre@productora.com" />
+            <input name="email" type="email" required autoComplete="username" placeholder="nombre@productora.com" />
           </label>
           <label>
             <span>Contraseña</span>
