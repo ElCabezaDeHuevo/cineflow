@@ -329,7 +329,6 @@ export async function generateTemporaryPassword(userId: string, reason: string) 
     return { error: "Supabase no pudo actualizar la contraseña: " + updateError.message };
   }
 
-  await admin.auth.admin.signOut(targetId, "global");
   revalidatePath("/usuarios");
   revalidatePath("/admin");
   return { temporaryPassword, email: target.user.email };
