@@ -196,11 +196,7 @@ export async function completeForcedPasswordChange() {
   delete nextMetadata.cineflow_password_reset_requested_at;
   delete nextMetadata.cineflow_password_reset_requested_by;
 
-  const { error: metadataError } = await admin.auth.admin.updateUserById(user.id, {
-    app_metadata: nextMetadata,
-  });
-  if (metadataError) throw new Error("La contraseña se actualizó, pero no se pudo cerrar el proceso. Inténtalo de nuevo.");
-
+  const previousMetadata = user.app_metadata ?? {};
   const completedAt = new Date().toISOString();
   const auditRows = memberships.map((membership) => ({
     organization_id: membership.organization_id,
@@ -216,9 +212,24 @@ export async function completeForcedPasswordChange() {
     },
   }));
   const { error: auditError } = await admin.from("organization_audit_log").insert(auditRows);
-  if (auditError) {
-    await admin.auth.admin.updateUserById(user.id, { app_metadata: previousMetadata });
-    throw new Error("No se pudo guardar el historial del cambio. Vuelve a intentarlo.");
+  if (auditError) throw new Error("No se pudo guardar el historial del cambio. Vuelve a intentarlo.");
+
+  const nextMetadata = { ...previousMetadata };
+  delete nextMetadata.cineflow_force_password_change;
+  delete nextMetadata.cineflow_password_reset_requested_at;
+  delete nextMetadata.cineflow_password_reset_requested_by;
+  const { error: metadataError } = await admin.auth.admin.updateUserById(user.id, {
+    app_metadata: nextMetadata,
+  });
+  if (metadataError) {
+    await admin.from("organization_audit_log").delete()
+      .eq("action", "user_password_changed_after_reset")
+      .eq("target_id", user.id)
+      .eq("actor_id", user.id)
+      .contains("metadata", { completed_at: completedAt });
+    throw new Error("La contraseña se actualizó, pero no se pudo cerrar el proceso. Inténtalo de nuevo.");
   }
+
+
   revalidatePath("/");
 }
