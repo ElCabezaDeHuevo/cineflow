@@ -32,10 +32,13 @@ export async function createCompany(formData: FormData) {
     name, slug, created_by: ownerId, billing_email: owner.user.email ?? null,
   }).select("id").single();
   if (orgError || !org) fail(orgError?.message ?? "No se pudo crear la productora.");
-  const { error: memberError } = await admin.from("organization_members").upsert({
+  const { error: memberError } = await admin.from("organization_members").insert({
     organization_id: org.id, user_id: ownerId, role: "owner",
   });
-  if (memberError) fail(memberError.message);
+  if (memberError) {
+    await admin.from("organizations").delete().eq("id", org.id);
+    fail(memberError.message);
+  }
   const now = new Date();
   const trialEnd = new Date(now);
   trialEnd.setDate(trialEnd.getDate() + 14);
@@ -44,11 +47,21 @@ export async function createCompany(formData: FormData) {
     status: "trialing", trial_start: now.toISOString(), trial_end: trialEnd.toISOString(),
     manual_payment_required: true,
   });
-  if (subError) fail(subError.message);
-  await admin.from("organization_audit_log").insert({
+  if (subError) {
+    await admin.from("organization_members").delete().eq("organization_id", org.id);
+    await admin.from("organizations").delete().eq("id", org.id);
+    fail(subError.message);
+  }
+  const { error: auditError } = await admin.from("organization_audit_log").insert({
     organization_id: org.id, action: "company_created", target_type: "organization",
     target_id: org.id, metadata: { owner_id: ownerId, trial_days: 14 },
   });
+  if (auditError) {
+    await admin.from("subscriptions").delete().eq("organization_id", org.id);
+    await admin.from("organization_members").delete().eq("organization_id", org.id);
+    await admin.from("organizations").delete().eq("id", org.id);
+    fail(auditError.message);
+  }
   revalidatePath("/admin/productoras");
   redirect("/admin/productoras?success=Productora+creada+con+14+dias+de+prueba");
 }
