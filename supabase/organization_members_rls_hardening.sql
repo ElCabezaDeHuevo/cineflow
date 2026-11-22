@@ -3,9 +3,7 @@
 
 DROP POLICY IF EXISTS "Owners and admins can manage organization membership" ON public.organization_members;
 
-CREATE POLICY "Members can view organization membership"
-ON public.organization_members FOR SELECT TO authenticated
-USING (private.is_organization_member(organization_id));
+-- Preserve the existing SELECT policy; it already limits rows to organization members.
 
 CREATE POLICY "Owners and admins can insert permitted memberships"
 ON public.organization_members FOR INSERT TO authenticated
