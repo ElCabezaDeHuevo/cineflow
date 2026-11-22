@@ -21,7 +21,7 @@ async function ownerContext(requestedOrganizationId: string) {
   if (subscription?.status === "paused" || subscription?.status === "expired" || subscription?.status === "canceled") {
     redirect("/empresa?error=El+servicio+está+suspendido.+Contacta+al+soporte");
   }
-  return { admin, user, organizationId: membership.organization_id };
+  return { admin, user, organizationId: membership.organization_id, actorRole: membership.role };
 }
 
 async function findAuthUserByEmail(admin: ReturnType<typeof createSupabaseAdminClient>, email: string) {
@@ -153,12 +153,15 @@ export async function updateCompanyMemberRole(formData: FormData) {
   if (!organizationId || !userId || !["admin", "producer", "member", "viewer"].includes(nextRole)) {
     redirect("/empresa?error=Rol+o+integrante+no+válido");
   }
-  const { admin, user } = await ownerContext(organizationId);
+  const { admin, user, actorRole } = await ownerContext(organizationId);
   if (user.id === userId) redirect("/empresa?error=No+puedes+cambiar+tu+propio+rol");
   const { data: target, error: targetError } = await admin.from("organization_members")
     .select("role").eq("organization_id", organizationId).eq("user_id", userId).maybeSingle();
   if (targetError || !target) redirect("/empresa?error=No+se+encontró+al+integrante");
   if (target.role === "owner") redirect("/empresa?error=Solo+el+administrador+general+puede+transferir+la+propiedad");
+  if (actorRole !== "owner" && (nextRole === "admin" || target.role === "admin")) {
+    redirect("/empresa?error=Solo+el+propietario+puede+asignar+o+modificar+administradores");
+  }
   const { error: updateError } = await admin.from("organization_members")
     .update({ role: nextRole }).eq("organization_id", organizationId).eq("user_id", userId);
   if (updateError) redirect("/empresa?error=" + encodeURIComponent(updateError.message));
