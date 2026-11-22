@@ -113,7 +113,7 @@ export async function recordCompanyPayment(formData: FormData) {
       manual_payment_required: subscription.manual_payment_required, updated_at: subscription.updated_at,
     }).eq("id", subscription.id);
     await admin.from("organization_manual_payments").delete()
-      .eq("organization_id", organizationId).eq("recorded_by", user.id).eq("paid_at", now.toISOString());
+      .eq("id", payment.id);
     fail(auditError.message);
   }
   await admin.from("organizations").update({ updated_at: now.toISOString() }).eq("id", organizationId);
