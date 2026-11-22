@@ -12,7 +12,7 @@ const groups = [
   { label: "Espacio de trabajo", items: [{ href: "/", label: "Panel principal", icon: "▦" }] },
   { label: "Producción", items: [{ href: "/proyectos", label: "Proyectos", icon: "▣" }, { href: "/timeline", label: "Timeline", icon: "◷" }, { href: "/calendario", label: "Calendario", icon: "▦" }, { href: "/rodaje", label: "Planificador de rodaje", icon: "▤" }] },
   { label: "Colaboración", items: [{ href: "/equipo", label: "Equipo", icon: "♙" }, { href: "/actividad", label: "Actividad", icon: "↗" }, { href: "/horarios", label: "Jornadas", icon: "◷" }] },
-  { label: "Herramientas", items: [{ href: "/buscar", label: "Buscar", icon: "⌕" }, { href: "/admin/informes", label: "Informes", icon: "▥" }, { href: "/centro", label: "Centro de ayuda", icon: "?" }] },
+  { label: "Herramientas", items: [{ href: "/buscar", label: "Buscar", icon: "⌕" }, { href: "/estadisticas", label: "Estadísticas", icon: "▥" }, { href: "/centro", label: "Centro de ayuda", icon: "?" }] },
 ];
 
 function NavItems({ pathname, isAdmin, companyRole, onNavigate }: { pathname: string; isAdmin: boolean; companyRole: CompanyRole | null; onNavigate?: () => void }) {
