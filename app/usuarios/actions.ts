@@ -364,8 +364,8 @@ export async function completeForcedPasswordChange(newPassword: string) {
     metadata: {
       email: user.email ?? null,
       completed_at: completedAt,
-      requested_at: previousMetadata.cineflow_password_reset_requested_at ?? null,
-      requested_by: previousMetadata.cineflow_password_reset_requested_by ?? null,
+      requested_at: (previousMetadata as Record<string, unknown>)["cineflow_password_reset_requested_at"] ?? null,
+      requested_by: (previousMetadata as Record<string, unknown>)["cineflow_password_reset_requested_by"] ?? null,
     },
   }));
   const { error: auditError } = await admin.from("organization_audit_log").insert(auditRows);
@@ -377,8 +377,6 @@ export async function completeForcedPasswordChange(newPassword: string) {
     ...previousMetadata,
     cineflow_force_password_change: false,
   };
-  delete nextMetadata.cineflow_password_reset_requested_at;
-  delete nextMetadata.cineflow_password_reset_requested_by;
   const { error: updateError } = await admin.auth.admin.updateUserById(user.id, {
     password,
     app_metadata: nextMetadata,
