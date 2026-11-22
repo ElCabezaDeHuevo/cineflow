@@ -114,3 +114,34 @@ export async function inviteCompanyMember(formData: FormData) {
   revalidatePath("/empresa");
   redirect("/empresa?success=Invitación+enviada.+El+acceso+se+activará+al+confirmar+el+correo");
 }
+
+
+export async function updateCompanyMemberRole(formData: FormData) {
+  const organizationId = String(formData.get("organization_id") ?? "").trim();
+  const userId = String(formData.get("user_id") ?? "").trim();
+  const nextRole = String(formData.get("role") ?? "").trim();
+  if (!organizationId || !userId || !["admin", "producer", "member", "viewer"].includes(nextRole)) {
+    redirect("/empresa?error=Rol+o+integrante+no+válido");
+  }
+  const { admin, user } = await ownerContext(organizationId);
+  if (user.id === userId) redirect("/empresa?error=No+puedes+cambiar+tu+propio+rol");
+  const { data: target, error: targetError } = await admin.from("organization_members")
+    .select("role").eq("organization_id", organizationId).eq("user_id", userId).maybeSingle();
+  if (targetError || !target) redirect("/empresa?error=No+se+encontró+al+integrante");
+  if (target.role === "owner") redirect("/empresa?error=Solo+el+administrador+general+puede+transferir+la+propiedad");
+  const { error: updateError } = await admin.from("organization_members")
+    .update({ role: nextRole }).eq("organization_id", organizationId).eq("user_id", userId);
+  if (updateError) redirect("/empresa?error=" + encodeURIComponent(updateError.message));
+  const { error: auditError } = await admin.from("organization_audit_log").insert({
+    organization_id: organizationId, actor_id: user.id, action: "organization_member_role_changed",
+    target_type: "user", target_id: userId,
+    metadata: { previous_role: target.role, new_role: nextRole },
+  });
+  if (auditError) {
+    await admin.from("organization_members").update({ role: target.role })
+      .eq("organization_id", organizationId).eq("user_id", userId);
+    redirect("/empresa?error=No+se+pudo+registrar+el+cambio.+Se+revirtió+la+operación");
+  }
+  revalidatePath("/empresa");
+  redirect("/empresa?success=Permiso+del+integrante+actualizado");
+}
