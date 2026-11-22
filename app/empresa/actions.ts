@@ -49,6 +49,8 @@ export async function inviteCompanyMember(formData: FormData) {
   if (!["producer", "member", "viewer"].includes(role)) redirect("/empresa?error=Permiso+no+válido");
   const { data: org, error: orgError } = await admin.from("organizations").select("name").eq("id", organizationId).single();
   if (orgError || !org) redirect("/empresa?error=No+se+encontró+la+productora");
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (!siteUrl) return { ok: false as const, message: "Falta configurar NEXT_PUBLIC_SITE_URL" };
 
   let existingUser;
   try {
@@ -87,7 +89,13 @@ export async function inviteCompanyMember(formData: FormData) {
       redirect("/empresa?error=" + encodeURIComponent(auditError.message));
     }
     revalidatePath("/empresa");
-    redirect("/empresa?success=Miembro+agregado+al+equipo");
+    return {
+      ok: true as const,
+      kind: "existing" as const,
+      email,
+      organizationName: org.name,
+      loginUrl: new URL("/login", siteUrl).toString(),
+    };
   }
 
   // A new member remains outside the organization until the invite link is verified.
@@ -99,11 +107,6 @@ export async function inviteCompanyMember(formData: FormData) {
   }).select("id").single();
   if (invitationError || !invitation) redirect("/empresa?error=" + encodeURIComponent(invitationError?.message ?? "No se pudo preparar la invitación"));
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-  if (!siteUrl) {
-    await admin.from("organization_invitations").delete().eq("id", invitation.id);
-    redirect("/empresa?error=Falta+configurar+NEXT_PUBLIC_SITE_URL");
-  }
   const redirectTo = new URL("/auth/confirm", siteUrl);
   redirectTo.searchParams.set("invitation_id", invitation.id);
   const { data, error } = await admin.auth.admin.generateLink({
@@ -128,7 +131,7 @@ export async function inviteCompanyMember(formData: FormData) {
   inviteUrl.searchParams.set("type", "invite");
   inviteUrl.searchParams.set("invitation_id", invitation.id);
   revalidatePath("/empresa");
-  return { ok: true as const, email, organizationName: org.name, inviteUrl };
+  return { ok: true as const, kind: "invitation" as const, email, organizationName: org.name, inviteUrl: inviteUrl.toString() };
 }
 
 
