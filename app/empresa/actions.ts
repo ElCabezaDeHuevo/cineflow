@@ -124,6 +124,16 @@ export async function inviteCompanyMember(formData: FormData) {
     return { ok: false as const, message: error?.message ?? "No se pudo generar el enlace de invitación" };
   }
 
+  // Persist the actual Supabase one-time OTP hash, not a placeholder.
+  const { error: tokenStoreError } = await admin.from("organization_invitations")
+    .update({ token_hash: supabaseTokenHash })
+    .eq("id", invitation.id)
+    .is("accepted_at", null);
+  if (tokenStoreError) {
+    await admin.from("organization_invitations").delete().eq("id", invitation.id);
+    return { ok: false as const, message: "No se pudo asegurar el enlace de invitación. Intenta de nuevo." };
+  }
+
   // Send the recipient directly to our server-side confirmation route.
   // It verifies the one-time token with verifyOtp(), stores the session cookie,
   // and only then grants the invited organization membership.
