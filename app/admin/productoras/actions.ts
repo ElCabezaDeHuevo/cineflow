@@ -82,13 +82,13 @@ export async function recordCompanyPayment(formData: FormData) {
   const end = new Date(now);
   if (interval === "annual") end.setFullYear(end.getFullYear() + 1);
   else end.setMonth(end.getMonth() + 1);
-  const { error: paymentError } = await admin.from("organization_manual_payments").insert({
+  const { data: payment, error: paymentError } = await admin.from("organization_manual_payments").insert({
     organization_id: organizationId, subscription_id: subscription.id, amount_mxn: amount,
     billing_interval: interval, paid_at: now.toISOString(),
     period_start: now.toISOString().slice(0, 10), period_end: end.toISOString().slice(0, 10),
     payment_method: method, reference: reference || null, notes: notes || null, recorded_by: user.id,
-  });
-  if (paymentError) fail(paymentError.message);
+  }).select("id").single();
+  if (paymentError || !payment) fail(paymentError?.message ?? "No se pudo guardar el pago.");
   const { error: updateError } = await admin.from("subscriptions").update({
     status: "active", billing_interval: interval,
     current_period_start: now.toISOString(), current_period_end: end.toISOString(),
@@ -97,7 +97,7 @@ export async function recordCompanyPayment(formData: FormData) {
   }).eq("id", subscription.id);
   if (updateError) {
     await admin.from("organization_manual_payments").delete()
-      .eq("organization_id", organizationId).eq("recorded_by", user.id).eq("paid_at", now.toISOString());
+      .eq("id", payment.id);
     fail(updateError.message);
   }
   const { error: auditError } = await admin.from("organization_audit_log").insert({
