@@ -202,6 +202,7 @@ export async function resetUserPassword(formData: FormData) {
   const userId = String(formData.get("user_id") ?? "").trim();
   const reason = String(formData.get("reason") ?? "").trim().slice(0, 300);
   if (!userId || userId === actor.id) redirect("/usuarios?error=No+puedes+restablecer+tu+propia+contraseña+desde+este+panel");
+  if (!reason) redirect("/usuarios?error=Escribe+el+motivo+del+restablecimiento+para+el+historial");
 
   const [{ data: target, error: targetError }, { data: memberships, error: membershipError }] = await Promise.all([
     admin.auth.admin.getUserById(userId),
