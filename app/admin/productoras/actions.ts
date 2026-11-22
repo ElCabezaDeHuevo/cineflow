@@ -76,7 +76,7 @@ export async function recordCompanyPayment(formData: FormData) {
   const notes = String(formData.get("notes") ?? "").trim().slice(0, 1000);
   if (!organizationId || !Number.isFinite(amount) || amount < 0 || !["monthly", "annual"].includes(interval) || !["transferencia", "efectivo", "deposito", "otro"].includes(method)) fail("Datos del pago no válidos.");
   const { data: subscription, error: subError } = await admin.from("subscriptions")
-    .select("id,organization_id").eq("organization_id", organizationId).maybeSingle();
+    .select("*").eq("organization_id", organizationId).maybeSingle();
   if (subError || !subscription) fail(subError?.message ?? "La productora no tiene una suscripción.");
   const now = new Date();
   const end = new Date(now);
@@ -95,13 +95,28 @@ export async function recordCompanyPayment(formData: FormData) {
     last_manual_payment_at: now.toISOString(), access_suspended_at: null,
     manual_payment_required: true, updated_at: now.toISOString(),
   }).eq("id", subscription.id);
-  if (updateError) fail(updateError.message);
-  await admin.from("organizations").update({ updated_at: now.toISOString() }).eq("id", organizationId);
-  await admin.from("organization_audit_log").insert({
+  if (updateError) {
+    await admin.from("organization_manual_payments").delete()
+      .eq("organization_id", organizationId).eq("recorded_by", user.id).eq("paid_at", now.toISOString());
+    fail(updateError.message);
+  }
+  const { error: auditError } = await admin.from("organization_audit_log").insert({
     organization_id: organizationId, actor_id: user.id, action: "manual_payment_recorded",
     target_type: "subscription", target_id: subscription.id,
     metadata: { amount_mxn: amount, billing_interval: interval, payment_method: method, reference },
   });
+  if (auditError) {
+    await admin.from("subscriptions").update({
+      status: subscription.status, billing_interval: subscription.billing_interval,
+      current_period_start: subscription.current_period_start, current_period_end: subscription.current_period_end,
+      last_manual_payment_at: subscription.last_manual_payment_at, access_suspended_at: subscription.access_suspended_at,
+      manual_payment_required: subscription.manual_payment_required, updated_at: subscription.updated_at,
+    }).eq("id", subscription.id);
+    await admin.from("organization_manual_payments").delete()
+      .eq("organization_id", organizationId).eq("recorded_by", user.id).eq("paid_at", now.toISOString());
+    fail(auditError.message);
+  }
+  await admin.from("organizations").update({ updated_at: now.toISOString() }).eq("id", organizationId);
   revalidatePath("/admin/productoras");
   redirect("/admin/productoras?success=Pago+registrado+y+servicio+activado");
 }
