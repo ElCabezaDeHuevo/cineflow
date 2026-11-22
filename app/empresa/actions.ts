@@ -114,8 +114,8 @@ export async function inviteCompanyMember(formData: FormData) {
       redirectTo: redirectTo.toString(),
     },
   });
-  const tokenHash = data?.properties?.hashed_token;
-  if (error || !tokenHash) {
+  const supabaseTokenHash = data?.properties?.hashed_token;
+  if (error || !supabaseTokenHash) {
     await admin.from("organization_invitations").delete().eq("id", invitation.id);
     return { ok: false as const, message: error?.message ?? "No se pudo generar el enlace de invitación" };
   }
@@ -124,7 +124,7 @@ export async function inviteCompanyMember(formData: FormData) {
   // It verifies the one-time token with verifyOtp(), stores the session cookie,
   // and only then grants the invited organization membership.
   const inviteUrl = new URL("/auth/confirm", siteUrl);
-  inviteUrl.searchParams.set("token_hash", tokenHash);
+  inviteUrl.searchParams.set("token_hash", supabaseTokenHash);
   inviteUrl.searchParams.set("type", "invite");
   inviteUrl.searchParams.set("invitation_id", invitation.id);
   revalidatePath("/empresa");
