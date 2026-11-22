@@ -44,24 +44,26 @@ export default function InviteMemberForm({
     });
   }
 
+  const invitationResult = result && result.ok && result.kind === "invitation" ? result : null;
+  const existingResult = result && result.ok && result.kind === "existing" ? result : null;
   const emailSubject = encodeURIComponent(`Invitación para unirte a ${organizationName} en CineFlow`);
-  const invitationMailto = result?.ok && result.kind === "invitation"
-    ? `mailto:${encodeURIComponent(result.email)}?subject=${emailSubject}&body=${encodeURIComponent(`Hola,
+  const invitationMailto = invitationResult
+    ? `mailto:${encodeURIComponent(invitationResult.email)}?subject=${emailSubject}&body=${encodeURIComponent(`Hola,
 
 Te invito a unirte a ${organizationName} en CineFlow.
 
 Abre este enlace para registrarte y aceptar la invitación:
-${result.inviteUrl}
+${invitationResult.inviteUrl}
 
 Este enlace es personal y caduca en 7 días.
 
 ¡Te esperamos!`)}`
     : null;
-  const existingAccountMailto = result?.ok && result.kind === "existing"
-    ? `mailto:${encodeURIComponent(result.email)}?subject=${emailSubject}&body=${encodeURIComponent(`Hola,
+  const existingAccountMailto = existingResult
+    ? `mailto:${encodeURIComponent(existingResult.email)}?subject=${emailSubject}&body=${encodeURIComponent(`Hola,
 
 Ya tienes una cuenta de CineFlow. Para entrar a ${organizationName}, inicia sesión aquí:
-${result.loginUrl}
+${existingResult.loginUrl}
 
 Si no recuerdas tu contraseña, contacta al administrador de tu productora.
 
@@ -89,25 +91,25 @@ Si no recuerdas tu contraseña, contacta al administrador de tu productora.
         </button>
       </form>
       {result && !result.ok && <p role="alert" className="mt-4 rounded-xl border border-red-400/30 bg-red-400/10 p-3 text-sm text-red-200">{result.message}</p>}
-      {result?.ok && result.kind === "invitation" && invitationMailto && (
+      {invitationResult && invitationMailto && (
         <div className="mt-5 rounded-xl border border-emerald-400/25 bg-emerald-400/5 p-4">
           <p className="font-semibold text-emerald-200">Invitación lista para enviar</p>
-          <p className="mt-1 text-sm text-gray-300">El enlace es válido durante 7 días. Envíalo únicamente a {result.email}.</p>
+          <p className="mt-1 text-sm text-gray-300">El enlace es válido durante 7 días. Envíalo únicamente a {invitationResult.email}.</p>
           <label className="mt-3 block text-xs text-gray-400">Enlace personal de registro
-            <textarea readOnly value={result.inviteUrl} rows={3} className="mt-2 w-full break-all rounded-lg border border-white/10 bg-black/30 p-3 text-xs text-white" />
+            <textarea readOnly value={invitationResult.inviteUrl} rows={3} className="mt-2 w-full break-all rounded-lg border border-white/10 bg-black/30 p-3 text-xs text-white" />
           </label>
           <div className="mt-3 flex flex-wrap gap-2">
-            <button type="button" onClick={() => navigator.clipboard.writeText(result.inviteUrl)} className="rounded-lg border border-white/15 px-4 py-2 text-sm hover:bg-white/5">Copiar enlace</button>
+            <button type="button" onClick={() => navigator.clipboard.writeText(invitationResult.inviteUrl)} className="rounded-lg border border-white/15 px-4 py-2 text-sm hover:bg-white/5">Copiar enlace</button>
             <a href={invitationMailto} className="rounded-lg bg-violet-500 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-400">Abrir aplicación de correo</a>
           </div>
         </div>
       )}
-      {result?.ok && result.kind === "existing" && existingAccountMailto && (
+      {existingResult && existingAccountMailto && (
         <div className="mt-5 rounded-xl border border-sky-400/25 bg-sky-400/5 p-4">
           <p className="font-semibold text-sky-200">Esta persona ya tiene una cuenta</p>
-          <p className="mt-1 text-sm text-gray-300">Se agregó a {result.organizationName} con el permiso seleccionado. No necesita registrarse otra vez; debe iniciar sesión con {result.email}.</p>
+          <p className="mt-1 text-sm text-gray-300">Se agregó a {existingResult.organizationName} con el permiso seleccionado. No necesita registrarse otra vez; debe iniciar sesión con {existingResult.email}.</p>
           <label className="mt-3 block text-xs text-gray-400">Enlace para iniciar sesión
-            <textarea readOnly value={result.loginUrl} rows={2} className="mt-2 w-full break-all rounded-lg border border-white/10 bg-black/30 p-3 text-xs text-white" />
+            <textarea readOnly value={existingResult.loginUrl} rows={2} className="mt-2 w-full break-all rounded-lg border border-white/10 bg-black/30 p-3 text-xs text-white" />
           </label>
           <a href={existingAccountMailto} className="mt-3 inline-flex rounded-lg bg-violet-500 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-400">Abrir aplicación de correo</a>
         </div>
