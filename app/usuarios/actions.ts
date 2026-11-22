@@ -264,11 +264,18 @@ export async function resetUserPassword(formData: FormData) {
   redirect(`/usuarios?success=${encodeURIComponent("Se envió el correo de restablecimiento. El usuario deberá cambiar su contraseña antes de entrar a CineFlow.")}`);
 }
 
-export async function completeForcedPasswordChange() {
+export async function completeForcedPasswordChange(newPassword: string) {
+  const password = String(newPassword ?? "");
+  if (password.length < 10 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
+    throw new Error("La contraseña debe tener al menos 10 caracteres, una mayúscula, una minúscula y un número.");
+  }
+
   const supabase = await createSupabaseServerClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) throw new Error("Tu sesión no es válida. Inicia sesión nuevamente.");
-  if (user.app_metadata?.cineflow_force_password_change !== true) return;
+  if (user.app_metadata?.cineflow_force_password_change !== true) {
+    throw new Error("Esta cuenta no tiene un restablecimiento pendiente.");
+  }
 
   const admin = createSupabaseAdminClient();
   if (!admin) throw new Error("El servicio de cuentas no está configurado.");
@@ -292,23 +299,25 @@ export async function completeForcedPasswordChange() {
     },
   }));
   const { error: auditError } = await admin.from("organization_audit_log").insert(auditRows);
-  if (auditError) throw new Error("No se pudo guardar el historial del cambio. Vuelve a intentarlo.");
+  if (auditError) throw new Error("No se pudo guardar el historial del cambio. No se modificó tu contraseña.");
 
   const nextMetadata = { ...previousMetadata };
   delete nextMetadata.cineflow_force_password_change;
   delete nextMetadata.cineflow_password_reset_requested_at;
   delete nextMetadata.cineflow_password_reset_requested_by;
-  const { error: metadataError } = await admin.auth.admin.updateUserById(user.id, {
+  const { error: updateError } = await admin.auth.admin.updateUserById(user.id, {
+    password,
     app_metadata: nextMetadata,
   });
-  if (metadataError) {
+  if (updateError) {
     await admin.from("organization_audit_log").delete()
       .eq("action", "user_password_changed_after_reset")
       .eq("target_id", user.id)
       .eq("actor_id", user.id)
       .contains("metadata", { completed_at: completedAt });
-    throw new Error("La contraseña se actualizó, pero no se pudo cerrar el proceso. Inténtalo de nuevo.");
+    throw new Error("No se pudo actualizar la contraseña. Inténtalo de nuevo.");
   }
 
   revalidatePath("/");
+  return { success: true };
 }
