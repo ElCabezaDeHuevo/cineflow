@@ -155,7 +155,7 @@ async function HomeContent({
     // conserva una sola portada por proyecto y firma las URLs en paralelo.
     const latestCoverByProject = new Map<
       string,
-      (typeof projectCovers extends (infer T)[] | null ? T : never)
+      { project_id: string; storage_path: string }
     >();
     for (const cover of projectCovers ?? []) {
       if (!latestCoverByProject.has(cover.project_id)) {
