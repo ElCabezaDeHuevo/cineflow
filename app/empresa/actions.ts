@@ -37,6 +37,9 @@ async function findAuthUserByEmail(admin: ReturnType<typeof createSupabaseAdminC
 }
 
 export async function inviteCompanyMember(formData: FormData) {
+  if (process.env.VERCEL_ENV === "preview") {
+    redirect("/empresa?error=Las+invitaciones+por+correo+solo+se+pueden+enviar+desde+la+versión+de+producción");
+  }
   const organizationId = String(formData.get("organization_id") ?? "").trim();
   if (!organizationId) redirect("/empresa?error=Selecciona+una+productora");
   const { admin, user } = await ownerContext(organizationId);
