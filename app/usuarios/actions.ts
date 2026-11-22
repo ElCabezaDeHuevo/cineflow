@@ -35,20 +35,13 @@ export async function createUser(formData: FormData) {
 
   if (!organizationId || !fullName || !email || password.length < 8 ||
       !CINE_ROLES.some((role) => role.value === cineRole) ||
-      !["owner", "admin", "producer", "member", "viewer"].includes(organizationRole)) {
+      !["admin", "producer", "member", "viewer"].includes(organizationRole)) {
     redirect("/usuarios?error=Revisa%20los%20datos%20del%20usuario");
   }
 
   const { data: company, error: companyError } = await admin.from("organizations")
     .select("id,name").eq("id", organizationId).maybeSingle();
   if (companyError || !company) redirect("/usuarios?error=La%20empresa%20seleccionada%20no%20existe");
-
-  if (organizationRole === "owner") {
-    const { data: currentOwner, error: ownerLookupError } = await admin.from("organization_members")
-      .select("user_id").eq("organization_id", organizationId).eq("role", "owner").maybeSingle();
-    if (ownerLookupError) redirect(`/usuarios?error=${message(ownerLookupError.message)}`);
-    if (currentOwner) redirect("/usuarios?error=Esta empresa ya tiene un dueño. Primero transfiere la propiedad.");
-  }
 
   let allUsers;
   try { allUsers = await listAllAuthUsers(admin); }
