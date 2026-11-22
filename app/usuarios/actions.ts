@@ -7,6 +7,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { CINE_ROLES } from "@/lib/cine-roles";
 import { hasOpenWorkSession, attendanceRequiredMessage } from "@/lib/attendance";
 import { isCineflowAdmin } from "@/lib/admin";
+import { listAllAuthUsers } from "@/lib/supabase/list-all-auth-users";
 
 async function requireAdmin() {
   const supabase = await createSupabaseServerClient();
@@ -49,9 +50,10 @@ export async function createUser(formData: FormData) {
     if (currentOwner) redirect("/usuarios?error=Esta empresa ya tiene un dueño. Primero transfiere la propiedad.");
   }
 
-  const { data: existingUsers, error: listError } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-  if (listError) redirect(`/usuarios?error=${message(listError.message)}`);
-  const existing = existingUsers.users.find((item) => item.email?.toLowerCase() === email);
+  let allUsers;
+  try { allUsers = await listAllAuthUsers(admin); }
+  catch (error) { redirect(`/usuarios?error=${message(error instanceof Error ? error.message : error)}`); }
+  const existing = allUsers.find((item) => item.email?.toLowerCase() === email);
   if (existing) {
     const { data: membership } = await admin.from("organization_members").select("user_id")
       .eq("organization_id", organizationId).eq("user_id", existing.id).maybeSingle();
@@ -80,11 +82,16 @@ export async function createUser(formData: FormData) {
     redirect(`/usuarios?error=${message(memberError.message)}`);
   }
 
-  await admin.from("organization_audit_log").insert({
+  const { error: auditError } = await admin.from("organization_audit_log").insert({
     organization_id: organizationId, actor_id: creator.id,
     action: "company_user_created", target_type: "user", target_id: data.user.id,
     metadata: { email, organization_role: organizationRole, cine_role: cineRole },
   });
+  if (auditError) {
+    await admin.from("organization_members").delete().eq("organization_id", organizationId).eq("user_id", data.user.id);
+    await admin.auth.admin.deleteUser(data.user.id);
+    redirect(`/usuarios?error=${message(auditError.message)}`);
+  }
   revalidatePath("/usuarios");
   revalidatePath("/admin/productoras");
   redirect(`/usuarios?success=${encodeURIComponent(`Usuario creado y agregado a ${company.name}.`)}`);
