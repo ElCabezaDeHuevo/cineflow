@@ -6,12 +6,13 @@ export async function signIn(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const requestedPath = String(formData.get("next") ?? "");
-  const nextPath =
+  const isSafeNext =
     requestedPath.startsWith("/") &&
     !requestedPath.startsWith("//") &&
-    !requestedPath.includes("\\")
-      ? requestedPath
-      : "/";
+    !requestedPath.includes("\\") &&
+    requestedPath !== "/login" &&
+    !requestedPath.startsWith("/auth/");
+  const nextPath = isSafeNext ? requestedPath : "/";
   if (!email || !password) {
     redirect(
       `/login?${new URLSearchParams({
