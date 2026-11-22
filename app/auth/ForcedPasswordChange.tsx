@@ -37,6 +37,9 @@ export default function ForcedPasswordChange({ email }: { email: string }) {
       const { error: updateError } = await supabase.auth.updateUser({ password });
       if (updateError) throw updateError;
       await completeForcedPasswordChange();
+      const { error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) throw refreshError;
+      router.replace("/");
       router.refresh();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "No se pudo cambiar la contraseña.");
