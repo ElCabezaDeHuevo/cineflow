@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isCineflowAdmin } from "@/lib/admin";
 import { inviteCompanyMember } from "./actions";
+import { listAllAuthUsers } from "@/lib/supabase/list-all-auth-users";
 
 const fmt = (v?: string | null) => v ? new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeZone: "America/Tijuana" }).format(new Date(v)) : "—";
 
@@ -25,12 +26,12 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
   ]);
   const admin = createSupabaseAdminClient();
   const ids = (members ?? []).map((m) => m.user_id);
-  const [{ data: profiles }, { data: authUsers }] = await Promise.all([
+  const [{ data: profiles }, authUsersResult] = await Promise.all([
     ids.length ? supabase.from("profiles").select("id,full_name,avatar_url").in("id", ids) : Promise.resolve({ data: [] }),
-    admin ? admin.auth.admin.listUsers({ page: 1, perPage: 1000 }) : Promise.resolve({ data: { users: [] } }),
+    admin ? listAllAuthUsers(admin).then((users) => ({ users, error: null })).catch((error: unknown) => ({ users: [], error: error instanceof Error ? error : new Error("No se pudieron consultar todas las cuentas") })) : Promise.resolve({ users: [], error: null }),
   ]);
   const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
-  const emailMap = new Map((authUsers?.users ?? []).map((a) => [a.id, a.email]));
+  const emailMap = new Map(authUsersResult.users.map((a) => [a.id, a.email]));
   const roleLabel: Record<string,string> = { owner: "Dueño", admin: "Administrador", producer: "Productor", member: "Colaborador", viewer: "Solo lectura" };
   const status = subscription?.status ?? "Sin plan";
   const statusLabel = status === "trialing" ? "Prueba gratuita" : status === "active" ? "Servicio activo" : status === "paused" ? "Servicio suspendido" : status === "past_due" ? "Pago pendiente" : status;
