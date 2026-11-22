@@ -55,21 +55,39 @@ export async function GET(request: NextRequest) {
     return loginError(request, "No se pudo activar tu acceso. Contacta al administrador.");
   }
 
-  const { error: acceptedError } = await admin.from("organization_invitations")
-    .update({ accepted_at: new Date().toISOString() })
-    .eq("id", invitation.id)
-    .is("accepted_at", null);
-  if (acceptedError) {
+  // Keep the auth metadata consistent with accounts created or assigned by admins.
+  const previousAppMetadata = user.app_metadata ?? {};
+  const { error: metadataError } = await admin.auth.admin.updateUserById(user.id, {
+    app_metadata: { ...previousAppMetadata, organization_id: invitation.organization_id },
+  });
+  if (metadataError) {
     if (!memberError) {
       await admin.from("organization_members").delete()
         .eq("organization_id", invitation.organization_id).eq("user_id", user.id);
     }
-    return loginError(request, "No se pudo completar la aceptación. Contacta al administrador.");
+    return loginError(request, "No se pudo actualizar el acceso de la cuenta. Contacta al administrador.");
+  }
+
+  const { data: acceptedInvitation, error: acceptedError } = await admin.from("organization_invitations")
+    .update({ accepted_at: new Date().toISOString() })
+    .eq("id", invitation.id)
+    .is("accepted_at", null)
+    .select("id")
+    .maybeSingle();
+  if (acceptedError || !acceptedInvitation) {
+    await admin.auth.admin.updateUserById(user.id, { app_metadata: previousAppMetadata });
+    if (!memberError) {
+      await admin.from("organization_members").delete()
+        .eq("organization_id", invitation.organization_id).eq("user_id", user.id);
+    }
+    return loginError(request, acceptedError
+      ? "No se pudo completar la aceptación. Contacta al administrador."
+      : "Esta invitación ya fue utilizada.");
   }
 
   const { data: org } = await admin.from("organizations").select("name")
     .eq("id", invitation.organization_id).maybeSingle();
-  await admin.from("organization_audit_log").insert({
+  const { error: auditError } = await admin.from("organization_audit_log").insert({
     organization_id: invitation.organization_id,
     actor_id: user.id,
     action: "invitation_accepted",
@@ -77,6 +95,15 @@ export async function GET(request: NextRequest) {
     target_id: user.id,
     metadata: { email: user.email, role: invitation.role },
   });
+  if (auditError) {
+    await admin.from("organization_invitations").update({ accepted_at: null }).eq("id", invitation.id);
+    await admin.auth.admin.updateUserById(user.id, { app_metadata: previousAppMetadata });
+    if (!memberError) {
+      await admin.from("organization_members").delete()
+        .eq("organization_id", invitation.organization_id).eq("user_id", user.id);
+    }
+    return loginError(request, "No se pudo registrar la aceptación. Contacta al administrador.");
+  }
 
   const destination = new URL("/", request.url);
   destination.searchParams.set("welcome", org?.name ?? "CineFlow");
