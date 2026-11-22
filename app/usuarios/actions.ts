@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { createClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -193,4 +194,116 @@ export async function approveAssignmentRequest(formData: FormData) {
 
 export async function rejectAssignmentRequest(formData: FormData) {
   await reviewAssignmentRequest(formData, false);
+}
+
+
+export async function resetUserPassword(formData: FormData) {
+  const { admin, user: actor } = await requireAdmin();
+  const userId = String(formData.get("user_id") ?? "").trim();
+  const reason = String(formData.get("reason") ?? "").trim().slice(0, 300);
+  if (!userId || userId === actor.id) redirect("/usuarios?error=No+puedes+restablecer+tu+propia+contraseña+desde+este+panel");
+
+  const [{ data: target, error: targetError }, { data: memberships, error: membershipError }] = await Promise.all([
+    admin.auth.admin.getUserById(userId),
+    admin.from("organization_members").select("organization_id,role").eq("user_id", userId),
+  ]);
+  if (targetError || !target?.user?.email) redirect("/usuarios?error=No+se+encontró+el+usuario");
+  if (membershipError || !memberships?.length) redirect("/usuarios?error=El+usuario+no+tiene+una+productora+para+registrar+la+auditoría");
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  if (!siteUrl || !supabaseUrl || !publishableKey) {
+    redirect("/usuarios?error=Falta+configurar+la+URL+del+sitio+o+la+clave+pública+de+Supabase");
+  }
+
+  const previousMetadata = target.user.app_metadata ?? {};
+  const requestedAt = new Date().toISOString();
+  const { error: metadataError } = await admin.auth.admin.updateUserById(userId, {
+    app_metadata: {
+      ...previousMetadata,
+      cineflow_force_password_change: true,
+      cineflow_password_reset_requested_at: requestedAt,
+      cineflow_password_reset_requested_by: actor.id,
+    },
+  });
+  if (metadataError) redirect(`/usuarios?error=${message(metadataError.message)}`);
+
+  const publicClient = createClient(supabaseUrl, publishableKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const { error: emailError } = await publicClient.auth.resetPasswordForEmail(target.user.email, {
+    redirectTo: new URL("/auth/reset-password", siteUrl).toString(),
+  });
+  if (emailError) {
+    await admin.auth.admin.updateUserById(userId, { app_metadata: previousMetadata });
+    redirect(`/usuarios?error=${message("No se pudo enviar el correo de restablecimiento: " + emailError.message)}`);
+  }
+
+  const auditRows = memberships.map((membership) => ({
+    organization_id: membership.organization_id,
+    actor_id: actor.id,
+    action: "user_password_reset_requested",
+    target_type: "user",
+    target_id: userId,
+    metadata: {
+      email: target.user.email,
+      requested_at: requestedAt,
+      reason: reason || null,
+      delivery: "recovery_email_sent",
+    },
+  }));
+  const { error: auditError } = await admin.from("organization_audit_log").insert(auditRows);
+  if (auditError) {
+    await admin.auth.admin.updateUserById(userId, { app_metadata: previousMetadata });
+    redirect(`/usuarios?error=${message("Se envió la solicitud, pero no se pudo guardar el registro de auditoría. Contacta al administrador.")}`);
+  }
+
+  revalidatePath("/usuarios");
+  redirect(`/usuarios?success=${encodeURIComponent("Se envió el correo de restablecimiento. El usuario deberá cambiar su contraseña antes de entrar a CineFlow.")}`);
+}
+
+export async function completeForcedPasswordChange() {
+  const supabase = await createSupabaseServerClient();
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) throw new Error("Tu sesión no es válida. Inicia sesión nuevamente.");
+  if (user.app_metadata?.cineflow_force_password_change !== true) return;
+
+  const admin = createSupabaseAdminClient();
+  if (!admin) throw new Error("El servicio de cuentas no está configurado.");
+  const { data: memberships, error: membershipError } = await admin
+    .from("organization_members").select("organization_id").eq("user_id", user.id);
+  if (membershipError || !memberships?.length) throw new Error("No se pudo verificar la productora de tu cuenta.");
+
+  const previousMetadata = user.app_metadata ?? {};
+  const nextMetadata = { ...previousMetadata };
+  delete nextMetadata.cineflow_force_password_change;
+  delete nextMetadata.cineflow_password_reset_requested_at;
+  delete nextMetadata.cineflow_password_reset_requested_by;
+
+  const { error: metadataError } = await admin.auth.admin.updateUserById(user.id, {
+    app_metadata: nextMetadata,
+  });
+  if (metadataError) throw new Error("La contraseña se actualizó, pero no se pudo cerrar el proceso. Inténtalo de nuevo.");
+
+  const completedAt = new Date().toISOString();
+  const auditRows = memberships.map((membership) => ({
+    organization_id: membership.organization_id,
+    actor_id: user.id,
+    action: "user_password_changed_after_reset",
+    target_type: "user",
+    target_id: user.id,
+    metadata: {
+      email: user.email ?? null,
+      completed_at: completedAt,
+      requested_at: previousMetadata.cineflow_password_reset_requested_at ?? null,
+      requested_by: previousMetadata.cineflow_password_reset_requested_by ?? null,
+    },
+  }));
+  const { error: auditError } = await admin.from("organization_audit_log").insert(auditRows);
+  if (auditError) {
+    await admin.auth.admin.updateUserById(user.id, { app_metadata: previousMetadata });
+    throw new Error("No se pudo guardar el historial del cambio. Vuelve a intentarlo.");
+  }
+  revalidatePath("/");
 }
