@@ -147,10 +147,26 @@ export async function deleteUser(formData: FormData) {
     .select("organization_id").eq("user_id", userId).eq("role", "owner").limit(1);
   if (ownershipError) redirect(`/usuarios?error=${message(ownershipError.message)}`);
   if (ownership?.length) redirect("/usuarios?error=No puedes eliminar al dueño de una empresa. Transfiere la propiedad primero.");
-  const { error } = await admin.auth.admin.deleteUser(userId);
-  if (error) redirect(`/usuarios?error=${message(error.message)}`);
+  const { data: account, error: lookupError } = await admin.auth.admin.getUserById(userId);
+  if (lookupError || !account.user) redirect(`/usuarios?error=${message(lookupError?.message ?? "No se encontró la cuenta.")}`);
+  const { error: disableError } = await admin.auth.admin.updateUserById(userId, {
+    ban_duration: "876000h",
+  });
+  if (disableError) redirect(`/usuarios?error=${message(disableError.message)}`);
+  const { error: auditError } = await admin.from("organization_audit_log").insert({
+    organization_id: (await admin.from("organization_members").select("organization_id").eq("user_id", userId).limit(1).maybeSingle()).data?.organization_id ?? null,
+    actor_id: user.id,
+    action: "company_user_deactivated",
+    target_type: "user",
+    target_id: userId,
+    metadata: { email: account.user.email ?? null, reason: "Desactivación desde administración; se conservaron los registros." },
+  });
+  if (auditError) {
+    await admin.auth.admin.updateUserById(userId, { ban_duration: "none" });
+    redirect(`/usuarios?error=${message("No se pudo registrar la baja. Se reactivó la cuenta.")}`);
+  }
   revalidatePath("/usuarios");
-  redirect("/usuarios?success=Cuenta%20eliminada");
+  redirect("/usuarios?success=Cuenta%20desactivada.%20Se%20conservaron%20sus%20registros.");
 }
 
 export async function updateUserRole(formData: FormData) {
