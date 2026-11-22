@@ -106,16 +106,21 @@ export async function inviteCompanyMember(formData: FormData) {
   }
   const redirectTo = new URL("/auth/confirm", siteUrl);
   redirectTo.searchParams.set("invitation_id", invitation.id);
-  const { data, error } = await admin.auth.admin.inviteUserByEmail(email, {
-    data: { invited_to: org.name, invitation_id: invitation.id },
-    redirectTo: redirectTo.toString(),
+  const { data, error } = await admin.auth.admin.generateLink({
+    type: "invite",
+    email,
+    options: {
+      data: { invited_to: org.name, invitation_id: invitation.id },
+      redirectTo: redirectTo.toString(),
+    },
   });
-  if (error || !data.user) {
+  const inviteUrl = data?.properties?.action_link;
+  if (error || !inviteUrl) {
     await admin.from("organization_invitations").delete().eq("id", invitation.id);
-    redirect("/empresa?error=" + encodeURIComponent(error?.message ?? "No se pudo enviar la invitación"));
+    return { ok: false as const, message: error?.message ?? "No se pudo generar el enlace de invitación" };
   }
   revalidatePath("/empresa");
-  redirect("/empresa?success=Invitación+enviada.+El+acceso+se+activará+al+confirmar+el+correo");
+  return { ok: true as const, email, organizationName: org.name, inviteUrl };
 }
 
 
