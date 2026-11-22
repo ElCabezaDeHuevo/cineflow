@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createUser, assignExistingUser, updateOrganizationMemberRole } from "./actions";
 import PasswordResetControl from "./PasswordResetControl";
+import DeleteUserButton from "./DeleteUserButton";
 import { CINE_ROLES } from "@/lib/cine-roles";
 import { isCineflowAdmin } from "@/lib/admin";
 import { listAllAuthUsers } from "@/lib/supabase/list-all-auth-users";
@@ -109,6 +110,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
                         <button type="submit" className="rounded-lg border border-violet-400/30 bg-violet-500/15 px-3 py-2 text-xs font-semibold text-violet-100 hover:bg-violet-500/25">Guardar rol</button>
                       </form>
                       <PasswordResetControl userId={member.user_id} />
+                      {member.role !== "owner" && account?.email && <DeleteUserButton userId={member.user_id} email={account.email} />}
                     </div>
                   </div>;
                 })}
