@@ -5,6 +5,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createUser, assignExistingUser } from "./actions";
 import { CINE_ROLES } from "@/lib/cine-roles";
 import { isCineflowAdmin } from "@/lib/admin";
+import { listAllAuthUsers } from "@/lib/supabase/list-all-auth-users";
 
 export const instant = false;
 
@@ -22,11 +23,12 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
   const { error, success } = await searchParams;
   if (!admin) return <main className="cf-cinematic-page cf-bg-users min-h-screen bg-[#0b0c10] p-8 text-white">Falta configurar SUPABASE_SERVICE_ROLE_KEY.</main>;
 
-  const [{ data: companies, error: companiesError }, { data: usersData, error: usersError }] = await Promise.all([
+  const [{ data: companies, error: companiesError }, usersResult] = await Promise.all([
     admin.from("organizations").select("id,name,slug,organization_members(user_id,role,joined_at)").order("name"),
-    admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+    listAllAuthUsers(admin).then((users) => ({ users, error: null })).catch((error: unknown) => ({ users: [], error: error instanceof Error ? error : new Error("No se pudieron consultar todas las cuentas") })),
   ]);
-  const users = usersData?.users ?? [];
+  const users = usersResult.users;
+  const usersError = usersResult.error;
   const userById = new Map(users.map((account) => [account.id, account]));
   const { data: profiles, error: profilesError } = users.length
     ? await admin.from("profiles").select("id,full_name,avatar_url").in("id", users.map((account) => account.id))
