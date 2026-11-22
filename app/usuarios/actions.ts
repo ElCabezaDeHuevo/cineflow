@@ -371,8 +371,12 @@ export async function completeForcedPasswordChange(newPassword: string) {
   const { error: auditError } = await admin.from("organization_audit_log").insert(auditRows);
   if (auditError) throw new Error("No se pudo guardar el historial del cambio. No se modificó tu contraseña.");
 
-  const nextMetadata = { ...previousMetadata };
-  delete nextMetadata.cineflow_force_password_change;
+  // Supabase Auth merges app_metadata on admin updates. Explicitly set false
+  // so the forced-reset flag cannot survive as true in the stored account.
+  const nextMetadata = {
+    ...previousMetadata,
+    cineflow_force_password_change: false,
+  };
   delete nextMetadata.cineflow_password_reset_requested_at;
   delete nextMetadata.cineflow_password_reset_requested_by;
   const { error: updateError } = await admin.auth.admin.updateUserById(user.id, {
