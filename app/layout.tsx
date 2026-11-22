@@ -6,6 +6,7 @@ import LogoutButton from "./LogoutButton";
 import AppNavigation from "./AppNavigation";
 import ErrorReportButton from "./ErrorReportButton";
 import FirstLoginIntroduction from "./onboarding/FirstLoginIntroduction";
+import ForcedPasswordChange from "./auth/ForcedPasswordChange";
 import RouteAutoRefresh from "./RouteAutoRefresh";
 import ServiceWorkerRegister from "./ServiceWorkerRegister";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
