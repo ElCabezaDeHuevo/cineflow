@@ -114,11 +114,19 @@ export async function inviteCompanyMember(formData: FormData) {
       redirectTo: redirectTo.toString(),
     },
   });
-  const inviteUrl = data?.properties?.action_link;
-  if (error || !inviteUrl) {
+  const tokenHash = data?.properties?.hashed_token;
+  if (error || !tokenHash) {
     await admin.from("organization_invitations").delete().eq("id", invitation.id);
     return { ok: false as const, message: error?.message ?? "No se pudo generar el enlace de invitación" };
   }
+
+  // Send the recipient directly to our server-side confirmation route.
+  // It verifies the one-time token with verifyOtp(), stores the session cookie,
+  // and only then grants the invited organization membership.
+  const inviteUrl = new URL("/auth/confirm", siteUrl);
+  inviteUrl.searchParams.set("token_hash", tokenHash);
+  inviteUrl.searchParams.set("type", "invite");
+  inviteUrl.searchParams.set("invitation_id", invitation.id);
   revalidatePath("/empresa");
   return { ok: true as const, email, organizationName: org.name, inviteUrl };
 }
