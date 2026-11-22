@@ -19,13 +19,6 @@ export async function GET(request: NextRequest) {
     return loginError(request, "El enlace de invitación no es válido o ha caducado.");
   }
 
-  const supabase = await createSupabaseServerClient();
-
-  // The invitation token is checked against its database record below before it can be consumed.
-
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  if (userError || !user?.email) return loginError(request, "No se pudo verificar la cuenta.");
-
   const admin = createSupabaseAdminClient();
   if (!admin) return loginError(request, "El servicio de invitaciones no está configurado.");
 
@@ -41,6 +34,14 @@ export async function GET(request: NextRequest) {
   if (new Date(invitation.expires_at).getTime() <= Date.now()) {
     return loginError(request, "La invitación ha caducado. Solicita una nueva.");
   }
+
+  // Only the stored, matching OTP may create the recipient's Supabase session.
+  const supabase = await createSupabaseServerClient();
+  const { error: verifyError } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: "invite" });
+  if (verifyError) return loginError(request, "No se pudo verificar la invitación. Solicita un enlace nuevo.");
+
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user?.email) return loginError(request, "No se pudo verificar la cuenta.");
   if (invitation.email.toLowerCase() !== user.email.toLowerCase()) {
     await supabase.auth.signOut();
     return loginError(request, "El correo autenticado no coincide con el correo invitado.");
@@ -55,7 +56,7 @@ export async function GET(request: NextRequest) {
   const acceptedAt = new Date().toISOString();
   const { data: claimedInvitation, error: claimError } = await admin
     .from("organization_invitations")
-    .update({ accepted_at: acceptedAt, token_hash: null })
+    .update({ accepted_at: acceptedAt, token_hash: "" })
     .eq("id", invitation.id)
     .eq("token_hash", tokenHash)
     .is("accepted_at", null)
@@ -72,7 +73,7 @@ export async function GET(request: NextRequest) {
       .update({ accepted_at: null, token_hash: tokenHash })
       .eq("id", invitation.id)
       .eq("accepted_at", acceptedAt)
-      .is("token_hash", null);
+      .eq("token_hash", "");
   };
 
   const { error: memberError } = await admin.from("organization_members").insert({
