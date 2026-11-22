@@ -151,12 +151,31 @@ async function HomeContent({
     }));
   const coverByProject = new Map<string, string>();
   if (storageAdmin) {
+    // projectCovers viene ordenado de más reciente a más antiguo:
+    // conserva una sola portada por proyecto y firma las URLs en paralelo.
+    const latestCoverByProject = new Map<
+      string,
+      (typeof projectCovers extends (infer T)[] | null ? T : never)
+    >();
     for (const cover of projectCovers ?? []) {
-      if (coverByProject.has(cover.project_id)) continue;
-      const { data: signed } = await storageAdmin.storage
-        .from("project-media")
-        .createSignedUrl(cover.storage_path, 60 * 60);
-      if (signed?.signedUrl) coverByProject.set(cover.project_id, signed.signedUrl);
+      if (!latestCoverByProject.has(cover.project_id)) {
+        latestCoverByProject.set(cover.project_id, cover);
+      }
+    }
+
+    const signedCovers = await Promise.all(
+      Array.from(latestCoverByProject.entries()).map(
+        async ([projectId, cover]) => {
+          const { data: signed } = await storageAdmin.storage
+            .from("project-media")
+            .createSignedUrl(cover.storage_path, 60 * 60);
+          return [projectId, signed?.signedUrl ?? null] as const;
+        },
+      ),
+    );
+
+    for (const [projectId, signedUrl] of signedCovers) {
+      if (signedUrl) coverByProject.set(projectId, signedUrl);
     }
   }
   const tasksByProject = new Map<string, { total: number; completed: number }>();
