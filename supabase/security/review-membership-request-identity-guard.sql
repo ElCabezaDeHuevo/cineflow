@@ -1,7 +1,7 @@
--- Security hardening for project membership request review.
--- Apply only after validating against the production function definition.
--- This file is intentionally not executed against production in this branch.
--- Fix: SECURITY DEFINER must not trust a caller-supplied reviewer_uuid.
+-- Security hardening for project request review RPCs.
+-- Branch artifact only: do not apply to production until reviewed and approved.
+-- The membership RPC previously trusted reviewer_uuid without binding it to auth.uid().
+-- That allowed a caller to impersonate a project owner by supplying the owner's UUID.
 
 CREATE OR REPLACE FUNCTION public.review_project_membership_request(
   request_uuid uuid,
@@ -66,3 +66,10 @@ begin
   where id = request_row.id;
 end;
 $function$;
+
+-- These functions must only be callable by authenticated sessions.
+REVOKE ALL ON FUNCTION public.review_project_membership_request(uuid, uuid, boolean) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.review_project_membership_request(uuid, uuid, boolean) TO authenticated;
+
+REVOKE ALL ON FUNCTION public.review_project_leave_request(uuid, uuid, boolean) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.review_project_leave_request(uuid, uuid, boolean) TO authenticated;
