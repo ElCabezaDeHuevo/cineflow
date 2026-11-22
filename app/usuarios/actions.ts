@@ -464,7 +464,7 @@ export async function updateOrganizationMemberRole(formData: FormData) {
     action: nextRole === "owner" ? "organization_ownership_transferred" : "organization_member_role_changed",
     target_type: "user",
     target_id: userId,
-    metadata: { email: (await admin.auth.admin.getUserById(userId)).data.user?.email ?? null, previous_role: previousRole, new_role: nextRole, previous_owner_id: previousOwnerId },
+    metadata: { email: (await admin.auth.admin.getUserById(userId)).data.user?.email ?? null, previous_role: previousRole, new_role: nextRole, previous_owner_id: previousOwnerId, transferred_to: null },
   }];
   if (previousOwnerId) {
     auditEntries.push({
@@ -473,7 +473,7 @@ export async function updateOrganizationMemberRole(formData: FormData) {
       action: "organization_member_role_changed",
       target_type: "user",
       target_id: previousOwnerId,
-      metadata: { previous_role: "owner", new_role: "admin", transferred_to: userId },
+      metadata: { email: null, previous_role: "owner", new_role: "admin", previous_owner_id: null, transferred_to: userId },
     });
   }
   const { error: auditError } = await admin.from("organization_audit_log").insert(auditEntries);
