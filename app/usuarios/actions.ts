@@ -90,6 +90,51 @@ export async function createUser(formData: FormData) {
   redirect(`/usuarios?success=${encodeURIComponent(`Usuario creado y agregado a ${company.name}.`)}`);
 }
 
+export async function assignExistingUser(formData: FormData) {
+  const { admin, user: actor } = await requireAdmin();
+  const userId = String(formData.get("user_id") ?? "").trim();
+  const organizationId = String(formData.get("organization_id") ?? "").trim();
+  const role = String(formData.get("organization_role") ?? "member");
+  if (!userId || !organizationId || !["admin", "producer", "member", "viewer"].includes(role)) {
+    redirect("/usuarios?error=Selecciona+una+cuenta,+empresa+y+permiso+válidos");
+  }
+  if (userId === actor.id) redirect("/usuarios?error=No+puedes+reasignarte+desde+este+formulario");
+  const [{ data: account, error: accountError }, { data: company, error: companyError }, { data: memberships, error: membershipsError }] = await Promise.all([
+    admin.auth.admin.getUserById(userId),
+    admin.from("organizations").select("id,name").eq("id", organizationId).maybeSingle(),
+    admin.from("organization_members").select("organization_id").eq("user_id", userId),
+  ]);
+  if (accountError || !account?.user) redirect("/usuarios?error=No+se+encontró+la+cuenta+seleccionada");
+  if (companyError || !company) redirect("/usuarios?error=La+productora+seleccionada+no+existe");
+  if (membershipsError) redirect(`/usuarios?error=${message(membershipsError.message)}`);
+  if (memberships?.length) redirect("/usuarios?error=La+cuenta+ya+pertenece+a+una+productora.+No+se+modificó+su+pertenencia");
+  const { error: memberError } = await admin.from("organization_members").insert({
+    organization_id: organizationId, user_id: userId, role, invited_by: actor.id,
+  });
+  if (memberError) redirect(`/usuarios?error=${message(memberError.message)}`);
+  const { error: metadataError } = await admin.auth.admin.updateUserById(userId, {
+    app_metadata: { ...account.user.app_metadata, organization_id: organizationId },
+  });
+  if (metadataError) {
+    await admin.from("organization_members").delete().eq("organization_id", organizationId).eq("user_id", userId);
+    redirect(`/usuarios?error=${message(metadataError.message)}`);
+  }
+  const { error: auditError } = await admin.from("organization_audit_log").insert({
+    organization_id: organizationId, actor_id: actor.id, action: "existing_user_assigned",
+    target_type: "user", target_id: userId,
+    metadata: { email: account.user.email ?? null, role },
+  });
+  if (auditError) {
+    await admin.from("organization_members").delete().eq("organization_id", organizationId).eq("user_id", userId);
+    await admin.auth.admin.updateUserById(userId, { app_metadata: account.user.app_metadata });
+    redirect(`/usuarios?error=${message(auditError.message)}`);
+  }
+  revalidatePath("/usuarios");
+  revalidatePath("/empresa");
+  revalidatePath("/admin/productoras");
+  redirect(`/usuarios?success=${encodeURIComponent(`Cuenta vinculada a ${company.name} correctamente.`)}`);
+}
+
 export async function deleteUser(formData: FormData) {
   const { admin, user } = await requireAdmin();
   const userId = String(formData.get("user_id") ?? "");

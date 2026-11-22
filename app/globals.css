@@ -29,7 +29,7 @@ body {
   margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), sans-serif;
   overflow-x: hidden;
 }
 
@@ -258,4 +258,26 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 @media (prefers-reduced-motion: reduce) {
   .cf-app-enter, .cf-stagger > * { animation: none !important; }
   .cf-shimmer::after { display: none; }
+}
+
+/* Native select menus: keep option text readable across browsers and OS themes. */
+select {
+  color-scheme: dark;
+  color: #f4f4f5;
+  background-color: #0b0c10;
+}
+
+select option,
+select optgroup {
+  color: #f4f4f5;
+  background-color: #14151c;
+}
+
+select option:disabled {
+  color: #9ca3af;
+}
+
+select:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
