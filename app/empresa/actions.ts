@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@supabase/supabase-js";
 
 async function ownerContext(requestedOrganizationId: string) {
   const supabase = await createSupabaseServerClient();
@@ -163,4 +164,88 @@ export async function updateCompanyMemberRole(formData: FormData) {
   }
   revalidatePath("/empresa");
   redirect("/empresa?success=Permiso+del+integrante+actualizado");
+}
+
+
+export async function requestCompanyMemberPasswordReset(formData: FormData) {
+  const organizationId = String(formData.get("organization_id") ?? "").trim();
+  const userId = String(formData.get("user_id") ?? "").trim();
+  const reason = String(formData.get("reason") ?? "").trim().slice(0, 300);
+  if (!organizationId || !userId || reason.length < 4) {
+    redirect("/empresa?error=Indica+el+integrante+y+un+motivo+de+al+menos+4+caracteres");
+  }
+
+  const { admin, user: actor } = await ownerContext(organizationId);
+  if (actor.id === userId) redirect("/empresa?error=No+puedes+restablecer+tu+propia+contraseña+desde+este+panel");
+
+  const { data: membership, error: membershipError } = await admin
+    .from("organization_members")
+    .select("role")
+    .eq("organization_id", organizationId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (membershipError || !membership) redirect("/empresa?error=El+integrante+no+pertenece+a+esta+productora");
+
+  // Company admins may reset only non-admin team members. Owners may also reset
+  // company administrators, but neither role can reset an owner from this screen.
+  if (membership.role === "owner" || (membership.role === "admin" && (await admin
+    .from("organization_members").select("role").eq("organization_id", organizationId)
+    .eq("user_id", actor.id).maybeSingle()).data?.role !== "owner")) {
+    redirect("/empresa?error=No+tienes+permiso+para+restablecer+la+contraseña+de+ese+integrante");
+  }
+
+  const { data: target, error: targetError } = await admin.auth.admin.getUserById(userId);
+  if (targetError || !target.user?.email) redirect("/empresa?error=No+se+encontró+el+correo+de+esa+cuenta");
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  if (!siteUrl || !supabaseUrl || !publishableKey) {
+    redirect("/empresa?error=Falta+configurar+la+URL+del+sitio+o+la+clave+pública+de+Supabase");
+  }
+
+  const previousMetadata = target.user.app_metadata ?? {};
+  const requestedAt = new Date().toISOString();
+  const { error: metadataError } = await admin.auth.admin.updateUserById(userId, {
+    app_metadata: {
+      ...previousMetadata,
+      cineflow_force_password_change: true,
+      cineflow_password_reset_requested_at: requestedAt,
+      cineflow_password_reset_requested_by: actor.id,
+    },
+  });
+  if (metadataError) redirect("/empresa?error=" + encodeURIComponent(metadataError.message));
+
+  const { error: auditError } = await admin.from("organization_audit_log").insert({
+    organization_id: organizationId,
+    actor_id: actor.id,
+    action: "user_password_reset_requested",
+    target_type: "user",
+    target_id: userId,
+    metadata: { email: target.user.email, requested_at: requestedAt, reason, delivery: "company_recovery_email" },
+  });
+  if (auditError) {
+    await admin.auth.admin.updateUserById(userId, { app_metadata: previousMetadata });
+    redirect("/empresa?error=No+se+pudo+registrar+el+restablecimiento.+No+se+envió+el+correo");
+  }
+
+  const publicClient = createClient(supabaseUrl, publishableKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const { error: emailError } = await publicClient.auth.resetPasswordForEmail(target.user.email, {
+    redirectTo: new URL("/auth/reset-password", siteUrl).toString(),
+  });
+  if (emailError) {
+    await admin.auth.admin.updateUserById(userId, { app_metadata: previousMetadata });
+    await admin.from("organization_audit_log").delete()
+      .eq("organization_id", organizationId)
+      .eq("actor_id", actor.id)
+      .eq("target_id", userId)
+      .eq("action", "user_password_reset_requested")
+      .contains("metadata", { requested_at: requestedAt });
+    redirect("/empresa?error=" + encodeURIComponent("No se pudo enviar el correo: " + emailError.message));
+  }
+
+  revalidatePath("/empresa");
+  redirect("/empresa?success=" + encodeURIComponent("Se envió el enlace para restablecer la contraseña a " + target.user.email));
 }
