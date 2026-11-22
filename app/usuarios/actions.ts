@@ -258,8 +258,10 @@ export async function resetUserPassword(formData: FormData) {
   }));
   const { error: auditError } = await admin.from("organization_audit_log").insert(auditRows);
   if (auditError) {
-    await admin.auth.admin.updateUserById(userId, { app_metadata: previousMetadata });
-    redirect(`/usuarios?error=${message("Se envió la solicitud, pero no se pudo guardar el registro de auditoría. Contacta al administrador.")}`);
+    // The recovery email has already been sent. Keep the forced-reset flag
+    // active so the recipient cannot bypass the required password change.
+    console.error("[cineflow] No se pudo registrar la auditoría del restablecimiento:", auditError.message);
+    redirect(`/usuarios?error=${message("El correo se envió, pero no se pudo guardar el registro de auditoría. El restablecimiento sigue activo.")}`);
   }
 
   revalidatePath("/usuarios");
