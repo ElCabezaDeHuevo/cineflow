@@ -38,6 +38,7 @@ export default async function CompaniesAdmin({ searchParams }: { searchParams: P
       {error && <p role="alert" className="mb-5 rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-200">{error}</p>}
       {success && <p role="status" className="mb-5 rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-4 text-sm text-emerald-200">{success}</p>}
       {companiesError && <p className="mb-5 rounded-xl border border-red-400/30 p-4 text-sm text-red-200">{companiesError.message}</p>}
+      {accountsError && <p role="alert" className="mb-5 rounded-xl border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-100">No se pudieron cargar todas las cuentas: {accountsError.message}. El selector de propietarios podría estar incompleto.</p>}
       <div className="mb-8 grid gap-4 sm:grid-cols-3">
         <article className="rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Productoras</p><p className="mt-2 text-3xl font-bold">{companies?.length ?? 0}</p></article>
         <article className="rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Activas o en prueba</p><p className="mt-2 text-3xl font-bold">{activeCount}</p></article>
