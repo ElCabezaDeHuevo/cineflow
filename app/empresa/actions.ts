@@ -5,14 +5,16 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
-async function ownerContext() {
+async function ownerContext(requestedOrganizationId: string) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
   const { data: memberships } = await supabase.from("organization_members")
     .select("organization_id,role").eq("user_id", user.id);
-  const membership = (memberships ?? []).find((m) => ["owner", "admin"].includes(m.role));
-  if (!membership) redirect("/");
+  const membership = (memberships ?? []).find((m) =>
+    m.organization_id === requestedOrganizationId && ["owner", "admin"].includes(m.role)
+  );
+  if (!membership) redirect("/empresa?error=No+tienes+permisos+para+administrar+esa+productora");
   const admin = createSupabaseAdminClient();
   if (!admin) redirect("/empresa?error=No+está+configurado+el+servicio+de+invitaciones");
   const { data: subscription } = await admin.from("subscriptions")
@@ -24,7 +26,9 @@ async function ownerContext() {
 }
 
 export async function inviteCompanyMember(formData: FormData) {
-  const { admin, user, organizationId } = await ownerContext();
+  const organizationId = String(formData.get("organization_id") ?? "").trim();
+  if (!organizationId) redirect("/empresa?error=Selecciona+una+productora");
+  const { admin, user } = await ownerContext(organizationId);
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const role = String(formData.get("role") ?? "member");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) redirect("/empresa?error=Correo+no+válido");
