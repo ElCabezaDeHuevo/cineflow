@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
-export const dynamic = "force-dynamic";
-
 function loginError(request: NextRequest, message: string) {
   const url = new URL("/login", request.url);
   url.searchParams.set("error", message);
