@@ -395,11 +395,13 @@ export async function completeForcedPasswordChange(newPassword: string) {
   // Refresh the SSR cookie session after the admin metadata update.
   // This replaces the JWT that still carried cineflow_force_password_change=true.
   const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
-  if (refreshError || !refreshed.session) {
-    throw new Error("La contraseña se guardó, pero no pudimos renovar tu sesión. Cierra sesión y entra con tu nueva contraseña.");
-  }
-  if (refreshed.user?.app_metadata?.cineflow_force_password_change === true) {
-    throw new Error("La contraseña se guardó, pero Supabase aún devuelve el indicador de restablecimiento. Cierra sesión y vuelve a entrar.");
+  if (refreshError || !refreshed.session || refreshed.user?.app_metadata?.cineflow_force_password_change === true) {
+    // The password and flag are already saved by the Admin API. Confirm the
+    // persisted flag, then let the client sign out locally and reauthenticate.
+    const { data: persisted, error: persistedError } = await admin.auth.admin.getUserById(user.id);
+    if (persistedError || persisted.user?.app_metadata?.cineflow_force_password_change === true) {
+      throw new Error("La contraseña no pudo confirmarse. Contacta al administrador antes de volver a intentarlo.");
+    }
   }
 
   revalidatePath("/");
