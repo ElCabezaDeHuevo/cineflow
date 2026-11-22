@@ -28,11 +28,10 @@ export async function proxy(request: NextRequest) {
       },
     },
   });
-  // Verify the JWT and refresh the session without a network user lookup.
-  // Supabase recommends getClaims() in Next.js Proxy for SSR session refresh.
-  const { data: claimsData } = await supabase.auth.getClaims();
-  const claims = claimsData?.claims as { app_metadata?: { cineflow_force_password_change?: boolean } } | undefined;
-  const forcePasswordChange = claims?.app_metadata?.cineflow_force_password_change === true;
+  // Fetch the current Auth user so a cleared reset flag is not read from a stale JWT.
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError) console.error("[cineflow] No se pudo verificar el usuario en el proxy:", userError.message);
+  const forcePasswordChange = !userError && userData.user?.app_metadata?.cineflow_force_password_change === true;
   const pathname = request.nextUrl.pathname;
   const isPasswordChangeRoute = pathname === "/auth/reset-password/required" || pathname === "/auth/reset-password" || pathname === "/login";
   const isSignOutRoute = pathname === "/auth/signout";
