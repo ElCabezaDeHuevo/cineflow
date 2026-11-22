@@ -153,14 +153,23 @@ export async function deleteUser(formData: FormData) {
     ban_duration: "876000h",
   });
   if (disableError) redirect(`/usuarios?error=${message(disableError.message)}`);
-  const { error: auditError } = await admin.from("organization_audit_log").insert({
-    organization_id: (await admin.from("organization_members").select("organization_id").eq("user_id", userId).limit(1).maybeSingle()).data?.organization_id ?? null,
+  const { data: memberships, error: membershipsError } = await admin.from("organization_members")
+    .select("organization_id").eq("user_id", userId);
+  if (membershipsError) {
+    await admin.auth.admin.updateUserById(userId, { ban_duration: "none" });
+    redirect(`/usuarios?error=${message("No se pudo verificar la empresa del usuario. No se aplicó la baja.")}`);
+  }
+  const auditEntries = (memberships ?? []).map((membership) => ({
+    organization_id: membership.organization_id,
     actor_id: user.id,
     action: "company_user_deactivated",
     target_type: "user",
     target_id: userId,
     metadata: { email: account.user.email ?? null, reason: "Desactivación desde administración; se conservaron los registros." },
-  });
+  }));
+  const { error: auditError } = auditEntries.length
+    ? await admin.from("organization_audit_log").insert(auditEntries)
+    : { error: null };
   if (auditError) {
     await admin.auth.admin.updateUserById(userId, { ban_duration: "none" });
     redirect(`/usuarios?error=${message("No se pudo registrar la baja. Se reactivó la cuenta.")}`);
