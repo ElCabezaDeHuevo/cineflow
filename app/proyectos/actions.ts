@@ -51,7 +51,13 @@ async function authenticatedClient() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  return user ? { supabase, user, active: await hasOpenWorkSession(supabase, user.id) } : null;
+  if (!user) return null;
+  // RLS hides organization membership from a suspended member. This shared
+  // guard also protects server actions that later use the service-role client.
+  const { data: memberships, error } = await supabase.from("organization_members")
+    .select("organization_id").eq("user_id", user.id).limit(1);
+  if (error || !memberships?.length) return null;
+  return { supabase, user, active: await hasOpenWorkSession(supabase, user.id) };
 }
 
 async function saveProjectMedia(projectId: string, userId: string, file: File, mediaType: "cover" | "screenshot", caption: string) {
