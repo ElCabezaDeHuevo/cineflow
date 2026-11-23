@@ -6,7 +6,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@supabase/supabase-js";
 
-async function ownerContext(requestedOrganizationId: string) {
+async function ownerContext(requestedOrganizationId: string, allowWhenSubscriptionInactive = false) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
@@ -25,10 +25,12 @@ async function ownerContext(requestedOrganizationId: string) {
     .maybeSingle();
   if (suspensionLookupError) redirect("/empresa?error=No+se+pudo+verificar+el+estado+de+tu+acceso");
   if (activeSuspension) redirect("/?error=Tu+acceso+a+esta+empresa+está+suspendido");
-  const { data: subscription } = await admin.from("subscriptions")
-    .select("status").eq("organization_id", membership.organization_id).maybeSingle();
-  if (subscription?.status === "paused" || subscription?.status === "expired" || subscription?.status === "canceled") {
-    redirect("/empresa?error=El+servicio+está+suspendido.+Contacta+al+soporte");
+  if (!allowWhenSubscriptionInactive) {
+    const { data: subscription } = await admin.from("subscriptions")
+      .select("status").eq("organization_id", membership.organization_id).maybeSingle();
+    if (subscription?.status === "paused" || subscription?.status === "expired" || subscription?.status === "canceled") {
+      redirect("/empresa?error=El+servicio+está+suspendido.+Contacta+al+soporte");
+    }
   }
   return { admin, user, organizationId: membership.organization_id, actorRole: membership.role };
 }
@@ -200,7 +202,7 @@ export async function removeCompanyMember(formData: FormData) {
     return { ok: false as const, message: "Completa la confirmación, tu contraseña y un motivo válido." };
   }
 
-  const { admin, user: actor, actorRole } = await ownerContext(organizationId);
+  const { admin, user: actor, actorRole } = await ownerContext(organizationId, true);
   if (actorRole !== "owner") return { ok: false as const, message: "Solo el dueño puede dar de baja integrantes." };
   if (actor.id === userId) return { ok: false as const, message: "No puedes darte de baja a ti mismo." };
   if (!actor.email) return { ok: false as const, message: "Tu cuenta no tiene un correo verificado para confirmar la operación." };
@@ -247,7 +249,7 @@ export async function restoreCompanyMember(formData: FormData) {
   const organizationId = String(formData.get("organization_id") ?? "").trim();
   const userId = String(formData.get("user_id") ?? "").trim();
   if (!organizationId || !userId) redirect("/empresa?error=No+se+identificó+la+cuenta+para+restaurar");
-  const { admin, user: actor, actorRole } = await ownerContext(organizationId);
+  const { admin, user: actor, actorRole } = await ownerContext(organizationId, true);
   if (actorRole !== "owner") redirect("/empresa?error=Solo+el+dueño+puede+restaurar+integrantes");
   const { error } = await admin.rpc("restore_organization_member", {
     p_organization_id: organizationId,
@@ -353,7 +355,7 @@ export async function suspendCompanyMember(formData: FormData) {
   if (!organizationId || !userId || confirmation !== "SUSPENDER" || !password || reason.length < 4) {
     return { ok: false as const, message: "Completa la confirmación, tu contraseña y un motivo válido." };
   }
-  const { admin, user: actor, actorRole } = await ownerContext(organizationId);
+  const { admin, user: actor, actorRole } = await ownerContext(organizationId, true);
   if (actorRole !== "owner") return { ok: false as const, message: "Solo el dueño puede suspender integrantes." };
   if (actor.id === userId || !actor.email) return { ok: false as const, message: "No puedes suspender tu propia cuenta." };
 
@@ -387,7 +389,7 @@ export async function reactivateCompanyMember(formData: FormData) {
   if (!organizationId || !userId || confirmation !== "REACTIVAR" || !password) {
     return { ok: false as const, message: "Confirma la palabra REACTIVAR e introduce tu contraseña." };
   }
-  const { admin, user: actor, actorRole } = await ownerContext(organizationId);
+  const { admin, user: actor, actorRole } = await ownerContext(organizationId, true);
   if (actorRole !== "owner") return { ok: false as const, message: "Solo el dueño puede reactivar integrantes." };
   if (actor.id === userId || !actor.email) return { ok: false as const, message: "No puedes reactivar tu propia cuenta desde aquí." };
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
