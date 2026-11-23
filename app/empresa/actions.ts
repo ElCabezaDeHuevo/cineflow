@@ -180,6 +180,77 @@ export async function updateCompanyMemberRole(formData: FormData) {
 }
 
 
+
+export async function removeCompanyMember(formData: FormData) {
+  const organizationId = String(formData.get("organization_id") ?? "").trim();
+  const userId = String(formData.get("user_id") ?? "").trim();
+  const confirmation = String(formData.get("confirmation") ?? "").trim();
+  const password = String(formData.get("owner_password") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim().slice(0, 300);
+  if (!organizationId || !userId || confirmation !== "ELIMINAR" || password.length < 1 || reason.length < 4) {
+    return { ok: false as const, message: "Completa la confirmación, tu contraseña y un motivo válido." };
+  }
+
+  const { admin, user: actor, actorRole } = await ownerContext(organizationId);
+  if (actorRole !== "owner") return { ok: false as const, message: "Solo el dueño puede dar de baja integrantes." };
+  if (actor.id === userId) return { ok: false as const, message: "No puedes darte de baja a ti mismo." };
+  if (!actor.email) return { ok: false as const, message: "Tu cuenta no tiene un correo verificado para confirmar la operación." };
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  if (!supabaseUrl || !publishableKey) {
+    return { ok: false as const, message: "No está configurada la verificación segura de la cuenta." };
+  }
+
+  // Re-authenticate in an isolated client; never replace the owner's active session.
+  const verifier = createClient(supabaseUrl, publishableKey, {
+    auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
+  });
+  const { error: verificationError } = await verifier.auth.signInWithPassword({
+    email: actor.email,
+    password,
+  });
+  if (verificationError) {
+    return { ok: false as const, message: "La contraseña del dueño no es correcta. No se realizó ningún cambio." };
+  }
+  await verifier.auth.signOut();
+
+  const { data: target, error: targetError } = await admin.auth.admin.getUserById(userId);
+  if (targetError || !target.user) return { ok: false as const, message: "No se encontró la cuenta del integrante." };
+  const { data: profile } = await admin.from("profiles").select("full_name").eq("id", userId).maybeSingle();
+
+  const { data: removalId, error } = await admin.rpc("remove_organization_member_reversible", {
+    p_organization_id: organizationId,
+    p_target_user_id: userId,
+    p_actor_id: actor.id,
+    p_target_email: target.user.email ?? "",
+    p_target_name: profile?.full_name ?? "",
+    p_reason: reason,
+  });
+  if (error) return { ok: false as const, message: error.message || "No se pudo completar la baja." };
+
+  revalidatePath("/empresa");
+  revalidatePath("/proyectos");
+  return { ok: true as const, message: "Acceso retirado. La cuenta y su historial se conservaron.", removalId };
+}
+
+export async function restoreCompanyMember(formData: FormData) {
+  const organizationId = String(formData.get("organization_id") ?? "").trim();
+  const userId = String(formData.get("user_id") ?? "").trim();
+  if (!organizationId || !userId) redirect("/empresa?error=No+se+identificó+la+cuenta+para+restaurar");
+  const { admin, user: actor, actorRole } = await ownerContext(organizationId);
+  if (actorRole !== "owner") redirect("/empresa?error=Solo+el+dueño+puede+restaurar+integrantes");
+  const { error } = await admin.rpc("restore_organization_member", {
+    p_organization_id: organizationId,
+    p_target_user_id: userId,
+    p_actor_id: actor.id,
+  });
+  if (error) redirect("/empresa?error=" + encodeURIComponent(error.message));
+  revalidatePath("/empresa");
+  revalidatePath("/proyectos");
+  redirect("/empresa?success=Integrante+restaurado.+Se+conservó+su+historial");
+}
+
 export async function requestCompanyMemberPasswordReset(formData: FormData) {
   const organizationId = String(formData.get("organization_id") ?? "").trim();
   const userId = String(formData.get("user_id") ?? "").trim();
