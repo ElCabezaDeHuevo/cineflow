@@ -30,14 +30,18 @@ export default function RemoveCompanyMemberButton({
     data.set("reason", reason);
     setMessage("");
     startTransition(async () => {
-      const result = await removeCompanyMember(data);
-      setMessage(result.message);
-      if (result.ok) {
-        setOpen(false);
-        setConfirmation("");
-        setPassword("");
-        setReason("");
-        window.location.reload();
+      try {
+        const result = await removeCompanyMember(data);
+        setMessage(result.message || (result.ok ? "Baja completada." : "No se pudo completar la baja."));
+        if (result.ok) {
+          setOpen(false);
+          setConfirmation("");
+          setPassword("");
+          setReason("");
+          window.location.reload();
+        }
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : "Ocurrió un error al confirmar la baja. Intenta de nuevo.");
       }
     });
   }
@@ -71,7 +75,7 @@ export default function RemoveCompanyMemberButton({
               onClick={submit} className="flex-1 rounded-lg bg-red-600 px-3 py-2 text-xs font-bold text-white hover:bg-red-500 disabled:opacity-40">
               {pending ? "Verificando…" : "Confirmar baja"}
             </button>
-            <button type="button" disabled={pending} onClick={() => { setOpen(false); setMessage(""); }}
+            <button type="button" disabled={pending} onClick={() => { setOpen(false); setMessage(""); setConfirmation(""); setPassword(""); setReason(""); }}
               className="rounded-lg border border-white/15 px-3 py-2 text-xs text-gray-200">Cancelar</button>
           </div>
         </div>
