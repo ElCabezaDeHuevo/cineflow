@@ -24,13 +24,15 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
   const organizationNameById = new Map((manageableOrganizations ?? []).map((item) => [item.id, item.name]));
   const [{ data: organization }, { data: members }, { data: subscription }] = await Promise.all([
     supabase.from("organizations").select("id,name,slug,billing_email").eq("id", membership.organization_id).single(),
-    supabase.from("organization_members").select("user_id,role,joined_at").eq("organization_id", membership.organization_id).order("joined_at", { ascending: true }),
+    isOwner && admin
+      ? admin.from("organization_members").select("user_id,role,joined_at").eq("organization_id", membership.organization_id).order("joined_at", { ascending: true })
+      : supabase.from("organization_members").select("user_id,role,joined_at").eq("organization_id", membership.organization_id).order("joined_at", { ascending: true }),
     supabase.from("subscriptions").select("status,billing_interval,trial_end,current_period_end,last_manual_payment_at").eq("organization_id", membership.organization_id).maybeSingle(),
   ]);
   const admin = createSupabaseAdminClient();
   const ids = (members ?? []).map((m) => m.user_id);
   const [{ data: profiles }, authUsersResult, paymentResult] = await Promise.all([
-    ids.length ? supabase.from("profiles").select("id,full_name,avatar_url").in("id", ids) : Promise.resolve({ data: [] }),
+    ids.length ? (isOwner && admin ? admin.from("profiles").select("id,full_name,avatar_url").in("id", ids) : supabase.from("profiles").select("id,full_name,avatar_url").in("id", ids)) : Promise.resolve({ data: [] }),
     admin ? listAllAuthUsers(admin).then((users) => ({ users, error: null })).catch((error: unknown) => ({ users: [], error: error instanceof Error ? error : new Error("No se pudieron consultar todas las cuentas") })) : Promise.resolve({ users: [], error: null }),
     admin ? admin.from("organization_manual_payments").select("amount_mxn,paid_at,billing_interval,payment_method,reference").eq("organization_id", membership.organization_id).order("paid_at", { ascending: false }).limit(1).maybeSingle() : Promise.resolve({ data: null }),
   ]);
