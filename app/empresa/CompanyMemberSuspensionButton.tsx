@@ -25,9 +25,13 @@ export default function CompanyMemberSuspensionButton({
     data.set("reason", reason);
     setMessage("");
     startTransition(async () => {
-      const result = suspended ? await reactivateCompanyMember(data) : await suspendCompanyMember(data);
-      setMessage(result.message);
-      if (result.ok) window.location.reload();
+      try {
+        const result = suspended ? await reactivateCompanyMember(data) : await suspendCompanyMember(data);
+        setMessage(result.message || (result.ok ? "Operación completada." : "No se pudo completar la operación."));
+        if (result.ok) window.location.reload();
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : "Ocurrió un error al confirmar la operación. Intenta de nuevo.");
+      }
     });
   }
 
