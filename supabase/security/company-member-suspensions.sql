@@ -65,7 +65,7 @@ as $$
             and s.reactivated_at is null
         )
     );
-$;
+$$;
 
 create or replace function public.suspend_organization_member(
   p_organization_id uuid,
