@@ -47,7 +47,7 @@ $$;
 create or replace function private.can_view_profile(target_profile uuid)
 returns boolean
 language sql stable security definer set search_path = ''
-as $
+as $$
   select target_profile = (select auth.uid())
     or exists (
       select 1
