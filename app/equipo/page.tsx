@@ -18,10 +18,24 @@ export default async function TeamPage() {
     supabase.from("projects").select("id, name, stage, owner_role").order("name"),
     supabase.from("project_members").select("project_id, user_id, role").order("created_at"),
   ]);
-  const { data: directoryProfiles, error: directoryError } = await supabase
-    .from("profiles")
-    .select("id, full_name, avatar_url, bio")
-    .order("full_name");
+  // The profile directory is limited to people who share at least one
+  // active company with the signed-in user. RLS applies the same rule again.
+  const { data: myOrganizations, error: myOrganizationsError } = await supabase
+    .from("organization_members")
+    .select("organization_id")
+    .eq("user_id", user.id);
+  const organizationIds = [...new Set((myOrganizations ?? []).map((item) => item.organization_id))];
+  const { data: companyMembers, error: companyMembersError } = organizationIds.length
+    ? await supabase.from("organization_members").select("user_id").in("organization_id", organizationIds)
+    : { data: [], error: null };
+  const directoryUserIds = [...new Set([user.id, ...(companyMembers ?? []).map((item) => item.user_id)])];
+  const { data: directoryProfiles, error: directoryError } = directoryUserIds.length
+    ? await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url, bio")
+        .in("id", directoryUserIds)
+        .order("full_name")
+    : { data: [], error: null };
   const userIds = [...new Set((memberships ?? []).map((member) => member.user_id))];
   const { data: profiles } = userIds.length ? await supabase.from("profiles").select("id, full_name, avatar_url, bio").in("id", userIds) : { data: [] };
   const profileById = new Map((profiles ?? []).map((profile) => [profile.id, profile]));
@@ -51,9 +65,9 @@ export default async function TeamPage() {
               Consulta los perfiles del equipo. Las notas y capturas son de uso administrativo.
             </p>
           </div>
-          {directoryError ? (
+          {myOrganizationsError || companyMembersError || directoryError ? (
             <p className="p-6 text-sm text-red-200">
-              No se pudieron cargar los perfiles: {directoryError.message}
+              No se pudieron cargar los perfiles: {(myOrganizationsError || companyMembersError || directoryError)?.message}
             </p>
           ) : directoryProfiles?.length ? (
             <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
