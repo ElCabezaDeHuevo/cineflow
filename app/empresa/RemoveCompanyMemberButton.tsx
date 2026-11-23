@@ -41,7 +41,9 @@ export default function RemoveCompanyMemberButton({
           window.location.reload();
         }
       } catch (error) {
-        setMessage(error instanceof Error ? error.message : "Ocurrió un error al confirmar la baja. Intenta de nuevo.");
+        if (error && typeof error === "object" && "digest" in error &&
+          typeof error.digest === "string" && error.digest.startsWith("NEXT_REDIRECT")) throw error;
+        setMessage(error instanceof Error ? error.message : "Ocurrió un error al confirmar la operación. Intenta de nuevo.");
       }
     });
   }
