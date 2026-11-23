@@ -16,6 +16,15 @@ async function ownerContext(requestedOrganizationId: string) {
   if (!membership) redirect("/empresa?error=No+tienes+permisos+para+administrar+esa+productora");
   const admin = createSupabaseAdminClient();
   if (!admin) redirect("/empresa?error=No+está+configurado+el+servicio+de+invitaciones");
+  const { data: activeSuspension, error: suspensionLookupError } = await admin
+    .from("organization_member_suspensions")
+    .select("id")
+    .eq("organization_id", membership.organization_id)
+    .eq("target_user_id", user.id)
+    .is("reactivated_at", null)
+    .maybeSingle();
+  if (suspensionLookupError) redirect("/empresa?error=No+se+pudo+verificar+el+estado+de+tu+acceso");
+  if (activeSuspension) redirect("/?error=Tu+acceso+a+esta+empresa+está+suspendido");
   const { data: subscription } = await admin.from("subscriptions")
     .select("status").eq("organization_id", membership.organization_id).maybeSingle();
   if (subscription?.status === "paused" || subscription?.status === "expired" || subscription?.status === "canceled") {
