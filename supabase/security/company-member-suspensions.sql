@@ -152,3 +152,12 @@ revoke all on function public.suspend_organization_member(uuid,uuid,uuid,text) f
 revoke all on function public.reactivate_organization_member(uuid,uuid,uuid) from public,anon,authenticated;
 grant execute on function public.suspend_organization_member(uuid,uuid,uuid,text) to service_role;
 grant execute on function public.reactivate_organization_member(uuid,uuid,uuid) to service_role;
+
+-- Prevent suspended users from reading even their own project_members row.
+-- Application server actions use this RLS-scoped read as the authorization gate
+-- before any service-role operation.
+drop policy if exists "members can read memberships" on public.project_members;
+create policy "active organization members can read memberships"
+  on public.project_members for select to authenticated
+  using (private.is_project_member(project_id));
+
