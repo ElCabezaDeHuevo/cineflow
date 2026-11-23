@@ -30,6 +30,8 @@ export default function CompanyMemberSuspensionButton({
         setMessage(result.message || (result.ok ? "Operación completada." : "No se pudo completar la operación."));
         if (result.ok) window.location.reload();
       } catch (error) {
+        if (error && typeof error === "object" && "digest" in error &&
+          typeof error.digest === "string" && error.digest.startsWith("NEXT_REDIRECT")) throw error;
         setMessage(error instanceof Error ? error.message : "Ocurrió un error al confirmar la operación. Intenta de nuevo.");
       }
     });
