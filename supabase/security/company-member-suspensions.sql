@@ -47,7 +47,7 @@ $$;
 create or replace function private.can_view_profile(target_profile uuid)
 returns boolean
 language sql stable security definer set search_path = ''
-as $$
+as $
   select target_profile = (select auth.uid())
     or exists (
       select 1
@@ -56,6 +56,7 @@ as $$
         on theirs.organization_id = mine.organization_id
       where mine.user_id = (select auth.uid())
         and theirs.user_id = target_profile
+        -- Both sides must be active in this exact shared company.
         and private.is_organization_member(mine.organization_id)
         and not exists (
           select 1 from public.organization_member_suspensions s
@@ -64,7 +65,7 @@ as $$
             and s.reactivated_at is null
         )
     );
-$$;
+$;
 
 create or replace function public.suspend_organization_member(
   p_organization_id uuid,
