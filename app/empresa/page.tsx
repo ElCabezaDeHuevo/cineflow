@@ -22,6 +22,8 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
   if (!membership) redirect(manageableMemberships.length ? "/empresa?error=No+tienes+acceso+a+esa+productora" : "/");
   const { data: manageableOrganizations } = manageableMemberships.length ? await supabase.from("organizations").select("id,name").in("id", manageableMemberships.map((m) => m.organization_id)) : { data: [] };
   const organizationNameById = new Map((manageableOrganizations ?? []).map((item) => [item.id, item.name]));
+  const admin = createSupabaseAdminClient();
+  const isOwner = membership.role === "owner";
   const [{ data: organization }, { data: members }, { data: subscription }] = await Promise.all([
     supabase.from("organizations").select("id,name,slug,billing_email").eq("id", membership.organization_id).single(),
     isOwner && admin
@@ -29,7 +31,6 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
       : supabase.from("organization_members").select("user_id,role,joined_at").eq("organization_id", membership.organization_id).order("joined_at", { ascending: true }),
     supabase.from("subscriptions").select("status,billing_interval,trial_end,current_period_end,last_manual_payment_at").eq("organization_id", membership.organization_id).maybeSingle(),
   ]);
-  const admin = createSupabaseAdminClient();
   const ids = (members ?? []).map((m) => m.user_id);
   const [{ data: profiles }, authUsersResult, paymentResult] = await Promise.all([
     ids.length ? (isOwner && admin ? admin.from("profiles").select("id,full_name,avatar_url").in("id", ids) : supabase.from("profiles").select("id,full_name,avatar_url").in("id", ids)) : Promise.resolve({ data: [] }),
@@ -49,7 +50,6 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
   const suspendedUserIds = new Set(suspendedMembers.map((item) => item.target_user_id));
   const roleLabel: Record<string,string> = { owner: "Dueño", admin: "Administrador", producer: "Productor", member: "Colaborador", viewer: "Solo lectura" };
   const latestPayment = paymentResult.data;
-  const isOwner = membership.role === "owner";
   const status = subscription?.status ?? "Sin plan";
   const statusLabel = status === "trialing" ? "Prueba gratuita" : status === "active" ? "Servicio activo" : status === "paused" ? "Servicio suspendido" : status === "past_due" ? "Pago pendiente" : status;
   const validUntil = status === "trialing" ? subscription?.trial_end : subscription?.current_period_end;
