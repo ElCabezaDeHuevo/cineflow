@@ -333,3 +333,71 @@ export async function requestCompanyMemberPasswordReset(formData: FormData) {
   revalidatePath("/empresa");
   redirect("/empresa?success=" + encodeURIComponent("Se envió el enlace para restablecer la contraseña a " + target.user.email));
 }
+
+
+export async function suspendCompanyMember(formData: FormData) {
+  const organizationId = String(formData.get("organization_id") ?? "").trim();
+  const userId = String(formData.get("user_id") ?? "").trim();
+  const confirmation = String(formData.get("confirmation") ?? "").trim();
+  const password = String(formData.get("owner_password") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim().slice(0, 300);
+  if (!organizationId || !userId || confirmation !== "SUSPENDER" || !password || reason.length < 4) {
+    return { ok: false as const, message: "Completa la confirmación, tu contraseña y un motivo válido." };
+  }
+  const { admin, user: actor, actorRole } = await ownerContext(organizationId);
+  if (actorRole !== "owner") return { ok: false as const, message: "Solo el dueño puede suspender integrantes." };
+  if (actor.id === userId || !actor.email) return { ok: false as const, message: "No puedes suspender tu propia cuenta." };
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  if (!supabaseUrl || !publishableKey) return { ok: false as const, message: "No está configurada la verificación segura." };
+  const verifier = createClient(supabaseUrl, publishableKey, {
+    auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
+  });
+  const { error: verificationError } = await verifier.auth.signInWithPassword({ email: actor.email, password });
+  if (verificationError) return { ok: false as const, message: "La contraseña del dueño no es correcta. No se realizó ningún cambio." };
+  await verifier.auth.signOut();
+
+  const { data: result, error } = await admin.rpc("suspend_organization_member", {
+    p_organization_id: organizationId,
+    p_target_user_id: userId,
+    p_actor_id: actor.id,
+    p_reason: reason,
+  });
+  if (error) return { ok: false as const, message: error.message || "No se pudo suspender el acceso." };
+  revalidatePath("/empresa");
+  revalidatePath("/proyectos");
+  return { ok: true as const, message: "Acceso suspendido únicamente en esta empresa.", suspensionId: result };
+}
+
+export async function reactivateCompanyMember(formData: FormData) {
+  const organizationId = String(formData.get("organization_id") ?? "").trim();
+  const userId = String(formData.get("user_id") ?? "").trim();
+  const confirmation = String(formData.get("confirmation") ?? "").trim();
+  const password = String(formData.get("owner_password") ?? "");
+  if (!organizationId || !userId || confirmation !== "REACTIVAR" || !password) {
+    return { ok: false as const, message: "Confirma la palabra REACTIVAR e introduce tu contraseña." };
+  }
+  const { admin, user: actor, actorRole } = await ownerContext(organizationId);
+  if (actorRole !== "owner") return { ok: false as const, message: "Solo el dueño puede reactivar integrantes." };
+  if (actor.id === userId || !actor.email) return { ok: false as const, message: "No puedes reactivar tu propia cuenta desde aquí." };
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  if (!supabaseUrl || !publishableKey) return { ok: false as const, message: "No está configurada la verificación segura." };
+  const verifier = createClient(supabaseUrl, publishableKey, {
+    auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
+  });
+  const { error: verificationError } = await verifier.auth.signInWithPassword({ email: actor.email, password });
+  if (verificationError) return { ok: false as const, message: "La contraseña del dueño no es correcta. No se realizó ningún cambio." };
+  await verifier.auth.signOut();
+
+  const { data: result, error } = await admin.rpc("reactivate_organization_member", {
+    p_organization_id: organizationId,
+    p_target_user_id: userId,
+    p_actor_id: actor.id,
+  });
+  if (error) return { ok: false as const, message: error.message || "No se pudo reactivar el acceso." };
+  revalidatePath("/empresa");
+  revalidatePath("/proyectos");
+  return { ok: true as const, message: "Acceso reactivado. Se conservaron el rol y los permisos anteriores.", suspensionId: result };
+}
