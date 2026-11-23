@@ -2,7 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import UserAvatar from "@/lib/UserAvatar";
+import { listAllAuthUsers } from "@/lib/supabase/list-all-auth-users";
 import { isCineflowAdmin } from "@/lib/admin";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export const instant = false;
 
@@ -36,6 +38,18 @@ export default async function TeamPage() {
         .in("id", directoryUserIds)
         .order("full_name")
     : { data: [], error: null };
+  // Auth metadata is a fallback for invited users whose public profile has not been completed.
+  // The lookup is restricted to IDs already proven to share an active company with this user.
+  const authAdmin = createSupabaseAdminClient();
+  const directoryAuthUsers = authAdmin
+    ? await Promise.all(directoryUserIds.map(async (id) => {
+        const { data, error } = await authAdmin.auth.admin.getUserById(id);
+        return error ? null : data.user;
+      }))
+    : [];
+  const authUserById = new Map(
+    directoryAuthUsers.filter((entry): entry is NonNullable<typeof entry> => Boolean(entry)).map((entry) => [entry.id, entry]),
+  );
   const userIds = [...new Set((memberships ?? []).map((member) => member.user_id))];
   const { data: profiles } = userIds.length ? await supabase.from("profiles").select("id, full_name, avatar_url, bio").in("id", userIds) : { data: [] };
   const profileById = new Map((profiles ?? []).map((profile) => [profile.id, profile]));
@@ -72,7 +86,11 @@ export default async function TeamPage() {
           ) : directoryProfiles?.length ? (
             <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
               {directoryProfiles.map((profile) => {
-                const name = profile.full_name || "Usuario";
+                const authUser = authUserById.get(profile.id);
+                const metadata = authUser?.user_metadata ?? {};
+                const emailName = authUser?.email?.split("@")[0]?.trim();
+                const name = [profile.full_name, metadata.full_name, metadata.name, metadata.display_name, metadata.username, emailName]
+                  .find((value) => typeof value === "string" && value.trim().length > 0)?.trim() || "Integrante";
                 return (
                   <Link
                     key={profile.id}
