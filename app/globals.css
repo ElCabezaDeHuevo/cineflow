@@ -979,3 +979,32 @@ body {
     transition: none !important;
   }
 }
+
+
+/* CineFlow — transparent glass treatment for compact dashboard windows */
+.cf-dashboard .cf-metric-card,
+.cf-dashboard .cf-quick-link {
+  background: linear-gradient(145deg, rgb(24 28 43 / 48%), rgb(14 18 31 / 38%));
+  border-color: rgb(221 225 255 / 13%);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 14%), inset 0 1px 0 rgb(255 255 255 / 7%);
+  -webkit-backdrop-filter: blur(13px) saturate(125%);
+  backdrop-filter: blur(13px) saturate(125%);
+}
+.cf-dashboard .cf-dashboard-panel {
+  background: linear-gradient(145deg, rgb(22 27 42 / 72%), rgb(13 18 31 / 66%));
+  border-color: rgb(221 225 255 / 14%);
+  -webkit-backdrop-filter: blur(17px) saturate(120%);
+  backdrop-filter: blur(17px) saturate(120%);
+}
+.cf-dashboard .cf-metric-card:hover,
+.cf-dashboard .cf-quick-link:hover {
+  background: linear-gradient(145deg, rgb(39 39 62 / 64%), rgb(20 23 40 / 56%));
+  border-color: rgb(180 160 255 / 30%);
+}
+@media (max-width: 767px) {
+  .cf-dashboard .cf-metric-card,
+  .cf-dashboard .cf-quick-link {
+    -webkit-backdrop-filter: blur(10px) saturate(120%);
+    backdrop-filter: blur(10px) saturate(120%);
+  }
+}
