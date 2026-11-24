@@ -494,3 +494,266 @@ body { background-color: var(--cf-bg); color: var(--cf-text); }
 :where(select option:disabled) {
   color: #858391;
 }
+
+
+/* ─────────────────────────────────────────────────────────────
+   CineFlow Studio · Unified UX system
+   Consistent hierarchy, readable controls and responsive surfaces
+   ───────────────────────────────────────────────────────────── */
+:root {
+  --cf-bg: #090b12;
+  --cf-surface: #111522;
+  --cf-surface-raised: #171d2c;
+  --cf-surface-hover: #1c2435;
+  --cf-border: rgb(180 190 215 / 13%);
+  --cf-border-strong: rgb(180 190 215 / 22%);
+  --cf-text: #f5f7fc;
+  --cf-muted: #a5aec1;
+  --cf-subtle: #778197;
+  --cf-accent: #9b83ff;
+  --cf-accent-strong: #8062f4;
+  --cf-success: #48c99a;
+  --cf-warning: #f0bb68;
+  --cf-danger: #f07883;
+  color-scheme: dark;
+}
+html { scroll-behavior: smooth; }
+body {
+  color: var(--cf-text);
+  background:
+    radial-gradient(ellipse at 12% -8%, rgb(127 91 255 / 12%), transparent 34rem),
+    radial-gradient(ellipse at 96% 8%, rgb(44 190 210 / 7%), transparent 30rem),
+    var(--cf-bg);
+  font-family: var(--font-geist-sans), Inter, ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -.008em;
+}
+::selection { background: rgb(155 131 255 / 35%); color: #fff; }
+.cf-app-frame { min-width: 0; }
+.cf-app-frame main { color: var(--cf-text); }
+.cf-app-frame main > section {
+  width: min(100%, 1680px);
+  margin-inline: auto;
+  padding-top: clamp(22px, 3vw, 42px);
+  padding-bottom: clamp(32px, 4vw, 56px);
+}
+.cf-app-frame main > section > header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-bottom: 26px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--cf-border);
+}
+.cf-app-frame main > section > header h1,
+.cf-app-frame main > section > header h1 * {
+  color: var(--cf-text);
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  font-weight: 760;
+  letter-spacing: -.055em;
+  line-height: 1.08;
+}
+.cf-app-frame main > section > header p {
+  color: var(--cf-muted);
+  line-height: 1.6;
+}
+.cf-app-frame main > section > header p:first-child {
+  color: #b8a9ff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+.cf-app-frame main :is(h2) {
+  color: #f0f2f8;
+  font-size: clamp(1.05rem, 1.5vw, 1.28rem);
+  font-weight: 700;
+  letter-spacing: -.025em;
+}
+.cf-app-frame main :is(h3) {
+  color: #e9edf7;
+  font-size: .98rem;
+  font-weight: 650;
+  letter-spacing: -.018em;
+}
+.cf-app-frame main :is(p, li, label, small) { line-height: 1.55; }
+.cf-app-frame main :is(.text-gray-500, .text-zinc-500) { color: var(--cf-subtle) !important; }
+.cf-app-frame main :is(.text-gray-400, .text-zinc-400) { color: var(--cf-muted) !important; }
+
+/* Reusable surfaces: cards, panels and data groups */
+.cf-app-frame main :is(article, aside, section)[class*="rounded-2xl"][class*="border"] {
+  border-color: var(--cf-border);
+  border-radius: 18px;
+  background-color: color-mix(in srgb, var(--cf-surface) 94%, transparent);
+  box-shadow: 0 12px 34px rgb(0 0 0 / 12%);
+}
+.cf-app-frame main :is(article, aside, section)[class*="rounded-xl"][class*="border"] {
+  border-color: var(--cf-border);
+  border-radius: 14px;
+}
+.cf-app-frame main :is(article, aside)[class*="bg-\\[\\#14151c\\]"],
+.cf-app-frame main :is(article, aside)[class*="bg-\\[\\#171923\\]"] {
+  background: var(--cf-surface) !important;
+}
+.cf-app-frame main :is(.divide-y, [class*="divide-y"]) > * {
+  border-color: var(--cf-border);
+}
+.cf-app-frame main :is(table) { width: 100%; border-collapse: separate; border-spacing: 0; }
+.cf-app-frame main :is(th) {
+  color: var(--cf-muted);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+.cf-app-frame main :is(td, th) { border-color: var(--cf-border); }
+.cf-app-frame main :is(.overflow-x-auto) { max-width: 100%; }
+
+/* Buttons have one clear hierarchy and comfortable touch targets */
+.cf-app-frame main button,
+.cf-app-frame main a[class*="inline-flex"],
+.cf-app-frame main a[class*="rounded"] {
+  min-height: 40px;
+  border-radius: 11px;
+  font-weight: 620;
+}
+.cf-app-frame main button[class*="bg-violet-500"],
+.cf-app-frame main button[class*="bg-violet-600"],
+.cf-app-frame main a[class*="bg-violet-500"],
+.cf-app-frame main a[class*="bg-violet-600"] {
+  background: linear-gradient(135deg, #8d72f5, #7658e7);
+  color: white;
+  box-shadow: 0 7px 20px rgb(112 83 229 / 18%);
+}
+.cf-app-frame main button[class*="border"][class*="bg-transparent"],
+.cf-app-frame main button[class*="border-white"],
+.cf-app-frame main a[class*="border-white"] {
+  border-color: var(--cf-border-strong);
+}
+.cf-app-frame main button:not(:disabled):hover,
+.cf-app-frame main a[class*="rounded"]:hover {
+  filter: brightness(1.08);
+}
+.cf-app-frame main button:disabled { cursor: not-allowed; opacity: .48; }
+
+/* Forms: visible labels, readable fields, clear focus and spacing */
+.cf-app-frame main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]), select, textarea) {
+  min-height: 44px;
+  border: 1px solid var(--cf-border-strong);
+  border-radius: 11px;
+  background: #0d1220;
+  color: var(--cf-text);
+  padding: 10px 13px;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 2%);
+}
+.cf-app-frame main textarea { min-height: 104px; }
+.cf-app-frame main :is(input, select, textarea)::placeholder { color: #778197; }
+.cf-app-frame main :is(input, select, textarea):focus {
+  border-color: rgb(155 131 255 / 75%);
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(155 131 255 / 14%);
+}
+:where(select, option, optgroup) { color-scheme: dark; }
+:where(select option, select optgroup) { color: #f5f7fc; background: #111522; }
+.cf-app-frame main :is(label) { color: #c4cbda; font-size: 12px; font-weight: 620; }
+.cf-app-frame main :is(form) { min-width: 0; }
+.cf-app-frame main :is(input[type="checkbox"], input[type="radio"]) { accent-color: #9b83ff; }
+
+/* Search, filters and status labels */
+.cf-app-frame main :is([class*="rounded-full"][class*="border"]) { font-weight: 650; }
+.cf-app-frame main :is([role="alert"]) { border-radius: 13px; line-height: 1.55; }
+.cf-app-frame main :is(.border-dashed) { border-color: rgb(155 131 255 / 28%); background: rgb(155 131 255 / 3%); }
+.cf-app-frame main :is(a) { text-underline-offset: 3px; }
+.cf-app-frame main :is(a:hover) { color: #d7ccff; }
+
+/* Sidebar and mobile navigation */
+.cf-sidebar {
+  width: 272px;
+  padding: 24px 15px 16px;
+  border-right: 1px solid var(--cf-border);
+  background: rgb(12 16 27 / 96%);
+  box-shadow: 14px 0 48px rgb(0 0 0 / 12%);
+}
+.cf-brand { margin: 0 9px 28px; font-size: 16px; letter-spacing: .12em; }
+.cf-brand-mark {
+  width: 38px; height: 38px; border-radius: 13px;
+  background: linear-gradient(145deg, rgb(155 131 255 / 35%), rgb(63 47 116 / 22%));
+  box-shadow: 0 5px 20px rgb(127 91 255 / 15%);
+}
+.cf-sidebar-scroll { padding: 4px 2px 18px; }
+.cf-sidebar-scroll > div { margin-bottom: 22px; }
+.cf-sidebar-scroll > div > p {
+  padding-inline: 12px;
+  color: #7f8aa1;
+  font-size: 9px;
+  letter-spacing: .16em;
+}
+.cf-nav-link {
+  min-height: 43px;
+  gap: 12px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  color: #aeb8ca;
+  font-size: 12px;
+  font-weight: 620;
+}
+.cf-nav-link:hover { background: rgb(255 255 255 / 5%); color: #fff; }
+.cf-nav-link.is-active {
+  border-color: rgb(155 131 255 / 22%);
+  background: linear-gradient(100deg, rgb(139 110 245 / 21%), rgb(139 110 245 / 7%));
+  color: #e2dcff;
+  box-shadow: inset 3px 0 #a58cff;
+}
+.cf-nav-icon {
+  width: 23px; height: 23px;
+  border-radius: 7px;
+  background: rgb(255 255 255 / 4%);
+  color: #a9a1c3;
+  font-size: 15px;
+}
+.cf-nav-link.is-active .cf-nav-icon { background: rgb(155 131 255 / 16%); color: #d7ccff; }
+.cf-account {
+  min-height: 58px;
+  padding: 10px;
+  border-color: var(--cf-border);
+  border-radius: 14px;
+  background: rgb(255 255 255 / 3%);
+}
+.cf-account strong { font-size: 12px; color: #f2f4fb; }
+.cf-account small { color: #8e99ad; font-size: 10px; }
+.cf-avatar { width: 36px; height: 36px; border: 1px solid rgb(155 131 255 / 25%); }
+.cf-app-frame { padding-left: 272px; }
+.cf-mobile-header {
+  height: 60px;
+  border-color: var(--cf-border);
+  background: rgb(12 16 27 / 94%);
+}
+.cf-mobile-nav {
+  padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+  border-color: var(--cf-border);
+  background: rgb(12 16 27 / 97%);
+  box-shadow: 0 -12px 40px rgb(0 0 0 / 20%);
+}
+.cf-mobile-nav a, .cf-mobile-nav button { min-height: 50px; border-radius: 12px; }
+.cf-mobile-nav a small, .cf-mobile-nav button small { font-size: 10px; }
+.cf-more-sheet { background: #111522; border-color: var(--cf-border); }
+
+/* Responsive polish */
+@media (max-width: 767px) {
+  .cf-app-frame { padding-left: 0; padding-bottom: 94px; }
+  .cf-app-frame main > section { padding-inline: 16px; }
+  .cf-app-frame main > section > header { align-items: flex-start; margin-bottom: 20px; padding-bottom: 18px; }
+  .cf-app-frame main > section > header > div:last-child { width: 100%; }
+  .cf-app-frame main :is(article, aside, section)[class*="rounded-2xl"][class*="border"] { border-radius: 15px; }
+  .cf-app-frame main :is(.grid) { min-width: 0; }
+  .cf-app-frame main :is(button, a[class*="rounded"]) { min-height: 42px; }
+}
+@media (max-width: 420px) {
+  .cf-app-frame main > section { padding-inline: 12px; }
+  .cf-mobile-nav { padding-inline: 6px; }
+  .cf-mobile-nav a small, .cf-mobile-nav button small { font-size: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cf-app-frame *, .cf-sidebar *, .cf-mobile-nav * { animation: none !important; transition: none !important; }
+}
