@@ -1,11 +1,14 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { usePathname } from "next/navigation";
 import { createPortal } from "react-dom";
 import { submitErrorReport, type ErrorReportState } from "./error-reports/actions";
 
 export default function ErrorReportButton() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  if (pathname === "/login" || pathname.startsWith("/auth/")) return null;
 
   return (
     <>

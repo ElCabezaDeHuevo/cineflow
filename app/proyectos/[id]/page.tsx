@@ -73,7 +73,7 @@ export default async function ProjectDetailPage({
   const { data: profiles } = memberIds.length ? await supabase.from("profiles").select("id, full_name, avatar_url").in("id", memberIds) : { data: [] };
   const team = members?.map((member) => ({ ...member, profile: profiles?.find((profile) => profile.id === member.user_id) })) ?? [];
   return (
-    <main className="min-h-screen bg-[#0b0c10] text-white">
+    <main className="cf-cinematic-page cf-bg-projects min-h-screen bg-[#0b0c10] text-white">
       <ProjectVisitTracker userId={user.id} projectId={project.id} />
       <section className="mx-auto max-w-5xl p-4 sm:p-6 md:p-10">
         <Link href="/proyectos" className="text-sm text-violet-300">

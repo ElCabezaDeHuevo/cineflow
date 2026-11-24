@@ -17,9 +17,13 @@ async function currentContext() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  return user
-    ? { supabase, user, active: await hasOpenWorkSession(supabase, user.id) }
-    : null;
+  if (!user) return null;
+  // Check membership through the user's RLS-scoped client before any action
+  // can perform privileged service-role reads or writes.
+  const { data: memberships, error } = await supabase.from("organization_members")
+    .select("organization_id").eq("user_id", user.id).limit(1);
+  if (error || !memberships?.length) return null;
+  return { supabase, user, active: await hasOpenWorkSession(supabase, user.id) };
 }
 
 function validateScreenshot(file: File) {

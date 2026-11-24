@@ -51,7 +51,13 @@ async function authenticatedClient() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  return user ? { supabase, user, active: await hasOpenWorkSession(supabase, user.id) } : null;
+  if (!user) return null;
+  // RLS hides organization membership from a suspended member. This shared
+  // guard also protects server actions that later use the service-role client.
+  const { data: memberships, error } = await supabase.from("organization_members")
+    .select("organization_id").eq("user_id", user.id).limit(1);
+  if (error || !memberships?.length) return null;
+  return { supabase, user, active: await hasOpenWorkSession(supabase, user.id) };
 }
 
 async function saveProjectMedia(projectId: string, userId: string, file: File, mediaType: "cover" | "screenshot", caption: string) {
@@ -152,7 +158,7 @@ export async function requestProjectMembership(formData: FormData) {
 
   const admin = createSupabaseAdminClient();
   if (!admin) {
-    redirect("/proyectos?error=Falta%20configurar%20SUPABASE_SERVICE_ROLE_KEY");
+    redirect("/proyectos?error=Falta%20configurar%20SUPABASE_SERVICE_ROLE_KEY o SUPABASE_SECRET_KEY");
   }
   const { data: project, error: projectError } = await admin
     .from("projects")
@@ -250,7 +256,7 @@ export async function requestProjectLeave(formData: FormData) {
 
   const admin = createSupabaseAdminClient();
   if (!admin) {
-    redirect("/proyectos?error=Falta%20configurar%20SUPABASE_SERVICE_ROLE_KEY");
+    redirect("/proyectos?error=Falta%20configurar%20SUPABASE_SERVICE_ROLE_KEY o SUPABASE_SECRET_KEY");
   }
   const { data: membership, error: membershipError } = await context.supabase
     .from("project_members")
@@ -308,7 +314,7 @@ async function reviewProjectLeaveRequest(
   }
   const admin = createSupabaseAdminClient();
   if (!admin) {
-    redirect("/proyectos?error=Falta%20configurar%20SUPABASE_SERVICE_ROLE_KEY");
+    redirect("/proyectos?error=Falta%20configurar%20SUPABASE_SERVICE_ROLE_KEY o SUPABASE_SECRET_KEY");
   }
   const { data: request, error: requestError } = await admin
     .from("project_leave_requests")
@@ -323,7 +329,7 @@ async function reviewProjectLeaveRequest(
       )}`,
     );
   }
-  const { error } = await admin.rpc("review_project_leave_request", {
+  const { error } = await context.supabase.rpc("review_project_leave_request", {
     request_uuid: request.id,
     reviewer_uuid: context.user.id,
     approve,
@@ -359,7 +365,7 @@ export async function leaveProject(formData: FormData) {
 
   const admin = createSupabaseAdminClient();
   if (!admin) {
-    redirect("/proyectos?error=Falta%20configurar%20SUPABASE_SERVICE_ROLE_KEY");
+    redirect("/proyectos?error=Falta%20configurar%20SUPABASE_SERVICE_ROLE_KEY o SUPABASE_SECRET_KEY");
   }
   const { data: membership, error: membershipError } = await context.supabase
     .from("project_members")
@@ -414,7 +420,7 @@ async function reviewProjectMembershipRequest(
   }
   const admin = createSupabaseAdminClient();
   if (!admin) {
-    redirect("/proyectos?error=Falta%20configurar%20SUPABASE_SERVICE_ROLE_KEY");
+    redirect("/proyectos?error=Falta%20configurar%20SUPABASE_SERVICE_ROLE_KEY o SUPABASE_SECRET_KEY");
   }
   const { data: request, error: requestError } = await admin
     .from("project_membership_requests")
@@ -425,7 +431,7 @@ async function reviewProjectMembershipRequest(
   if (requestError || !request) {
     redirect(`/proyectos?error=${encodeURIComponent(requestError?.message ?? "La solicitud ya no está pendiente.")}`);
   }
-  const { error } = await admin.rpc("review_project_membership_request", {
+  const { error } = await context.supabase.rpc("review_project_membership_request", {
     request_uuid: request.id,
     reviewer_uuid: context.user.id,
     approve,

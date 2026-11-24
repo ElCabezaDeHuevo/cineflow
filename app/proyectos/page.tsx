@@ -232,7 +232,7 @@ export default async function ProjectsPage({
   };
 
   return (
-    <main className="min-h-screen bg-[#0b0c10] text-white">
+    <main className="cf-cinematic-page cf-bg-projects min-h-screen bg-[#0b0c10] text-white">
       <section className="mx-auto max-w-7xl p-4 sm:p-6 md:p-10">
         <Link href="/" className="text-sm text-violet-300">
           ← Panel principal
@@ -262,7 +262,7 @@ export default async function ProjectsPage({
               requestsError ||
               membershipRequestsError ||
               leaveRequestsError ||
-              "Falta configurar SUPABASE_SERVICE_ROLE_KEY para mostrar todos los proyectos y gestionar solicitudes."}
+              "Falta configurar SUPABASE_SERVICE_ROLE_KEY o SUPABASE_SECRET_KEY para mostrar todos los proyectos y gestionar solicitudes."}
           </p>
         )}
         {success && (

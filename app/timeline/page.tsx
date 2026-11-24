@@ -30,7 +30,7 @@ async function TimelineContent() {
     profiles?.find((profile) => profile.id === id);
 
   return (
-    <main className="min-h-screen bg-[#0b0c10] text-white">
+    <main className="cf-cinematic-page cf-bg-timeline min-h-screen bg-[#0b0c10] text-white">
       <section className="mx-auto max-w-7xl p-6 md:p-10">
         <Link
           href="/"

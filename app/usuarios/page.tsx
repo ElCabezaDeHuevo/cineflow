@@ -2,9 +2,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { createUser } from "./actions";
+import { createUser, assignExistingUser, updateOrganizationMemberRole } from "./actions";
+import PasswordResetControl from "./PasswordResetControl";
+import DeleteUserButton from "./DeleteUserButton";
 import { CINE_ROLES } from "@/lib/cine-roles";
 import { isCineflowAdmin } from "@/lib/admin";
+import { listAllAuthUsers } from "@/lib/supabase/list-all-auth-users";
 
 export const instant = false;
 
@@ -20,13 +23,14 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
   if (!isCineflowAdmin(user)) redirect("/");
   const admin = createSupabaseAdminClient();
   const { error, success } = await searchParams;
-  if (!admin) return <main className="min-h-screen bg-[#0b0c10] p-8 text-white">Falta configurar SUPABASE_SERVICE_ROLE_KEY.</main>;
+  if (!admin) return <main className="cf-cinematic-page cf-bg-users min-h-screen bg-[#0b0c10] p-8 text-white">Falta configurar SUPABASE_SERVICE_ROLE_KEY.</main>;
 
-  const [{ data: companies, error: companiesError }, { data: usersData, error: usersError }] = await Promise.all([
+  const [{ data: companies, error: companiesError }, usersResult] = await Promise.all([
     admin.from("organizations").select("id,name,slug,organization_members(user_id,role,joined_at)").order("name"),
-    admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+    listAllAuthUsers(admin).then((users) => ({ users, error: null })).catch((error: unknown) => ({ users: [], error: error instanceof Error ? error : new Error("No se pudieron consultar todas las cuentas") })),
   ]);
-  const users = usersData?.users ?? [];
+  const users = usersResult.users;
+  const usersError = usersResult.error;
   const userById = new Map(users.map((account) => [account.id, account]));
   const { data: profiles, error: profilesError } = users.length
     ? await admin.from("profiles").select("id,full_name,avatar_url").in("id", users.map((account) => account.id))
@@ -36,7 +40,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
   const existingUnassignedUsers = users.filter((account) => !assignedUserIds.has(account.id));
 
   return (
-    <main className="min-h-screen bg-[#0b0c10] text-white">
+    <main className="cf-cinematic-page cf-bg-users min-h-screen bg-[#0b0c10] text-white">
       <section className="mx-auto max-w-7xl p-6 md:p-10">
         <Link href="/admin" className="text-sm text-violet-300 hover:text-violet-200">← Panel de administración</Link>
         <header className="mt-8">
@@ -68,7 +72,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
             </label>
             <label className="block text-sm text-gray-300">Permiso dentro de la empresa
               <select name="organization_role" required defaultValue="member" className="mt-2 w-full rounded-xl border border-white/10 bg-[#0b0c10] px-4 py-3 text-white">
-                <option value="owner">Dueño de empresa</option><option value="admin">Administrador de empresa</option><option value="producer">Productor</option><option value="member">Colaborador</option><option value="viewer">Solo lectura</option>
+                <option value="admin">Administrador de empresa</option><option value="producer">Productor</option><option value="member">Colaborador</option><option value="viewer">Solo lectura</option>
               </select>
             </label>
             <div className="flex items-end"><button disabled={!companies?.length} className="w-full rounded-xl bg-violet-500 px-5 py-3 font-semibold transition hover:bg-violet-400 disabled:opacity-40">Crear usuario y asignar empresa</button></div>
@@ -92,7 +96,22 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
                   const displayName = profile?.full_name || String(account?.user_metadata?.full_name ?? "Sin nombre");
                   return <div key={member.user_id} className="flex flex-wrap items-center justify-between gap-3 p-4">
                     <div className="min-w-0"><p className="truncate font-medium">{displayName}</p><p className="truncate text-sm text-gray-400">{account?.email ?? "Cuenta no encontrada"}</p><p className="mt-1 text-xs text-gray-600">Puesto: {String(account?.user_metadata?.cine_role ?? "Sin asignar")}</p></div>
-                    <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-gray-300">{roleLabels[member.role] ?? member.role}</span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <form action={updateOrganizationMemberRole} className="flex flex-wrap items-center gap-2">
+                        <input type="hidden" name="organization_id" value={company.id} />
+                        <input type="hidden" name="user_id" value={member.user_id} />
+                        <select name="organization_role" defaultValue={member.role} aria-label={`Rol de ${displayName}`} className="rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-xs text-white">
+                          <option value="owner">Dueño</option>
+                          <option value="admin">Administrador</option>
+                          <option value="producer">Productor</option>
+                          <option value="member">Colaborador</option>
+                          <option value="viewer">Solo lectura</option>
+                        </select>
+                        <button type="submit" className="rounded-lg border border-violet-400/30 bg-violet-500/15 px-3 py-2 text-xs font-semibold text-violet-100 hover:bg-violet-500/25">Guardar rol</button>
+                      </form>
+                      <PasswordResetControl userId={member.user_id} />
+                      {member.role !== "owner" && account?.email && <DeleteUserButton userId={member.user_id} email={account.email} />}
+                    </div>
                   </div>;
                 })}
               </div> : <p className="p-5 text-sm text-gray-500">Esta empresa todavía no tiene usuarios vinculados.</p>}
@@ -112,7 +131,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
               const displayName = profile?.full_name || String(account.user_metadata?.full_name ?? "Sin nombre");
               return <div key={account.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
                 <div className="min-w-0"><p className="truncate font-medium">{displayName}</p><p className="truncate text-sm text-gray-400">{account.email ?? "Sin correo"}</p><p className="mt-1 text-xs text-gray-500">Cuenta creada: {new Date(account.created_at).toLocaleDateString("es-MX")}</p></div>
-                <span className="rounded-full border border-amber-400/20 px-3 py-1 text-xs text-amber-200">Sin empresa asignada</span>
+                <form action={assignExistingUser} className="flex flex-wrap items-end gap-2"><input type="hidden" name="user_id" value={account.id} /><label className="min-w-[180px] text-xs text-gray-400">Asignar a<select name="organization_id" required defaultValue="" className="mt-1 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white"><option value="" disabled>Seleccionar productora</option>{(companies ?? []).map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}</select></label><label className="min-w-[150px] text-xs text-gray-400">Permiso<select name="organization_role" defaultValue="member" className="mt-1 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white"><option value="admin">Administrador</option><option value="producer">Productor</option><option value="member">Colaborador</option><option value="viewer">Solo lectura</option></select></label><button disabled={!companies?.length} className="rounded-lg bg-violet-500 px-4 py-2 text-sm font-semibold hover:bg-violet-400 disabled:opacity-40">Vincular cuenta</button></form>
               </div>;
             })}
           </div> : <p className="p-5 text-sm text-gray-500">No hay cuentas pendientes de asignar.</p>}

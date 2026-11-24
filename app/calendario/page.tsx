@@ -26,7 +26,7 @@ export default async function ProductionCalendarPage() {
   ].sort((a, b) => a.date.localeCompare(b.date));
 
   return (
-    <main className="min-h-screen bg-[#0b0c10] px-4 py-8 text-white md:px-8">
+    <main className="cf-cinematic-page cf-bg-calendar min-h-screen bg-[#0b0c10] px-4 py-8 text-white md:px-8">
       <section className="mx-auto max-w-5xl">
         <Link href="/" className="text-sm text-violet-300 hover:text-violet-200">← Panel principal</Link>
         <header className="mb-8 mt-6"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-300">CineFlow / Planificación</p><h1 className="mt-2 text-3xl font-bold">Calendario de producción</h1><p className="mt-2 text-gray-400">Fechas de inicio, entregas y tareas aún no completadas.</p></header>

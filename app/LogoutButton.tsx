@@ -8,7 +8,7 @@ export default function LogoutButton({ hasActiveSession = false }: { hasActiveSe
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
-  if (pathname === "/login") return null;
+  if (pathname === "/login" || pathname.startsWith("/auth/")) return null;
 
   return (
     <>

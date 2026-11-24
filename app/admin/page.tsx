@@ -43,14 +43,13 @@ export default async function AdminDashboard({
   const admin = createSupabaseAdminClient();
   if (!admin) {
     return (
-      <main className="min-h-screen bg-[#0b0c10] p-6 text-white md:p-10">
+      <main className="cf-cinematic-page cf-bg-admin min-h-screen bg-[#0b0c10] p-6 text-white md:p-10">
         <section className="mx-auto max-w-6xl">
           <Link href="/" className="text-sm text-violet-300">
             ← Panel principal
           </Link>
           <p className="mt-8 rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-200">
-            Falta configurar SUPABASE_SERVICE_ROLE_KEY para cargar el panel de
-            administración.
+            Configura SUPABASE_SERVICE_ROLE_KEY o SUPABASE_SECRET_KEY en Vercel para cargar el panel de administración. Incluye Preview y Production, y vuelve a desplegar.
           </p>
         </section>
       </main>
@@ -62,6 +61,7 @@ export default async function AdminDashboard({
     { count: pendingAssignments, error: assignmentsError },
     { count: accountCount, error: accountsError },
     { data: deletionRequests, error: deletionRequestsError },
+    { data: passwordAuditRows, error: passwordAuditError },
   ] = await Promise.all([
     admin
       .from("error_reports")
@@ -76,10 +76,15 @@ export default async function AdminDashboard({
     admin.from("profiles").select("id", { count: "exact", head: true }),
     admin.from("project_deletion_requests").select("id,project_id,project_name,requester_id,reason,created_at")
       .eq("status", "pending").order("created_at", { ascending: true }),
+    admin.from("organization_audit_log")
+      .select("id,organization_id,actor_id,action,target_id,metadata,created_at")
+      .in("action", ["user_password_reset_requested", "user_password_changed_after_reset"])
+      .order("created_at", { ascending: false }).limit(100),
   ]);
   const userIds = [...new Set([
     ...(reports ?? []).map((report) => report.user_id),
     ...(deletionRequests ?? []).map((request) => request.requester_id),
+    ...(passwordAuditRows ?? []).flatMap((row) => [row.actor_id, row.target_id]).filter(Boolean),
   ])];
   const { data: profiles, error: profilesError } = userIds.length
     ? await admin
@@ -89,6 +94,37 @@ export default async function AdminDashboard({
     : { data: [], error: null };
   const profileById = new Map(
     (profiles ?? []).map((profile) => [profile.id, profile]),
+  );
+  const auditOrganizationIds = [...new Set((passwordAuditRows ?? []).map((row) => row.organization_id))];
+  const { data: auditOrganizations, error: auditOrganizationsError } = auditOrganizationIds.length
+    ? await admin.from("organizations").select("id,name").in("id", auditOrganizationIds)
+    : { data: [], error: null };
+  const auditOrganizationNameById = new Map((auditOrganizations ?? []).map((organization) => [organization.id, organization.name]));
+  const passwordResetHistory = new Map<string, {
+    action: string;
+    targetId: string;
+    actorId: string | null;
+    metadata: Record<string, unknown>;
+    createdAt: string;
+    organizationIds: string[];
+  }>();
+  for (const row of passwordAuditRows ?? []) {
+    const metadata = (row.metadata ?? {}) as Record<string, unknown>;
+    const eventTime = String(metadata.requested_at ?? metadata.completed_at ?? row.created_at);
+    const key = [row.action, row.target_id ?? "", eventTime].join(":");
+    const existing = passwordResetHistory.get(key);
+    if (existing) existing.organizationIds.push(row.organization_id);
+    else passwordResetHistory.set(key, {
+      action: row.action,
+      targetId: row.target_id ?? "",
+      actorId: row.actor_id,
+      metadata,
+      createdAt: row.created_at,
+      organizationIds: [row.organization_id],
+    });
+  }
+  const passwordResetEvents = [...passwordResetHistory.values()].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
   const reportsWithScreenshots = await Promise.all(
     (reports ?? []).map(async (report) => {
@@ -149,14 +185,70 @@ export default async function AdminDashboard({
           </p>
         </header>
 
-        {(reportsError || assignmentsError || accountsError || profilesError || deletionRequestsError) && (
+        <section className="mb-8 overflow-hidden rounded-2xl border border-amber-400/20 bg-[#14151c]">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 p-5">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-amber-200">Seguridad de cuentas</p>
+              <h2 className="mt-1 text-xl font-semibold">Historial de restablecimientos de contraseña</h2>
+              <p className="mt-1 text-sm text-gray-400">Registro de solicitudes administrativas y cambios completados por los usuarios.</p>
+            </div>
+            <span className="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 text-sm text-amber-100">{passwordResetEvents.length} eventos</span>
+          </div>
+          {passwordAuditError || auditOrganizationsError ? (
+            <p className="p-5 text-sm text-rose-200">No se pudo cargar el historial: {passwordAuditError?.message ?? auditOrganizationsError?.message}</p>
+          ) : passwordResetEvents.length ? (
+            <div className="divide-y divide-white/10">
+              {passwordResetEvents.map((event, index) => {
+                const actor = event.actorId ? profileById.get(event.actorId) : null;
+                const target = profileById.get(event.targetId);
+                const isCompleted = event.action === "user_password_changed_after_reset";
+                const email = String(event.metadata.email ?? "Correo no disponible");
+                const orgNames = [...new Set(event.organizationIds.map((id) => auditOrganizationNameById.get(id) ?? "Productora"))];
+                return (
+                  <article key={event.action + event.targetId + event.createdAt + index} className="grid gap-3 p-5 md:grid-cols-[1fr_auto]">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-semibold text-white">{target?.full_name || email}</h3>
+                        <span className={isCompleted ? "rounded-full bg-emerald-400/10 px-2.5 py-1 text-xs text-emerald-200" : "rounded-full bg-amber-400/10 px-2.5 py-1 text-xs text-amber-100"}>
+                          {isCompleted ? "Contraseña cambiada" : "Restablecimiento solicitado"}
+                        </span>
+                      </div>
+                      <p className="mt-1 break-all text-sm text-gray-400">{email}</p>
+                      <p className="mt-2 text-sm text-gray-300">
+                        {isCompleted ? "Cambio completado por el usuario" : <>Solicitado por <strong className="font-semibold text-gray-100">{actor?.full_name || "Administrador"}</strong></>}
+                      </p>
+                      {!isCompleted && event.metadata.reason ? (
+                        <div className="mt-3 rounded-lg border border-white/10 bg-black/20 p-3">
+                          <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Motivo registrado</p>
+                          <p className="mt-1 whitespace-pre-wrap text-sm text-gray-200">{String(event.metadata.reason)}</p>
+                        </div>
+                      ) : null}
+                      <p className="mt-2 text-xs text-gray-500">Productora: {orgNames.join(" · ")}</p>
+                    </div>
+                    <div className="text-left text-xs text-gray-400 md:text-right">
+                      <p>{dateTime(event.createdAt)}</p>
+                      {event.metadata.requested_at ? <p className="mt-1">Solicitud: {dateTime(String(event.metadata.requested_at))}</p> : null}
+                      {event.metadata.completed_at ? <p className="mt-1">Completado: {dateTime(String(event.metadata.completed_at))}</p> : null}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="p-6 text-sm text-gray-400">Todavía no hay restablecimientos de contraseña registrados.</p>
+          )}
+        </section>
+
+        {(reportsError || assignmentsError || accountsError || profilesError || deletionRequestsError || passwordAuditError || auditOrganizationsError) && (
           <p className="mb-6 rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-200">
             No se pudo cargar toda la información:{" "}
             {reportsError?.message ??
               assignmentsError?.message ??
               accountsError?.message ??
               profilesError?.message ??
-              deletionRequestsError?.message}
+              deletionRequestsError?.message ??
+              passwordAuditError?.message ??
+              auditOrganizationsError?.message}
           </p>
         )}
 

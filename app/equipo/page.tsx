@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import UserAvatar from "@/lib/UserAvatar";
 import { isCineflowAdmin } from "@/lib/admin";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { cineRoleLabel } from "@/lib/cine-roles";
 
 export const instant = false;
 
@@ -14,21 +16,65 @@ export default async function TeamPage() {
   if (!user) redirect("/login");
   const isAdmin = isCineflowAdmin(user);
 
-  const [{ data: projects }, { data: memberships }] = await Promise.all([
-    supabase.from("projects").select("id, name, stage, owner_role").order("name"),
-    supabase.from("project_members").select("project_id, user_id, role").order("created_at"),
-  ]);
-  const { data: directoryProfiles, error: directoryError } = await supabase
-    .from("profiles")
-    .select("id, full_name, avatar_url, bio")
-    .order("full_name");
+  const { data: myOrganizations } = await supabase
+    .from("organization_members")
+    .select("organization_id")
+    .eq("user_id", user.id);
+  const organizationIds = [...new Set((myOrganizations ?? []).map((item) => item.organization_id))];
+  const { data: projects } = organizationIds.length
+    ? await supabase.from("projects").select("id, name, stage, owner_role, organization_id")
+        .in("organization_id", organizationIds).order("name")
+    : { data: [] };
+  const projectIds = (projects ?? []).map((project) => project.id);
+  const { data: memberships } = projectIds.length
+    ? await supabase.from("project_members").select("project_id, user_id, role")
+        .in("project_id", projectIds).order("created_at")
+    : { data: [] };
+  // The profile directory is limited to people who share at least one
+  // active company with the signed-in user. RLS applies the same rule again.
+  const myOrganizationsError = null;
+  const { data: companyMembers, error: companyMembersError } = organizationIds.length
+    ? await supabase.from("organization_members").select("user_id").in("organization_id", organizationIds)
+    : { data: [], error: null };
+  const directoryUserIds = [...new Set([user.id, ...(companyMembers ?? []).map((item) => item.user_id)])];
+  const { data: myCompanyRoles } = organizationIds.length
+    ? await supabase.from("organization_members").select("role").eq("user_id", user.id).in("organization_id", organizationIds)
+    : { data: [] };
+  const { data: cinematicRoles } = organizationIds.length
+    ? await supabase.from("organization_member_cinematic_roles")
+        .select("organization_id,user_id,requested_role,approved_role,status")
+        .in("organization_id", organizationIds)
+        .in("user_id", directoryUserIds)
+        .order("requested_at", { ascending: false })
+    : { data: [] };
+  const cinematicRoleByUserId = new Map((cinematicRoles ?? []).filter((item, index, rows) => rows.findIndex((candidate) => candidate.user_id === item.user_id) === index).map((item) => [item.user_id, item]));
+  const myCompanyRole = organizationIds.length > 1 ? "multiple" : (myCompanyRoles ?? []).some((item) => item.role === "owner") ? "owner" : (myCompanyRoles ?? []).some((item) => item.role === "admin") ? "admin" : "member";
+  const { data: directoryProfiles, error: directoryError } = directoryUserIds.length
+    ? await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url, bio")
+        .in("id", directoryUserIds)
+        .order("full_name")
+    : { data: [], error: null };
+  // Auth metadata is a fallback for invited users whose public profile has not been completed.
+  // The lookup is restricted to IDs already proven to share an active company with this user.
+  const authAdmin = createSupabaseAdminClient();
+  const directoryAuthUsers = authAdmin
+    ? await Promise.all(directoryUserIds.map(async (id) => {
+        const { data, error } = await authAdmin.auth.admin.getUserById(id);
+        return error ? null : data.user;
+      }))
+    : [];
+  const authUserById = new Map(
+    directoryAuthUsers.filter((entry): entry is NonNullable<typeof entry> => Boolean(entry)).map((entry) => [entry.id, entry]),
+  );
   const userIds = [...new Set((memberships ?? []).map((member) => member.user_id))];
   const { data: profiles } = userIds.length ? await supabase.from("profiles").select("id, full_name, avatar_url, bio").in("id", userIds) : { data: [] };
   const profileById = new Map((profiles ?? []).map((profile) => [profile.id, profile]));
   const projectById = new Map((projects ?? []).map((project) => [project.id, project]));
 
   return (
-    <main className="min-h-screen bg-[#0b0c10] text-white">
+    <main className="cf-cinematic-page cf-bg-team min-h-screen bg-[#0b0c10] text-white">
       <section className="mx-auto max-w-7xl p-6 md:p-10">
         <Link href="/" className="text-sm text-violet-300 hover:text-violet-200">← Volver al panel</Link>
         <header className="mt-8 flex flex-wrap items-end justify-between gap-4">
@@ -41,7 +87,7 @@ export default async function TeamPage() {
         <section className="mt-8 grid gap-4 sm:grid-cols-3">
           <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Colaboradores</p><p className="mt-3 text-3xl font-bold">{userIds.length}</p></article>
           <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Proyectos compartidos</p><p className="mt-3 text-3xl font-bold">{projects?.length ?? 0}</p></article>
-          <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Tu acceso</p><p className="mt-3 text-3xl font-bold">{memberships?.some((member) => member.user_id === user.id && member.role === "owner") ? "Owner" : "Miembro"}</p></article>
+          <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Tu acceso</p><p className="mt-3 text-3xl font-bold">{myCompanyRole === "multiple" ? "Varias empresas" : myCompanyRole === "owner" ? "Owner / Dueño" : myCompanyRole === "admin" ? "Administrador" : "Miembro"}</p></article>
         </section>
 
         <section className="cf-card mt-8 overflow-hidden rounded-2xl border border-white/10 bg-[#14151c]">
@@ -51,14 +97,18 @@ export default async function TeamPage() {
               Consulta los perfiles del equipo. Las notas y capturas son de uso administrativo.
             </p>
           </div>
-          {directoryError ? (
+          {myOrganizationsError || companyMembersError || directoryError ? (
             <p className="p-6 text-sm text-red-200">
-              No se pudieron cargar los perfiles: {directoryError.message}
+              No se pudieron cargar los perfiles: {(myOrganizationsError || companyMembersError || directoryError)?.message}
             </p>
           ) : directoryProfiles?.length ? (
             <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
               {directoryProfiles.map((profile) => {
-                const name = profile.full_name || "Usuario";
+                const authUser = authUserById.get(profile.id);
+                const roleRequest = cinematicRoleByUserId.get(profile.id);
+                const emailName = authUser?.email?.split("@")[0]?.trim();
+                const name = [profile.full_name, authUser?.user_metadata?.full_name, authUser?.user_metadata?.name, authUser?.user_metadata?.display_name, authUser?.user_metadata?.username, emailName]
+                  .find((value) => typeof value === "string" && value.trim().length > 0)?.trim() || "Integrante";
                 return (
                   <Link
                     key={profile.id}
@@ -69,7 +119,7 @@ export default async function TeamPage() {
                     <span className="min-w-0">
                       <span className="block truncate font-medium">{name}</span>
                       <span className="mt-1 block truncate text-sm text-gray-500">
-                        {profile.bio || "Ver perfil"}
+                        {roleRequest?.status === "pending" ? `Pendiente de aprobación · ${cineRoleLabel(roleRequest.requested_role)}` : roleRequest?.status === "approved" ? cineRoleLabel(roleRequest.approved_role) : roleRequest?.status === "rejected" ? "Puesto no aprobado" : profile.bio || "Ver perfil"}
                       </span>
                     </span>
                   </Link>

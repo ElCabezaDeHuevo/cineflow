@@ -36,7 +36,7 @@ export default async function ShootingBoard({ searchParams }: { searchParams: Pr
   const scheduledIds = new Set((scheduled ?? []).map((s)=>s.scene_id));
   const unscheduled = (scenes ?? []).filter((s)=>!scheduledIds.has(s.id) && s.status!=="shot" && s.status!=="omitted");
   return (
-    <main className="min-h-screen bg-[#0b0c10] px-4 py-7 text-white md:px-8">
+    <main className="cf-cinematic-page cf-bg-shooting min-h-screen bg-[#0b0c10] px-4 py-7 text-white md:px-8">
       <section className="mx-auto max-w-[1600px]">
         <div className="flex flex-wrap items-center justify-between gap-4"><Link href="/" className="text-sm text-violet-300">← Panel principal</Link><Link href="/calendario" className="text-sm text-violet-300">Calendario general →</Link></div>
         <header className="my-7 flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs uppercase tracking-[.2em] text-violet-300">CineFlow / Producción</p><h1 className="mt-2 text-3xl font-bold">Planificador de rodaje</h1><p className="mt-2 text-sm text-gray-400">Escenas sin programar y jornadas de filmación por proyecto.</p></div>

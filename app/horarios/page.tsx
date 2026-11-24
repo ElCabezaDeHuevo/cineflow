@@ -61,7 +61,7 @@ export default async function HorariosPage() {
   const active = allSessions.find((session) => !session.clock_out && !session.deleted_at);
   const latestPersonalSession = allSessions[0];
   return (
-    <main className="min-h-screen bg-[#0b0c10] text-white">
+    <main className="cf-cinematic-page cf-bg-schedule min-h-screen bg-[#0b0c10] text-white">
       <section className="mx-auto max-w-7xl p-6 md:p-10">
         <Link href="/" className="text-sm text-violet-300">
           ← Panel principal
