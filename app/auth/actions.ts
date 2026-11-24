@@ -51,19 +51,33 @@ export async function completeInvitationRegistration(formData: FormData) {
   }
   const supabase = await createSupabaseServerClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
-  if (userError || !user) redirect("/login?error=" + encodeURIComponent("La sesión de invitación no es válida. Solicita un enlace nuevo."));
-  const { data: membership, error: membershipError } = await supabase.from("organization_members")
-    .select("organization_id").eq("user_id", user.id).limit(1).maybeSingle();
-  if (membershipError || !membership) redirect("/login?error=" + encodeURIComponent("No se encontró una invitación aceptada para esta cuenta."));
-  const { error } = await supabase.auth.updateUser({
-    password,
-    data: {
-      ...user.user_metadata,
-      cine_role_requested: requestedCineRole,
-      cine_role_status: "pending",
-      cine_role: null,
-    },
+  if (userError || !user?.email) redirect("/login?error=" + encodeURIComponent("La sesión de invitación no es válida. Solicita un enlace nuevo."));
+  const invitationId = String(user.user_metadata?.invitation_id ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(invitationId)) {
+    redirect("/login?error=" + encodeURIComponent("No se encontró la invitación que corresponde a esta cuenta."));
+  }
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect("/login?error=" + encodeURIComponent("El servicio de registro no está disponible."));
+  const { data: invitation, error: invitationError } = await admin
+    .from("organization_invitations")
+    .select("id,accepted_user_id,accepted_at,registration_completed_at")
+    .eq("id", invitationId)
+    .maybeSingle();
+  if (invitationError || !invitation || invitation.accepted_user_id !== user.id ||
+      !invitation.accepted_at || invitation.registration_completed_at) {
+    redirect("/login?error=" + encodeURIComponent("La invitación ya fue utilizada o no corresponde a esta cuenta."));
+  }
+
+  const { error: passwordError } = await supabase.auth.updateUser({ password });
+  if (passwordError) redirect("/auth/complete-invitation?error=" + encodeURIComponent("No se pudo guardar la contraseña: " + passwordError.message));
+
+  const { error: registrationError } = await admin.rpc("complete_organization_invitation_registration", {
+    p_invitation_id: invitationId,
+    p_user_id: user.id,
+    p_requested_role: requestedCineRole,
   });
-  if (error) redirect("/auth/complete-invitation?error=" + encodeURIComponent("No se pudo guardar la contraseña: " + error.message));
+  if (registrationError) {
+    redirect("/auth/complete-invitation?error=" + encodeURIComponent("No se pudo registrar tu especialidad: " + registrationError.message));
+  }
   redirect("/?welcome=Tu+cuenta+está+lista");
 }
