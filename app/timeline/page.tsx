@@ -22,6 +22,15 @@ async function TimelineContent() {
     supabase.from("project_tasks").select("id,project_id,title,status,stage,created_by,updated_at"),
     supabase.from("project_activity").select("id,project_id,actor_id,message,created_at").order("created_at", { ascending: false }).limit(100),
   ]);
+  const projectIds = (projects ?? []).map((project) => project.id);
+  const [{ data: shootDays }, { data: dueTasks }] = await Promise.all([
+    projectIds.length
+      ? supabase.from("shoot_days").select("id,project_id,shoot_day_number,shoot_date,call_time").in("project_id", projectIds).not("shoot_date", "is", null).order("shoot_date", { ascending: true })
+      : Promise.resolve({ data: [] }),
+    projectIds.length
+      ? supabase.from("project_tasks").select("id,project_id,title,due_date,status").in("project_id", projectIds).not("due_date", "is", null).neq("status", "completada").order("due_date", { ascending: true })
+      : Promise.resolve({ data: [] }),
+  ]);
   const activityUserIds = [...new Set((activity ?? []).map((event) => event.actor_id).filter(Boolean))];
   const { data: profiles } = activityUserIds.length
     ? await supabase.from("profiles").select("id,full_name,avatar_url").in("id", activityUserIds)
