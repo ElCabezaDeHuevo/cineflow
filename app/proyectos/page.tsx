@@ -223,13 +223,13 @@ export default async function ProjectsPage({
       ["owner", "editor"].includes(roleByProject.get(project.id) ?? ""),
   );
   const initial = {
-    name: "El último fotograma",
-    type: "Cortometraje",
-    stage: "Postproducción",
-    owner_role: "Director de producción",
-    start_date: "2026-10-01",
-    delivery_date: "2026-11-15",
-    description: "Cortometraje de ficción en fase de montaje y acabado.",
+    name: "",
+    type: "",
+    stage: "Desarrollo",
+    owner_role: "",
+    start_date: "",
+    delivery_date: "",
+    description: "",
   };
 
   return (
