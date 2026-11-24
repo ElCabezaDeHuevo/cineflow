@@ -59,7 +59,7 @@ create policy "Members can view cinematic role requests in their company"
   for select to authenticated
   using (
     user_id = (select auth.uid())
-    or private.is_organization_member(organization_id, array['owner','admin'])
+    or private.is_organization_member(organization_id)
   );
 
 -- Invitation acceptance, membership creation, and audit are one transaction.
@@ -100,12 +100,14 @@ begin
   if exists (
     select 1 from public.organization_members
     where organization_id = v_invitation.organization_id and user_id = p_user_id
+      and role <> v_invitation.role
   ) then
-    raise exception 'La cuenta ya pertenece a esta productora';
+    raise exception 'La cuenta ya pertenece a esta productora con otro permiso';
   end if;
 
   insert into public.organization_members(organization_id,user_id,role,invited_by)
-  values (v_invitation.organization_id,p_user_id,v_invitation.role,v_invitation.invited_by);
+  values (v_invitation.organization_id,p_user_id,v_invitation.role,v_invitation.invited_by)
+  on conflict (organization_id,user_id) do nothing;
 
   update public.organization_invitations
   set accepted_at = now(), accepted_user_id = p_user_id, token_hash = ''
