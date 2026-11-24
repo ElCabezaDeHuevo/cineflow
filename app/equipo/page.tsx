@@ -90,7 +90,7 @@ export default async function TeamPage() {
             <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
               {directoryProfiles.map((profile) => {
                 const authUser = authUserById.get(profile.id);
-                const metadata = authUser?.user_metadata ?? {};
+                const metadata = { ...(authUser?.user_metadata ?? {}), ...(authUser?.app_metadata ?? {}) };
                 const emailName = authUser?.email?.split("@")[0]?.trim();
                 const name = [profile.full_name, metadata.full_name, metadata.name, metadata.display_name, metadata.username, emailName]
                   .find((value) => typeof value === "string" && value.trim().length > 0)?.trim() || "Integrante";
