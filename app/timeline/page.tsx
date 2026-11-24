@@ -17,12 +17,15 @@ async function TimelineContent() {
   if (!user) redirect("/login");
   await connection();
 
-  const [{ data: projects }, { data: tasks }, { data: activity }, { data: profiles }] = await Promise.all([
+  const [{ data: projects }, { data: tasks }, { data: activity }] = await Promise.all([
     supabase.from("projects").select("id, name, type, stage, owner_role, start_date, delivery_date, description").order("start_date", { ascending: true }),
     supabase.from("project_tasks").select("id,project_id,title,status,stage,created_by,updated_at"),
     supabase.from("project_activity").select("id,project_id,actor_id,message,created_at").order("created_at", { ascending: false }).limit(100),
-    supabase.from("profiles").select("id,full_name,avatar_url"),
   ]);
+  const activityUserIds = [...new Set((activity ?? []).map((event) => event.actor_id).filter(Boolean))];
+  const { data: profiles } = activityUserIds.length
+    ? await supabase.from("profiles").select("id,full_name,avatar_url").in("id", activityUserIds)
+    : { data: [] };
   const progressFor = (projectId: string) => {
     const projectTasks = tasks?.filter((task) => task.project_id === projectId) ?? [];
     return projectTasks.length ? Math.round((projectTasks.filter((task) => task.status === "completada").length / projectTasks.length) * 100) : 0;
