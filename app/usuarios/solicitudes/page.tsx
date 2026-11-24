@@ -51,8 +51,8 @@ export default async function AssignmentRequestsPage({
   const profileById = new Map((profiles ?? []).map((profile) => [profile.id, profile]));
 
   return (
-    <main className="min-h-screen bg-[#0b0c10] text-white">
-      <section className="mx-auto max-w-5xl p-6 md:p-10">
+    <main className="cf-cinematic-page cf-bg-requests min-h-screen bg-[#0b0c10] text-white">
+      <section className="mx-auto max-w-5xl p-4 sm:p-6 md:p-10">
         <Link href="/admin" className="text-sm text-violet-300">
           ← Panel de administración
         </Link>
