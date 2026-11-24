@@ -20,7 +20,7 @@ export default async function AdminReportsPage() {
   if (!user) redirect("/login");
   if (!isCineflowAdmin(user)) redirect("/");
   const admin = createSupabaseAdminClient();
-  if (!admin) return <main className="cf-cinematic-page cf-bg-admin min-h-screen bg-[#0b0c10] p-8 text-white">Falta configurar el acceso administrativo a Supabase.</main>;
+  if (!admin) return <main className="cf-cinematic-page cf-bg-admin-reports min-h-screen bg-[#0b0c10] p-8 text-white">Falta configurar el acceso administrativo a Supabase.</main>;
 
   const [{ data: sessions, error: sessionsError }, { data: profiles, error: profilesError }, { data: projects }, { data: tasks }] = await Promise.all([
     admin.from("work_sessions").select("id,user_id,clock_in,clock_out,review_status,deleted_at").order("clock_in", { ascending: false }).limit(5000),
