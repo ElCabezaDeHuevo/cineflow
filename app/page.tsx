@@ -69,6 +69,18 @@ async function HomeContent({
   const displayName =
     profile?.full_name || user?.email?.split("@")[0] || "Invitado";
   const isAdmin = isCineflowAdmin(user);
+  const { data: companyMemberships, error: companyMembershipsError } = await supabase
+    .from("organization_members")
+    .select("role")
+    .eq("user_id", user.id);
+  if (companyMembershipsError) {
+    throw new Error(`No se pudo determinar tu rol en la productora: ${companyMembershipsError.message}`);
+  }
+  const companyRolePriority: Record<string, number> = { owner: 5, admin: 4, producer: 3, member: 2, viewer: 1 };
+  const companyRole = (companyMemberships ?? [])
+    .map((membership) => membership.role)
+    .sort((a, b) => (companyRolePriority[b] ?? 0) - (companyRolePriority[a] ?? 0))[0] ?? null;
+  const canManageCompany = companyRole === "owner" || companyRole === "admin";
 
   await connection();
   const { data: allProjects, error: projectsError } = user
@@ -126,7 +138,8 @@ async function HomeContent({
   if (activeSessionsError) {
     throw new Error(`No se pudo cargar el equipo que está trabajando: ${activeSessionsError.message}`);
   }
-  const activeUserIds = [...new Set((activeWorkSessions ?? []).map((session) => session.user_id))];
+  const activeTeamSessions = [...new Map((activeWorkSessions ?? []).map((session) => [session.user_id, session])).values()];
+  const activeUserIds = activeTeamSessions.map((session) => session.user_id);
   const { data: activeProfiles, error: activeProfilesError } = activeUserIds.length
     ? await supabase
         .from("profiles")
@@ -210,14 +223,9 @@ async function HomeContent({
     total: projects.length,
     active: projects.filter((project) => {
       const stage = project.stage.toLowerCase();
-      return !["entrega", "final", "complet", "cancel"].some((term) => stage.includes(term));
+      return !["entreg", "final", "complet", "cancel", "archiv"].some((term) => stage.includes(term));
     }).length,
-    rodaje: projects.filter(
-      (project) =>
-        project.stage.toLowerCase().includes("rodaje") ||
-        (project.stage.toLowerCase().includes("producci") &&
-          !project.stage.toLowerCase().includes("post")),
-    ).length,
+    rodaje: projects.filter((project) => etapaIndex(project.stage) === 1).length,
     postproduccion: projects.filter((project) =>
       project.stage.toLowerCase().includes("post"),
     ).length,
@@ -250,6 +258,10 @@ async function HomeContent({
               <p className="mt-3 max-w-xl text-sm leading-6 text-slate-300 sm:text-base">
                 Organiza tus proyectos, coordina a tu equipo y mantén cada etapa de la producción bajo control.
               </p>
+              <p className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.04] px-3 py-1.5 text-xs text-slate-300">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
+                {companyRole === "owner" ? "Dueño de productora" : companyRole === "admin" ? "Administrador de productora" : companyRole === "producer" ? "Productor" : companyRole === "member" ? "Colaborador" : companyRole === "viewer" ? "Acceso de solo lectura" : isAdmin ? "Administrador global" : "Espacio personal"}
+              </p>
             </div>
             <div className="flex flex-wrap gap-3">
               <Link href="/proyectos" className="cf-dashboard-primary">
@@ -258,15 +270,18 @@ async function HomeContent({
               <Link href="/rodaje" className="cf-dashboard-secondary">
                 <span aria-hidden="true">▤</span> Planificar rodaje
               </Link>
+              {canManageCompany && <Link href="/empresa" className="cf-dashboard-secondary">
+                <span aria-hidden="true">⌂</span> Mi productora
+              </Link>}
               {isAdmin && <Link href="/admin" className="cf-dashboard-secondary">
-                <span aria-hidden="true">⚙</span> Administración
+                <span aria-hidden="true">⚙</span> Administración global
               </Link>}
             </div>
           </div>
           <div className="relative z-10 mt-8 grid gap-3 border-t border-white/10 pt-6 sm:grid-cols-3">
             <div><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-slate-400">Proyectos en cartera</p><p className="mt-1 text-sm font-semibold text-white">{panel.total} proyectos visibles</p></div>
             <div><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-slate-400">Actividad asignada</p><p className="mt-1 text-sm font-semibold text-white">{myOpenTasks} tareas abiertas para ti</p></div>
-            <div><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-slate-400">Equipo en jornada</p><p className="mt-1 text-sm font-semibold text-white">{activeWorkSessions?.length ?? 0} personas trabajando en tus proyectos</p></div>
+            <div><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-slate-400">Equipo en jornada</p><p className="mt-1 text-sm font-semibold text-white">{activeTeamSessions.length} integrantes con jornada activa</p></div>
           </div>
         </header>
 
@@ -350,12 +365,12 @@ async function HomeContent({
 
         <section id="equipo" className="cf-dashboard-panel p-5 sm:p-7">
           <div className="flex flex-wrap items-end justify-between gap-3">
-            <div><p className="cf-eyebrow">En tiempo real</p><h2 className="mt-1 text-xl font-semibold">Equipo en jornada</h2><p className="mt-1 text-sm text-slate-400">Personas con una jornada abierta en proyectos a los que perteneces.</p></div>
-            <span className="rounded-full border border-emerald-300/15 bg-emerald-300/10 px-3 py-1.5 text-xs font-semibold text-emerald-200">{activeWorkSessions?.length ?? 0} trabajando</span>
+            <div><p className="cf-eyebrow">En tiempo real</p><h2 className="mt-1 text-xl font-semibold">Equipo en jornada</h2><p className="mt-1 text-sm text-slate-400">Integrantes de tus proyectos que tienen una jornada abierta.</p></div>
+            <span className="rounded-full border border-emerald-300/15 bg-emerald-300/10 px-3 py-1.5 text-xs font-semibold text-emerald-200">{activeTeamSessions.length} trabajando</span>
           </div>
-          {activeWorkSessions?.length ? (
+          {activeTeamSessions.length ? (
             <ul className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {activeWorkSessions.map((session) => {
+              {activeTeamSessions.map((session) => {
                 const activeProfile = activeProfiles?.find((item) => item.id === session.user_id);
                 const name = activeProfile?.full_name || "Usuario";
                 return <li key={session.user_id} className="flex min-w-0 items-center gap-3 rounded-2xl border border-white/[.07] bg-white/[.025] p-3.5">
