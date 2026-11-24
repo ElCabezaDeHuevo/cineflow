@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { permanentlyDeleteUser } from "./actions";
+import { deleteUser, permanentlyDeleteUser } from "./actions";
 
 export default function DeleteUserButton({ userId, email }: { userId: string; email: string }) {
   const [phrase, setPhrase] = useState("");
@@ -9,7 +9,14 @@ export default function DeleteUserButton({ userId, email }: { userId: string; em
   const [reason, setReason] = useState("");
 
   return (
-    <details className="group">
+    <>
+      <form action={deleteUser} onSubmit={(event) => {
+        if (!window.confirm(`¿Suspender el acceso de ${email}? La cuenta y sus datos se conservarán.`)) event.preventDefault();
+      }}>
+        <input type="hidden" name="user_id" value={userId} />
+        <button type="submit" className="rounded-lg border border-amber-400/30 px-3 py-2 text-xs font-semibold text-amber-200 transition hover:bg-amber-400/10">Suspender cuenta</button>
+      </form>
+      <details className="group">
       <summary className="cursor-pointer list-none rounded-lg border border-rose-400/30 px-3 py-2 text-xs font-semibold text-rose-200 transition hover:bg-rose-400/10">
         Eliminar permanentemente
       </summary>
@@ -43,6 +50,7 @@ export default function DeleteUserButton({ userId, email }: { userId: string; em
           </form>
         </section>
       </div>
-    </details>
+      </details>
+    </>
   );
 }
