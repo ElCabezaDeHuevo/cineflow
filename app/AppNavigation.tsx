@@ -142,7 +142,7 @@ export default function AppNavigation({ name, email, avatarUrl, isAdmin, company
           <span className="min-w-0"><strong className="block truncate text-sm text-white">{name}</strong><small className="block truncate text-xs text-zinc-400">Perfil, contraseña y seguridad</small></span>
           <span className="ml-auto text-zinc-500" aria-hidden="true">↗</span>
         </Link>
-        <NavItems pathname={pathname} isAdmin={isAdmin} companyRole={companyRole} onNavigate={() => setMoreOpen(false)} />
+        <div className="cf-more-nav-scroll"><NavItems pathname={pathname} isAdmin={isAdmin} companyRole={companyRole} onNavigate={() => setMoreOpen(false)} /></div>
       </section>
     </div>}
   </>;
