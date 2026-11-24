@@ -122,7 +122,7 @@ export default function AppNavigation({ name, email, avatarUrl, isAdmin, company
       <div className="cf-sidebar-scroll"><NavItems pathname={pathname} isAdmin={isAdmin} companyRole={companyRole} /></div>
       <Link href="/perfil" className="cf-account" aria-label="Abrir mi perfil">
         <span className="cf-avatar">{avatarUrl ? <img src={avatarUrl} alt="" /> : initials}</span>
-        <span className="min-w-0"><strong>{name}</strong><small>{roleLabels[companyRole ?? "viewer"]}</small></span>
+        <span className="min-w-0"><strong>{name}</strong><small>{isAdmin ? "Dueño de CineFlow" : roleLabels[companyRole ?? "viewer"]}</small></span>
         <span className="ml-auto text-zinc-500" aria-hidden="true">↗</span>
       </Link>
     </aside>
@@ -144,7 +144,7 @@ export default function AppNavigation({ name, email, avatarUrl, isAdmin, company
     {moreOpen && <div className="cf-more-overlay" onClick={() => setMoreOpen(false)}>
       <section id="cf-more-menu" className="cf-more-sheet" role="dialog" aria-modal="true" aria-label="Más secciones" onClick={(event) => event.stopPropagation()}>
         <div className="mb-5 flex items-center justify-between gap-3">
-          <div><p className="text-[10px] font-bold uppercase tracking-[.18em] text-violet-300">CineFlow</p><strong className="text-base">Todas las secciones</strong><p className="mt-1 text-xs text-zinc-400">{roleLabels[companyRole ?? "viewer"]}{isAdmin ? " · Administración global" : ""}</p></div>
+          <div><p className="text-[10px] font-bold uppercase tracking-[.18em] text-violet-300">CineFlow</p><strong className="text-base">Todas las secciones</strong><p className="mt-1 text-xs text-zinc-400">{isAdmin ? "Dueño de CineFlow · Administración global" : roleLabels[companyRole ?? "viewer"]}</p></div>
           <button type="button" onClick={() => setMoreOpen(false)} aria-label="Cerrar menú" className="flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-white/10 px-3 text-zinc-300">✕</button>
         </div>
         <Link href="/perfil" onClick={() => setMoreOpen(false)} className="mb-4 flex min-h-14 items-center gap-3 rounded-xl border border-violet-300/15 bg-violet-300/[.06] p-3">
