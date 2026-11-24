@@ -65,10 +65,7 @@ drop policy if exists "Members can view cinematic role requests in their company
 create policy "Members can view cinematic role requests in their company"
   on public.organization_member_cinematic_roles
   for select to authenticated
-  using (
-    user_id = (select auth.uid())
-    or private.is_organization_member(organization_id)
-  );
+  using (private.is_organization_member(organization_id));
 
 -- Invitation acceptance, membership creation, and audit are one transaction.
 create or replace function public.accept_organization_invitation(
