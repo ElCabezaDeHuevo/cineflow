@@ -20,6 +20,6 @@ export async function authorizeOwnerEmailChange(formData: FormData) {
     body: { confirmation_email: confirmationEmail, confirmation_phrase: confirmationPhrase },
   });
   if (error) redirect("/admin/correo?error=" + encodeURIComponent(error.message));
-  if (!data?.success) redirect("/admin/correo?error=" + encodeURIComponent(data?.error ?? "No se pudo verificar el cambio"));
+  if (!data?.ok) redirect("/admin/correo?error=" + encodeURIComponent(data?.error ?? "No se pudo verificar el cambio"));
   redirect("/admin/correo?success=Correo+actualizado+y+registrado");
 }
