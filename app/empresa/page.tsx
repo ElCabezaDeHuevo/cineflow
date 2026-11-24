@@ -40,7 +40,6 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
   ]);
   const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
   const emailMap = new Map(authUsersResult.users.map((a) => [a.id, a.email]));
-  const authUserMap = new Map(authUsersResult.users.map((a) => [a.id, a]));
   const removedMembersResult = admin
     ? await admin.from("organization_member_removals").select("id,target_user_id,target_email,target_name,previous_role,removed_at,reason").eq("organization_id", membership.organization_id).is("restored_at", null).order("removed_at", { ascending: false })
     : { data: [] };
