@@ -116,16 +116,18 @@ async function HomeContent({
   if (coversError) {
     throw new Error(`No se pudieron cargar las portadas: ${coversError.message}`);
   }
-  const { data: ownActiveSession, error: ownActiveSessionError } = await supabase
+  const { data: ownActiveSessions, error: ownActiveSessionsError } = await supabase
     .from("work_sessions")
     .select("clock_in")
     .eq("user_id", user.id)
     .is("clock_out", null)
     .is("deleted_at", null)
-    .maybeSingle();
-  if (ownActiveSessionError) {
-    throw new Error(`No se pudo consultar tu jornada actual: ${ownActiveSessionError.message}`);
+    .order("clock_in", { ascending: false })
+    .limit(1);
+  if (ownActiveSessionsError) {
+    throw new Error(`No se pudo consultar tu jornada actual: ${ownActiveSessionsError.message}`);
   }
+  const ownActiveSession = ownActiveSessions?.[0] ?? null;
   const projectNameById = new Map(
     (allProjects ?? []).map((project) => [project.id, project.name]),
   );
