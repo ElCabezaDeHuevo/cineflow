@@ -118,12 +118,16 @@ export default function AppNavigation({ name, email, avatarUrl, isAdmin, company
     </nav>
     {moreOpen && <div className="cf-more-overlay" onClick={() => setMoreOpen(false)}>
       <section id="cf-more-menu" className="cf-more-sheet" role="dialog" aria-modal="true" aria-label="Más secciones" onClick={(event) => event.stopPropagation()}>
-        <div className="mb-5 flex items-center justify-between">
-          <div><p className="text-[10px] font-bold uppercase tracking-[.18em] text-violet-300">CineFlow</p><strong className="text-base">Todas las secciones</strong></div>
-          <button type="button" onClick={() => setMoreOpen(false)} aria-label="Cerrar menú" className="rounded-xl border border-white/10 px-3 py-2 text-zinc-300">✕</button>
+        <div className="mb-5 flex items-center justify-between gap-3">
+          <div><p className="text-[10px] font-bold uppercase tracking-[.18em] text-violet-300">CineFlow</p><strong className="text-base">Todas las secciones</strong><p className="mt-1 text-xs text-zinc-400">{roleLabels[companyRole ?? "viewer"]}{isAdmin ? " · Administración global" : ""}</p></div>
+          <button type="button" onClick={() => setMoreOpen(false)} aria-label="Cerrar menú" className="flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-white/10 px-3 text-zinc-300">✕</button>
         </div>
+        <Link href="/perfil" onClick={() => setMoreOpen(false)} className="mb-4 flex min-h-14 items-center gap-3 rounded-xl border border-violet-300/15 bg-violet-300/[.06] p-3">
+          <span className="cf-avatar">{avatarUrl ? <img src={avatarUrl} alt="" /> : initials}</span>
+          <span className="min-w-0"><strong className="block truncate text-sm text-white">{name}</strong><small className="block truncate text-xs text-zinc-400">Perfil, contraseña y seguridad</small></span>
+          <span className="ml-auto text-zinc-500" aria-hidden="true">↗</span>
+        </Link>
         <NavItems pathname={pathname} isAdmin={isAdmin} companyRole={companyRole} onNavigate={() => setMoreOpen(false)} />
-        <Link href="/perfil" onClick={() => setMoreOpen(false)} className="cf-nav-link"><span className="cf-nav-icon" aria-hidden="true">◉</span><span>Mi perfil y seguridad</span></Link>
       </section>
     </div>}
   </>;
