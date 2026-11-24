@@ -63,7 +63,7 @@ export default async function AdminCinematicPositionsPage({
         <section className="rounded-2xl border border-white/10 bg-[#14151c] p-5 md:p-7">
           <form method="get" className="mb-6 max-w-xl">
             <label htmlFor="organization" className="mb-2 block text-sm font-medium text-gray-300">Productora</label>
-            <select id="organization" name="organization" defaultValue={organizationId} onChange={undefined as never} className="w-full rounded-xl border border-white/15 bg-[#0b0c10] px-4 py-3 text-white">
+            <select id="organization" name="organization" defaultValue={organizationId} className="w-full rounded-xl border border-white/15 bg-[#0b0c10] px-4 py-3 text-white">
               {(organizations ?? []).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
             </select>
             <button className="mt-3 rounded-lg border border-violet-300/30 px-4 py-2 text-sm font-semibold text-violet-200 hover:bg-violet-400/10">Ver integrantes</button>
