@@ -100,21 +100,10 @@ export async function createUser(formData: FormData) {
     redirect(`/usuarios?error=${message("No se pudo asignar el puesto cinematográfico: " + cinematicRoleError.message)}`);
   }
 
-  const { error: auditError } = await admin.from("organization_audit_log").insert({
-    organization_id: organizationId, actor_id: creator.id,
-    action: "company_user_created", target_type: "user", target_id: data.user.id,
-    metadata: { email, organization_role: organizationRole, cine_role: cineRole },
-  });
-  if (auditError) {
-    await admin.from("organization_members").delete().eq("organization_id", organizationId).eq("user_id", data.user.id);
-    await admin.auth.admin.deleteUser(data.user.id);
-    redirect(`/usuarios?error=${message(auditError.message)}`);
-  }
   revalidatePath("/usuarios");
   revalidatePath("/admin/productoras");
-  redirect(`/usuarios?success=${encodeURIComponent(`Usuario creado y agregado a ${company.name}.`)}`);
+  redirect(`/usuarios?success=${encodeURIComponent(`Usuario creado y agregado a ${company.name} con su puesto cinematográfico.`)}`);
 }
-
 
 export async function assignExistingUser(formData: FormData) {
   const { admin, user: actor } = await requireAdmin();
