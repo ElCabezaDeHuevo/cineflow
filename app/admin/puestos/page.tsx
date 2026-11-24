@@ -6,8 +6,6 @@ import { isCineflowAdmin } from "@/lib/admin";
 import { CINE_ROLES, cineRoleLabel } from "@/lib/cine-roles";
 import { assignCinematicPosition } from "./actions";
 
-export const dynamic = "force-dynamic";
-
 export default async function AdminCinematicPositionsPage({
   searchParams,
 }: {
