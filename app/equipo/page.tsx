@@ -104,7 +104,7 @@ export default async function TeamPage() {
                     <span className="min-w-0">
                       <span className="block truncate font-medium">{name}</span>
                       <span className="mt-1 block truncate text-sm text-gray-500">
-                        {profile.bio || "Ver perfil"}
+                        {metadata.cine_role_status === "pending" ? `Pendiente de aprobación · ${cineRoleLabel(metadata.cine_role_requested)}` : metadata.cine_role_status === "approved" ? cineRoleLabel(metadata.cine_role) : profile.bio || "Ver perfil"}
                       </span>
                     </span>
                   </Link>
