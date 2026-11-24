@@ -163,37 +163,29 @@ export async function approveCompanyMemberCineRole(formData: FormData) {
   const organizationId = String(formData.get("organization_id") ?? "").trim();
   const userId = String(formData.get("user_id") ?? "").trim();
   const selectedRole = String(formData.get("cine_role") ?? "").trim();
-  if (!organizationId || !userId || !CINE_ROLES.some((role) => role.value === selectedRole && role.value !== "viewer")) {
-    redirect("/empresa?error=La+especialidad+seleccionada+no+es+válida");
+  const decision = String(formData.get("decision") ?? "approved");
+  const reason = String(formData.get("review_reason") ?? "").trim().slice(0, 300);
+  if (!organizationId || !userId || !["approved", "rejected"].includes(decision) ||
+      (decision === "approved" && !CINE_ROLES.some((role) => role.value === selectedRole && role.value !== "viewer")) ||
+      reason.length > 300) {
+    redirect("/empresa?error=La+revisión+o+el+puesto+seleccionado+no+es+válido");
   }
   const { admin, user: actor } = await ownerContext(organizationId);
-  const { data: membership } = await admin.from("organization_members").select("role")
-    .eq("organization_id", organizationId).eq("user_id", actor.id).maybeSingle();
-  if (!membership || !["owner", "admin"].includes(membership.role)) {
-    redirect("/empresa?error=No+tienes+permiso+para+aprobar+especialidades");
-  }
-  const { data: targetMembership } = await admin.from("organization_members").select("user_id")
-    .eq("organization_id", organizationId).eq("user_id", userId).maybeSingle();
-  if (!targetMembership) redirect("/empresa?error=El+integrante+no+pertenece+a+esta+productora");
-  const { data: target, error: targetError } = await admin.auth.admin.getUserById(userId);
-  if (targetError || !target.user) redirect("/empresa?error=No+se+encontró+la+cuenta");
-  const requested = target.user.user_metadata?.cine_role_requested;
-  if (requested !== selectedRole || target.user.user_metadata?.cine_role_status !== "pending") {
-    redirect("/empresa?error=La+solicitud+ya+no+está+pendiente+o+ha+cambiado");
-  }
-  const { error } = await admin.auth.admin.updateUserById(userId, {
-    app_metadata: { ...target.user.app_metadata, cine_role: selectedRole, cine_role_status: "approved", cine_role_approved_by: actor.id, cine_role_approved_at: new Date().toISOString() },
+  const { error } = await admin.rpc("review_organization_member_cinematic_role", {
+    p_organization_id: organizationId,
+    p_user_id: userId,
+    p_actor_id: actor.id,
+    p_approved_role: decision === "approved" ? selectedRole : null,
+    p_status: decision,
+    p_review_reason: reason || null,
   });
   if (error) redirect("/empresa?error=" + encodeURIComponent(error.message));
-  const { error: auditError } = await admin.from("organization_audit_log").insert({
-    organization_id: organizationId, actor_id: actor.id, action: "member_cinematic_role_approved",
-    target_type: "user", target_id: userId, metadata: { cine_role: selectedRole },
-  });
-  if (auditError) redirect("/empresa?error=El+puesto+se+aprobó+pero+no+se+pudo+registrar+la+auditoría");
   revalidatePath("/empresa");
   revalidatePath("/equipo");
   revalidatePath("/usuarios/" + userId);
-  redirect("/empresa?success=Puesto+cinematográfico+aprobado");
+  redirect(decision === "approved"
+    ? "/empresa?success=Puesto+cinematográfico+aprobado"
+    : "/empresa?success=Solicitud+de+puesto+rechazada");
 }
 
 export async function updateCompanyMemberRole(formData: FormData) {
