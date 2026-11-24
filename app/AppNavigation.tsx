@@ -8,18 +8,75 @@ type CompanyRole = "owner" | "admin" | "producer" | "member" | "viewer";
 type Props = { name: string; email: string; avatarUrl?: string | null; isAdmin: boolean; companyRole: CompanyRole | null };
 
 const groups = [
-  { label: "Espacio de trabajo", items: [{ href: "/", label: "Panel principal", icon: "▦" }] },
-  { label: "Producción", items: [{ href: "/proyectos", label: "Proyectos", icon: "▣" }, { href: "/timeline", label: "Timeline", icon: "◷" }, { href: "/calendario", label: "Calendario", icon: "▦" }, { href: "/rodaje", label: "Planificador de rodaje", icon: "▤" }] },
-  { label: "Colaboración", items: [{ href: "/equipo", label: "Equipo", icon: "♙" }, { href: "/actividad", label: "Actividad", icon: "↗" }, { href: "/horarios", label: "Jornadas", icon: "◷" }] },
-  { label: "Herramientas", items: [{ href: "/buscar", label: "Buscar", icon: "⌕" }, { href: "/estadisticas", label: "Estadísticas", icon: "▥" }, { href: "/centro", label: "Centro de ayuda", icon: "?" }] },
+  { label: "Inicio", items: [{ href: "/", label: "Panel principal", icon: "▦" }] },
+  { label: "Producción", items: [
+    { href: "/proyectos", label: "Proyectos", icon: "▣" },
+    { href: "/rodaje", label: "Planificador de rodaje", icon: "▤" },
+    { href: "/calendario", label: "Calendario", icon: "▦" },
+    { href: "/timeline", label: "Línea de tiempo", icon: "◷" },
+  ] },
+  { label: "Equipo y comunicación", items: [
+    { href: "/equipo", label: "Directorio del equipo", icon: "♙" },
+    { href: "/actividad", label: "Actividad reciente", icon: "↗" },
+    { href: "/horarios", label: "Mis jornadas", icon: "◷" },
+  ] },
+  { label: "Herramientas", items: [
+    { href: "/buscar", label: "Búsqueda global", icon: "⌕" },
+    { href: "/estadisticas", label: "Estadísticas", icon: "▥" },
+    { href: "/centro", label: "Centro de trabajo", icon: "⌂" },
+  ] },
 ];
 
-function NavItems({ pathname, isAdmin, companyRole, onNavigate }: { pathname: string; isAdmin: boolean; companyRole: CompanyRole | null; onNavigate?: () => void }) {
+const roleLabels: Record<CompanyRole, string> = {
+  owner: "Dueño de productora",
+  admin: "Administrador",
+  producer: "Productor",
+  member: "Colaborador",
+  viewer: "Solo lectura",
+};
+
+function NavItems({ pathname, isAdmin, companyRole, onNavigate }: {
+  pathname: string; isAdmin: boolean; companyRole: CompanyRole | null; onNavigate?: () => void;
+}) {
   const canManageCompany = companyRole === "owner" || companyRole === "admin";
+  const isActive = (href: string) => href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/");
   return <>
-    {groups.map((group) => <div key={group.label} className="mb-6"><p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[.2em] text-zinc-500">{group.label}</p><div className="space-y-1">{group.items.map((item) => { const active = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(item.href + "/"); return <Link key={item.href} href={item.href} onClick={onNavigate} aria-current={active ? "page" : undefined} className={`cf-nav-link ${active ? "is-active" : ""}`}><span className="cf-nav-icon">{item.icon}</span><span>{item.label}</span></Link>; })}</div></div>)}
-    {canManageCompany && <div className="mb-6"><p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[.2em] text-zinc-500">Mi productora</p><Link href="/empresa" onClick={onNavigate} className={`cf-nav-link ${pathname === "/empresa" ? "is-active" : ""}`}><span className="cf-nav-icon">⌂</span><span>Espacio de empresa</span></Link><Link href="/empresa/informes" onClick={onNavigate} className={`cf-nav-link ${pathname.startsWith("/empresa/informes") ? "is-active" : ""}`}><span className="cf-nav-icon">▥</span><span>Informes de empresa</span></Link></div>}
-    {isAdmin && <div className="mb-6"><p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[.2em] text-zinc-500">Administración global</p><Link href="/admin/informes" onClick={onNavigate} className={`cf-nav-link ${pathname === "/admin/informes" ? "is-active" : ""}`}><span className="cf-nav-icon">▥</span><span>Informes globales</span></Link><Link href="/admin" onClick={onNavigate} className={`cf-nav-link ${pathname.startsWith("/admin") && pathname !== "/admin/informes" ? "is-active" : ""}`}><span className="cf-nav-icon">⚙</span><span>Panel de administración</span></Link></div>}
+    {groups.map((group) => <div key={group.label} className="mb-6">
+      <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[.2em] text-zinc-500">{group.label}</p>
+      <div className="space-y-1">{group.items.map((item) => {
+        const active = isActive(item.href);
+        return <Link key={item.href} href={item.href} onClick={onNavigate} aria-current={active ? "page" : undefined} className={`cf-nav-link ${active ? "is-active" : ""}`}>
+          <span className="cf-nav-icon" aria-hidden="true">{item.icon}</span><span>{item.label}</span>
+        </Link>;
+      })}</div>
+    </div>)}
+    {canManageCompany && <div className="mb-6">
+      <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[.2em] text-zinc-500">Mi productora</p>
+      <Link href="/empresa" onClick={onNavigate} aria-current={isActive("/empresa") ? "page" : undefined} className={`cf-nav-link ${isActive("/empresa") ? "is-active" : ""}`}>
+        <span className="cf-nav-icon" aria-hidden="true">⌂</span><span>Espacio de empresa</span>
+      </Link>
+      <Link href="/empresa/informes" onClick={onNavigate} aria-current={isActive("/empresa/informes") ? "page" : undefined} className={`cf-nav-link ${isActive("/empresa/informes") ? "is-active" : ""}`}>
+        <span className="cf-nav-icon" aria-hidden="true">▥</span><span>Informes de empresa</span>
+      </Link>
+    </div>}
+    {isAdmin && <div className="mb-6">
+      <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[.2em] text-zinc-500">Administración global</p>
+      <Link href="/admin" onClick={onNavigate} aria-current={pathname === "/admin" ? "page" : undefined} className={`cf-nav-link ${pathname === "/admin" ? "is-active" : ""}`}>
+        <span className="cf-nav-icon" aria-hidden="true">⚙</span><span>Panel de administración</span>
+      </Link>
+      <Link href="/admin/productoras" onClick={onNavigate} aria-current={isActive("/admin/productoras") ? "page" : undefined} className={`cf-nav-link ${isActive("/admin/productoras") ? "is-active" : ""}`}>
+        <span className="cf-nav-icon" aria-hidden="true">▣</span><span>Productoras y pagos</span>
+      </Link>
+      <Link href="/admin/informes" onClick={onNavigate} aria-current={isActive("/admin/informes") ? "page" : undefined} className={`cf-nav-link ${isActive("/admin/informes") ? "is-active" : ""}`}>
+        <span className="cf-nav-icon" aria-hidden="true">▥</span><span>Informes globales</span>
+      </Link>
+      <Link href="/admin/horarios" onClick={onNavigate} aria-current={isActive("/admin/horarios") ? "page" : undefined} className={`cf-nav-link ${isActive("/admin/horarios") ? "is-active" : ""}`}>
+        <span className="cf-nav-icon" aria-hidden="true">◷</span><span>Control de horarios</span>
+      </Link>
+      <Link href="/usuarios" onClick={onNavigate} aria-current={isActive("/usuarios") ? "page" : undefined} className={`cf-nav-link ${isActive("/usuarios") ? "is-active" : ""}`}>
+        <span className="cf-nav-icon" aria-hidden="true">♙</span><span>Usuarios y solicitudes</span>
+      </Link>
+    </div>}
   </>;
 }
 
@@ -28,14 +85,46 @@ export default function AppNavigation({ name, email, avatarUrl, isAdmin, company
   const [moreOpen, setMoreOpen] = useState(false);
   if (pathname === "/login" || pathname.startsWith("/auth/")) return null;
   const initials = name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "CF";
-  const primary = [{ href: "/", label: "Inicio", icon: "▦" }, { href: "/proyectos", label: "Proyectos", icon: "▣" }, { href: "/timeline", label: "Timeline", icon: "◷" }, { href: "/equipo", label: "Equipo", icon: "♙" }];
+  const primary = [
+    { href: "/", label: "Inicio", icon: "▦" },
+    { href: "/proyectos", label: "Proyectos", icon: "▣" },
+    { href: "/calendario", label: "Agenda", icon: "▦" },
+    { href: "/equipo", label: "Equipo", icon: "♙" },
+  ];
   return <>
-    <aside className="cf-sidebar hidden md:flex">
-      <Link href="/" className="cf-brand"><span className="cf-brand-mark">C</span><span>CINE<span>FLOW</span><small>STUDIO</small></span></Link>
+    <aside className="cf-sidebar hidden md:flex" aria-label="Navegación principal">
+      <Link href="/" className="cf-brand"><span className="cf-brand-mark">C</span><span>CINE<span>FLOW</span><small>STUDIO WORKSPACE</small></span></Link>
       <div className="cf-sidebar-scroll"><NavItems pathname={pathname} isAdmin={isAdmin} companyRole={companyRole} /></div>
-      <Link href="/perfil" className="cf-account"><span className="cf-avatar">{avatarUrl ? <img src={avatarUrl} alt="" /> : initials}</span><span className="min-w-0"><strong>{name}</strong><small>{email || "Mi cuenta"}</small></span><span className="ml-auto text-zinc-500">⌄</span></Link>
+      <Link href="/perfil" className="cf-account" aria-label="Abrir mi perfil">
+        <span className="cf-avatar">{avatarUrl ? <img src={avatarUrl} alt="" /> : initials}</span>
+        <span className="min-w-0"><strong>{name}</strong><small>{roleLabels[companyRole ?? "viewer"]}</small></span>
+        <span className="ml-auto text-zinc-500" aria-hidden="true">↗</span>
+      </Link>
     </aside>
-    <header className="cf-mobile-header md:hidden"><Link href="/" className="cf-brand"><span className="cf-brand-mark">C</span><span>CINE<span>FLOW</span><small>STUDIO</small></span></Link><Link href="/perfil" className="cf-avatar">{initials}</Link></header>
-    <nav className="cf-mobile-nav md:hidden" aria-label="Navegación principal">{primary.map((item) => { const active = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(item.href + "/"); return <Link key={item.href} href={item.href} className={active ? "is-active" : ""}><span>{item.icon}</span><small>{item.label}</small></Link>; })}<button type="button" onClick={() => setMoreOpen((open) => !open)} aria-expanded={moreOpen}><span>•••</span><small>Más</small></button></nav>{moreOpen && <div className="cf-more-overlay" onClick={() => setMoreOpen(false)}><section className="cf-more-sheet" onClick={(event) => event.stopPropagation()}><div className="mb-4 flex items-center justify-between"><strong className="text-sm">Más secciones</strong><button type="button" onClick={() => setMoreOpen(false)} aria-label="Cerrar" className="text-zinc-400">✕</button></div><NavItems pathname={pathname} isAdmin={isAdmin} companyRole={companyRole} onNavigate={() => setMoreOpen(false)}/><Link href="/perfil" onClick={() => setMoreOpen(false)} className="cf-nav-link">Mi cuenta</Link></section></div>}
+    <header className="cf-mobile-header md:hidden">
+      <Link href="/" className="cf-brand"><span className="cf-brand-mark">C</span><span>CINE<span>FLOW</span><small>STUDIO</small></span></Link>
+      <Link href="/perfil" className="cf-avatar" aria-label="Mi perfil">{avatarUrl ? <img src={avatarUrl} alt="" /> : initials}</Link>
+    </header>
+    <nav className="cf-mobile-nav md:hidden" aria-label="Navegación principal">
+      {primary.map((item) => {
+        const active = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(item.href + "/");
+        return <Link key={item.href} href={item.href} className={active ? "is-active" : ""} aria-current={active ? "page" : undefined}>
+          <span aria-hidden="true">{item.icon}</span><small>{item.label}</small>
+        </Link>;
+      })}
+      <button type="button" onClick={() => setMoreOpen((open) => !open)} aria-expanded={moreOpen} aria-controls="cf-more-menu">
+        <span aria-hidden="true">•••</span><small>Más</small>
+      </button>
+    </nav>
+    {moreOpen && <div className="cf-more-overlay" onClick={() => setMoreOpen(false)}>
+      <section id="cf-more-menu" className="cf-more-sheet" role="dialog" aria-modal="true" aria-label="Más secciones" onClick={(event) => event.stopPropagation()}>
+        <div className="mb-5 flex items-center justify-between">
+          <div><p className="text-[10px] font-bold uppercase tracking-[.18em] text-violet-300">CineFlow</p><strong className="text-base">Todas las secciones</strong></div>
+          <button type="button" onClick={() => setMoreOpen(false)} aria-label="Cerrar menú" className="rounded-xl border border-white/10 px-3 py-2 text-zinc-300">✕</button>
+        </div>
+        <NavItems pathname={pathname} isAdmin={isAdmin} companyRole={companyRole} onNavigate={() => setMoreOpen(false)} />
+        <Link href="/perfil" onClick={() => setMoreOpen(false)} className="cf-nav-link"><span className="cf-nav-icon" aria-hidden="true">◉</span><span>Mi perfil y seguridad</span></Link>
+      </section>
+    </div>}
   </>;
 }
