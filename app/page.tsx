@@ -215,7 +215,7 @@ async function HomeContent({
   const deliveryDates = projects.map((project) => project.delivery_date);
 
   return (
-    <main className="cf-cinematic-page cf-dashboard min-h-screen text-white">
+    <main className="cf-cinematic-page cf-bg-dashboard cf-dashboard min-h-screen text-white">
       <section className="mx-auto max-w-[1500px] p-4 sm:p-6 xl:p-10">
         {created && (
           <div role="status" className="mb-6 rounded-2xl border border-emerald-400/25 bg-emerald-400/10 px-5 py-4 text-sm font-medium text-emerald-200">
