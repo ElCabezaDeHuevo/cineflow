@@ -7,6 +7,14 @@ alter table public.organization_invitations
   add column if not exists accepted_user_id uuid references auth.users(id) on delete set null,
   add column if not exists registration_completed_at timestamptz;
 
+-- A consumed invitation keeps the legacy non-null token_hash column but is
+-- excluded from uniqueness. Only still-pending invitations need unique tokens.
+alter table public.organization_invitations
+  drop constraint if exists organization_invitations_token_hash_key;
+create unique index if not exists organization_invitations_pending_token_hash_uidx
+  on public.organization_invitations(token_hash)
+  where accepted_at is null;
+
 create table if not exists public.organization_member_cinematic_roles (
   organization_id uuid not null references public.organizations(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade,
