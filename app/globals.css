@@ -893,3 +893,18 @@ body {
   .cf-mobile-nav a, .cf-mobile-nav button { min-height: 42px; gap: 1px; }
   .cf-more-sheet { max-height: 88dvh; }
 }
+
+/* Tablets: compact persistent navigation rail without squeezing the workspace */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .cf-sidebar { width: 78px; padding: 20px 9px 12px; }
+  .cf-app-frame { padding-left: 78px; }
+  .cf-brand { justify-content: center; margin: 0 0 24px; }
+  .cf-brand > span:last-child { display: none; }
+  .cf-sidebar-scroll > div > p { display: none; }
+  .cf-sidebar-scroll > div { margin-bottom: 12px; }
+  .cf-nav-link { min-height: 48px; justify-content: center; padding: 8px 4px; }
+  .cf-nav-link > span:last-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+  .cf-nav-icon { width: 32px; height: 32px; font-size: 18px; }
+  .cf-account { justify-content: center; padding: 8px 4px; }
+  .cf-account > span:not(.cf-avatar) { display: none; }
+}
