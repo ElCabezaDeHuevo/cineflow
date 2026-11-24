@@ -908,3 +908,74 @@ body {
   .cf-account { justify-content: center; padding: 8px 4px; }
   .cf-account > span:not(.cf-avatar) { display: none; }
 }
+
+
+/* CineFlow dashboard: portada cinematográfica y movimiento sutil */
+.cf-dashboard-hero {
+  background:
+    linear-gradient(100deg, rgb(9 13 24 / 94%) 0%, rgb(10 15 27 / 82%) 48%, rgb(10 14 24 / 48%) 100%),
+    linear-gradient(0deg, rgb(9 13 24 / 55%), transparent 58%),
+    url("https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=2400&q=85") center 44% / cover no-repeat,
+    #111827;
+}
+.cf-dashboard-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 78% 35%, rgb(145 116 255 / 19%), transparent 38%);
+  animation: cf-hero-glow 9s ease-in-out infinite alternate;
+}
+.cf-dashboard-hero::after {
+  right: 2%;
+  bottom: -42%;
+  color: rgb(255 255 255 / 4%);
+  text-shadow: 0 0 55px rgb(148 125 255 / 10%);
+}
+.cf-motion-hero { animation: cf-dashboard-in .7s cubic-bezier(.2,.75,.25,1) both; }
+.cf-motion-section { animation: cf-dashboard-in .65s cubic-bezier(.2,.75,.25,1) both; }
+.cf-motion-delay-1 { animation-delay: .08s; }
+.cf-motion-delay-2 { animation-delay: .16s; }
+.cf-motion-delay-3 { animation-delay: .24s; }
+.cf-motion-delay-4 { animation-delay: .32s; }
+.cf-motion-card { animation: cf-dashboard-in .55s cubic-bezier(.2,.75,.25,1) both; }
+.cf-motion-card:nth-child(1) { animation-delay: .10s; }
+.cf-motion-card:nth-child(2) { animation-delay: .17s; }
+.cf-motion-card:nth-child(3) { animation-delay: .24s; }
+.cf-motion-card:nth-child(4) { animation-delay: .31s; }
+.cf-motion-panel { transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease; }
+.cf-motion-panel:hover {
+  transform: translateY(-3px);
+  border-color: rgb(155 131 255 / 26%);
+  box-shadow: 0 20px 48px rgb(0 0 0 / 22%);
+}
+.cf-dashboard .cf-quick-link { transition: transform .2s ease, border-color .2s ease, background .2s ease; }
+.cf-dashboard [role="progressbar"] > div { animation: cf-progress-in 1.1s cubic-bezier(.2,.75,.25,1) both; transform-origin: left center; }
+@keyframes cf-dashboard-in {
+  from { opacity: 0; transform: translate3d(0, 16px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes cf-progress-in {
+  from { transform: scaleX(.18); opacity: .45; }
+  to { transform: scaleX(1); opacity: 1; }
+}
+@keyframes cf-hero-glow {
+  from { opacity: .55; transform: translate3d(-1%, 0, 0); }
+  to { opacity: 1; transform: translate3d(1%, 0, 0); }
+}
+@media (max-width: 767px) {
+  .cf-dashboard-hero {
+    background-position: center, center, 58% center, center;
+  }
+  .cf-motion-panel:hover { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cf-motion-hero, .cf-motion-section, .cf-motion-card,
+  .cf-dashboard-hero::before, .cf-dashboard [role="progressbar"] > div {
+    animation: none !important;
+  }
+  .cf-motion-panel, .cf-dashboard .cf-quick-link, .cf-dashboard-primary, .cf-dashboard-secondary {
+    transition: none !important;
+  }
+}
