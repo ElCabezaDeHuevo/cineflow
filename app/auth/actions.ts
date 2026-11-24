@@ -1,6 +1,7 @@
 "use server";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { CINE_ROLES } from "@/lib/cine-roles";
 
 export async function signIn(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
@@ -38,6 +39,10 @@ export async function signIn(formData: FormData) {
 export async function completeInvitationRegistration(formData: FormData) {
   const password = String(formData.get("password") ?? "");
   const confirmation = String(formData.get("confirmation") ?? "");
+  const requestedCineRole = String(formData.get("cine_role") ?? "");
+  if (!CINE_ROLES.some((role) => role.value === requestedCineRole && role.value !== "viewer")) {
+    redirect("/auth/complete-invitation?error=" + encodeURIComponent("Selecciona un puesto cinematográfico válido."));
+  }
   if (password.length < 10 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
     redirect("/auth/complete-invitation?error=" + encodeURIComponent("Usa al menos 10 caracteres, una mayúscula, una minúscula y un número."));
   }
@@ -50,7 +55,15 @@ export async function completeInvitationRegistration(formData: FormData) {
   const { data: membership, error: membershipError } = await supabase.from("organization_members")
     .select("organization_id").eq("user_id", user.id).limit(1).maybeSingle();
   if (membershipError || !membership) redirect("/login?error=" + encodeURIComponent("No se encontró una invitación aceptada para esta cuenta."));
-  const { error } = await supabase.auth.updateUser({ password });
+  const { error } = await supabase.auth.updateUser({
+    password,
+    data: {
+      ...user.user_metadata,
+      cine_role_requested: requestedCineRole,
+      cine_role_status: "pending",
+      cine_role: null,
+    },
+  });
   if (error) redirect("/auth/complete-invitation?error=" + encodeURIComponent("No se pudo guardar la contraseña: " + error.message));
   redirect("/?welcome=Tu+cuenta+está+lista");
 }
