@@ -6,6 +6,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { hasOpenWorkSession } from "@/lib/attendance";
 import { isCineflowAdmin } from "@/lib/admin";
 import UserAvatar from "@/lib/UserAvatar";
+import ProductionNavigation from "@/app/ProductionNavigation";
 import ScreenshotCard from "../ScreenshotCard";
 import StageWindows from "../StageWindows";
 import ProjectVisitTracker from "@/app/ProjectVisitTracker";
@@ -244,7 +245,8 @@ export default async function ProjectTrackingPage({
   return (
     <main className="min-h-screen bg-[#0b0c10] text-white">
       <ProjectVisitTracker userId={user.id} projectId={project.id} />
-      <section className="mx-auto max-w-7xl p-6 md:p-10">
+      <section className="mx-auto max-w-7xl p-4 sm:p-6 md:p-10">
+        <ProductionNavigation active="/proyectos" />
         {!activeSession && (
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
             <span>
