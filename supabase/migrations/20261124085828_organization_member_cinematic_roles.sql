@@ -145,7 +145,7 @@ begin
   if coalesce(auth.role(), '') <> 'service_role' then
     raise exception 'Operación no autorizada';
   end if;
-  if p_requested_role not in (
+  if p_requested_role is null or p_requested_role not in (
     'director','assistant-director','producer','executive-producer','line-producer',
     'production-coordinator','screenwriter','script-supervisor','director-of-photography',
     'camera-operator','1st-ac','2nd-ac','gaffer','key-grip','production-designer',
@@ -223,17 +223,17 @@ begin
   if coalesce(auth.role(), '') <> 'service_role' then
     raise exception 'Operación no autorizada';
   end if;
-  if p_status not in ('approved','rejected') then
+  if p_status is null or p_status not in ('approved','rejected') then
     raise exception 'Estado de revisión no válido';
   end if;
-  if p_status = 'approved' and p_approved_role not in (
+  if p_status = 'approved' and (p_approved_role is null or p_approved_role not in (
     'director','assistant-director','producer','executive-producer','line-producer',
     'production-coordinator','screenwriter','script-supervisor','director-of-photography',
     'camera-operator','1st-ac','2nd-ac','gaffer','key-grip','production-designer',
     'art-director','set-designer','props-master','costume-designer','makeup-artist',
     'hair-stylist','casting-director','actor','sound-mixer','boom-operator','editor',
     'colorist','sound-editor','composer','vfx-artist','motion-designer','marketing'
-  ) then
+  )) then
     raise exception 'Puesto aprobado no válido';
   end if;
   if char_length(coalesce(p_review_reason,'')) > 300 then
