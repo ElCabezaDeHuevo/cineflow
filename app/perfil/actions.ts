@@ -28,7 +28,6 @@ export async function changePassword(formData: FormData) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
-  if (!(await hasOpenWorkSession(supabase, user.id))) redirect(`/perfil?error=${encodeURIComponent(attendanceRequiredMessage)}`);
   const { error } = await supabase.auth.updateUser({ password });
   if (error) redirect(`/perfil?error=${encodeURIComponent(error.message)}`);
   redirect("/perfil?success=Contraseña%20actualizada");
