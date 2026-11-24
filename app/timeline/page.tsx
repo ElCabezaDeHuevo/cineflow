@@ -5,6 +5,7 @@ import { connection } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import UserAvatar from "@/lib/UserAvatar";
 import TimelineProjects from "./TimelineProjects";
+import ProductionNavigation from "@/app/ProductionNavigation";
 
 export const instant = false;
 
@@ -31,7 +32,8 @@ async function TimelineContent() {
 
   return (
     <main className="cf-cinematic-page cf-bg-timeline min-h-screen bg-[#0b0c10] text-white">
-      <section className="mx-auto max-w-7xl p-6 md:p-10">
+      <section className="mx-auto max-w-7xl p-4 sm:p-6 md:p-10">
+        <ProductionNavigation active="/timeline" />
         <Link
           href="/"
           className="text-sm text-violet-300 hover:text-violet-200"
@@ -79,13 +81,13 @@ async function TimelineContent() {
             <p className="mt-3 text-3xl font-bold">
               {projects?.filter(
                 (project) =>
-                  new Date(`${project.delivery_date}T00:00:00`) >= new Date(),
+                  Boolean(project.delivery_date) && new Date(`${project.delivery_date}T00:00:00`) >= new Date(),
               ).length ?? 0}
             </p>
           </article>
         </section>
 
-        <section className="cf-card mt-8 overflow-hidden rounded-2xl border border-white/10 bg-[#14151c]">
+        <section className="cf-dashboard-panel mt-8 overflow-hidden">
           <TimelineProjects
             projects={(projects ?? []).map((project) => ({
               ...project,
