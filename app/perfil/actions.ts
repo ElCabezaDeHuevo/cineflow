@@ -3,13 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { hasOpenWorkSession, attendanceRequiredMessage } from "@/lib/attendance";
 
 export async function updateProfile(formData: FormData) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
-  if (!(await hasOpenWorkSession(supabase, user.id))) redirect(`/perfil?error=${encodeURIComponent(attendanceRequiredMessage)}`);
   const fullName = String(formData.get("full_name") ?? "").trim();
   const avatarUrl = String(formData.get("avatar_url") ?? "").trim();
   const bio = String(formData.get("bio") ?? "").trim();
