@@ -84,25 +84,18 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
         {error && <p role="alert" className="mb-5 rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-200">{error}</p>}
         {success && <p role="status" className="mb-5 rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-4 text-sm text-emerald-200">{success}</p>}
         {authUsersResult.error && <p role="alert" className="mb-5 rounded-xl border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-100">No se pudieron cargar todos los correos del equipo. Actualiza la página o contacta soporte.</p>}
-        <section className="mb-6 grid gap-3 sm:grid-cols-3"><Link href={`/empresa/informes?organization_id=${membership.organization_id}`} className="rounded-2xl border border-violet-400/25 bg-violet-500/10 p-5 transition hover:bg-violet-500/15"><p className="text-xs font-semibold uppercase tracking-widest text-violet-300">Análisis de equipo</p><h2 className="mt-2 text-lg font-semibold">Informes de la productora</h2><p className="mt-1 text-sm text-gray-400">Horas, asistencia, jornadas activas, revisiones y avance de proyectos.</p></Link><Link href="/proyectos" className="rounded-2xl border border-white/10 bg-[#14151c] p-5 transition hover:bg-white/5"><p className="text-xs font-semibold uppercase tracking-widest text-gray-400">Operación</p><h2 className="mt-2 text-lg font-semibold">Proyectos</h2><p className="mt-1 text-sm text-gray-400">Consulta y gestiona las producciones de tu empresa.</p></Link><div className="rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-xs font-semibold uppercase tracking-widest text-gray-400">Equipo</p><h2 className="mt-2 text-lg font-semibold">Invitaciones y roles</h2><p className="mt-1 text-sm text-gray-400">Agrega integrantes y administra sus permisos desde esta página.</p></div></section>
-        <section className="mb-6 grid gap-4 sm:grid-cols-3">
-          <article className="rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Servicio</p><p className="mt-2 text-xl font-semibold">{statusLabel}</p></article>
-          <article className="rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Vigencia</p><p className="mt-2 text-xl font-semibold">{fmt(validUntil)}</p><p className="mt-1 text-xs text-gray-500">{subscription?.billing_interval === "annual" ? "Anual" : "Mensual"}</p></article>
-          <article className="rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Integrantes</p><p className="mt-2 text-xl font-semibold">{members?.length ?? 0}</p></article>
-        </section>
-        <section id="vigencia" className="mb-6 rounded-2xl border border-white/10 bg-[#14151c] p-5"><h2 className="font-semibold">Información de pagos</h2><p className="mt-1 text-sm text-gray-400">Consulta de solo lectura. Los pagos, planes y reactivaciones los gestiona el equipo de CineFlow.</p><div className="mt-4 grid gap-3 sm:grid-cols-3"><div><p className="text-xs text-gray-500">Último pago</p><p className="mt-1 text-sm">{latestPayment ? fmt(latestPayment.paid_at) : "Sin pagos registrados"}</p></div><div><p className="text-xs text-gray-500">Importe</p><p className="mt-1 text-sm">{latestPayment ? new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(latestPayment.amount_mxn)) : "—"}</p></div><div><p className="text-xs text-gray-500">Método</p><p className="mt-1 text-sm">{latestPayment?.payment_method ?? "—"}</p></div></div></section>
         <section className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            { href: "/empresa/miembros", title: "Miembros y usuarios", detail: "Consulta integrantes, estados de acceso y administra sus cuentas.", icon: "♙" },
-            { href: "/empresa/roles", title: "Roles y permisos", detail: "Administra los permisos y responsabilidades dentro de la productora.", icon: "⚿" },
-            { href: "/empresa/invitaciones", title: "Invitaciones", detail: "Invita nuevos colaboradores y prepara sus enlaces de acceso.", icon: "✉" },
-            { href: "/empresa/solicitudes", title: "Solicitudes", detail: "Revisa las solicitudes pendientes del equipo.", icon: "☷" },
-            { href: "/empresa/puestos", title: "Puestos cinematográficos", detail: "Consulta y aprueba los puestos de cada integrante.", icon: "▣" },
-            { href: "/empresa/vigencia", title: "Plan y vigencia", detail: "Consulta el estado del servicio y la información de pagos.", icon: "◷" },
+            { href: "/empresa/miembros", title: "Miembros y usuarios", detail: "Consulta integrantes y el estado de sus cuentas.", icon: "♙" },
+            { href: "/empresa/roles", title: "Roles y permisos", detail: "Administra los niveles de acceso del equipo.", icon: "⚿" },
+            { href: "/empresa/invitaciones", title: "Invitaciones", detail: "Invita colaboradores y genera enlaces de acceso.", icon: "✉" },
+            { href: "/empresa/solicitudes", title: "Solicitudes", detail: "Revisa y responde las solicitudes pendientes.", icon: "☷" },
+            { href: "/empresa/puestos", title: "Puestos cinematográficos", detail: "Consulta las especialidades del equipo.", icon: "▣" },
+            { href: "/empresa/vigencia", title: "Plan y vigencia", detail: "Consulta el estado del servicio y los pagos.", icon: "◷" },
             { href: "/empresa/configuracion", title: "Configuración", detail: "Consulta los datos generales de tu productora.", icon: "⚙" },
           ].map((item) => <Link key={item.href} href={item.href} className="group rounded-2xl border border-white/10 bg-white/[.055] p-5 transition hover:border-violet-300/30 hover:bg-violet-400/[.09]">
             <span className="text-xl text-violet-200" aria-hidden="true">{item.icon}</span>
-            <h2 className="mt-3 font-semibold">{item.title}<span className="ml-2 text-violet-300 transition group-hover:translate-x-1">→</span></h2>
+            <h2 className="mt-3 font-semibold">{item.title}<span className="ml-2 text-violet-300">→</span></h2>
             <p className="mt-2 text-sm leading-6 text-gray-400">{item.detail}</p>
           </Link>)}
         </section>
