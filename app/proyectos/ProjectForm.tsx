@@ -147,6 +147,7 @@ function SelectField({
         required
         className="mt-2 w-full rounded-xl border border-white/10 bg-[#171b29] px-4 py-3 text-white outline-none focus:border-violet-400"
       >
+        {!defaultValue && <option value="" disabled>Selecciona una opción</option>}
         {choices.map((option) => <option key={option} value={option}>{option}</option>)}
       </select>
       {error && <span className="mt-1 block text-xs text-red-300">{error}</span>}
