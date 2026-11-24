@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { completeInvitationRegistration } from "@/app/auth/actions";
 import { CINE_ROLES } from "@/lib/cine-roles";
 
@@ -13,13 +14,19 @@ export default async function CompleteInvitationPage({
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login?error=" + encodeURIComponent("Abre el enlace de invitación que recibiste para completar tu registro."));
 
-  const { data: memberships, error: membershipError } = await supabase
-    .from("organization_members")
-    .select("organization_id")
-    .eq("user_id", user.id)
-    .limit(1);
-  if (membershipError || !memberships?.length) {
-    redirect("/login?error=" + encodeURIComponent("No hay una invitación aceptada para esta cuenta."));
+  const invitationId = String(user.user_metadata?.invitation_id ?? "");
+  const admin = createSupabaseAdminClient();
+  if (!admin || !/^[0-9a-f-]{36}$/i.test(invitationId)) {
+    redirect("/login?error=" + encodeURIComponent("No se encontró la invitación que corresponde a esta cuenta."));
+  }
+  const { data: invitation, error: invitationError } = await admin
+    .from("organization_invitations")
+    .select("accepted_user_id,accepted_at,registration_completed_at")
+    .eq("id", invitationId)
+    .maybeSingle();
+  if (invitationError || !invitation || invitation.accepted_user_id !== user.id ||
+      !invitation.accepted_at || invitation.registration_completed_at) {
+    redirect("/login?error=" + encodeURIComponent("La invitación ya fue utilizada o no corresponde a esta cuenta."));
   }
 
   return (
