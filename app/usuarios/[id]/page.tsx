@@ -78,6 +78,7 @@ export default async function UserProfileDetailPage({
   if (!canViewTeamProfile || !profile) notFound();
 
   const targetUser = targetUserResult.data?.user ?? null;
+  const targetMetadata = targetUser ? { ...targetUser.user_metadata, ...targetUser.app_metadata } : {};
   const notes = notesResult.data ?? [];
   const notesError = notesResult.error;
 
@@ -138,7 +139,7 @@ export default async function UserProfileDetailPage({
               <div className="rounded-xl border border-white/10 bg-black/10 p-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Rol</p>
                 <p className="mt-2 text-sm font-medium text-violet-200">
-                  {targetUser?.user_metadata?.cine_role_status === "pending" ? `Pendiente de aprobación · ${cineRoleLabel(targetUser.user_metadata.cine_role_requested)}` : targetUser?.user_metadata?.cine_role_status === "approved" ? cineRoleLabel(targetUser.user_metadata.cine_role) : targetUser?.user_metadata?.cine_role ? cineRoleLabel(targetUser.user_metadata.cine_role) : "Sin puesto cinematográfico asignado"}
+                  {targetMetadata.cine_role_status === "pending" ? `Pendiente de aprobación · ${cineRoleLabel(targetMetadata.cine_role_requested)}` : targetMetadata.cine_role_status === "approved" ? cineRoleLabel(targetMetadata.cine_role) : targetUser?.user_metadata?.cine_role ? cineRoleLabel(targetUser.user_metadata.cine_role) : "Sin puesto cinematográfico asignado"}
                 </p>
               </div>
               <div className="rounded-xl border border-white/10 bg-black/10 p-4">
