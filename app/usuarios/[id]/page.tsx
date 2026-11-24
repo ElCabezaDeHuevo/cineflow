@@ -56,6 +56,12 @@ export default async function UserProfileDetailPage({
         .eq("user_id", id).in("organization_id", organizationIds).limit(1).maybeSingle()
     : { data: null };
   const canViewTeamProfile = isAdmin || id === user.id || Boolean(sharedMembership);
+  const { data: cinematicRole } = organizationIds.length
+    ? await supabase.from("organization_member_cinematic_roles")
+        .select("requested_role,approved_role,status,review_reason")
+        .eq("user_id", id).in("organization_id", organizationIds)
+        .order("requested_at", { ascending: false }).limit(1).maybeSingle()
+    : { data: null };
 
   const [{ data: profile, error: profileError }, targetUserResult, notesResult] = await Promise.all([
     canViewTeamProfile
@@ -137,10 +143,11 @@ export default async function UserProfileDetailPage({
 
             <div className="mt-6 space-y-4">
               <div className="rounded-xl border border-white/10 bg-black/10 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Rol</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Puesto cinematográfico</p>
                 <p className="mt-2 text-sm font-medium text-violet-200">
-                  {targetMetadata.cine_role_status === "pending" ? `Pendiente de aprobación · ${cineRoleLabel(targetMetadata.cine_role_requested)}` : targetMetadata.cine_role_status === "approved" ? cineRoleLabel(targetMetadata.cine_role) : targetUser?.user_metadata?.cine_role ? cineRoleLabel(targetUser.user_metadata.cine_role) : "Sin puesto cinematográfico asignado"}
+                  {cinematicRole?.status === "pending" ? `Pendiente de aprobación · ${cineRoleLabel(cinematicRole.requested_role)}` : cinematicRole?.status === "approved" ? cineRoleLabel(cinematicRole.approved_role) : cinematicRole?.status === "rejected" ? "Solicitud de puesto rechazada" : "Sin puesto cinematográfico asignado"}
                 </p>
+                {cinematicRole?.review_reason && <p className="mt-2 text-xs text-gray-400">Motivo: {cinematicRole.review_reason}</p>}
               </div>
               <div className="rounded-xl border border-white/10 bg-black/10 p-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Biografía</p>
