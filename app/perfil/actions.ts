@@ -36,7 +36,7 @@ export async function changePassword(formData: FormData) {
 
 export async function changeEmail(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     redirect("/perfil?error=Escribe+un+correo+electrónico+válido");
   }
   const supabase = await createSupabaseServerClient();
