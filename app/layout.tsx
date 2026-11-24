@@ -71,7 +71,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               <ErrorReportButton />
               <LogoutButton hasActiveSession={Boolean(activeSession)} />
             </div>
-            {user.app_metadata?.cineflow_onboarding_pending === true && (
+            {!isAdmin && user.app_metadata?.cineflow_onboarding_pending === true && (
               <FirstLoginIntroduction
                 name={
                   String(user.user_metadata?.full_name ?? "").trim() ||
