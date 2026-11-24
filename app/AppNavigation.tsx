@@ -53,17 +53,18 @@ function NavItems({ pathname, isAdmin, companyRole, onNavigate }: {
     {canManageCompany && <div className="mb-6">
       <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[.2em] text-zinc-500">Mi productora</p>
       {[
-        { href: "/empresa#resumen", label: "Resumen de empresa", icon: "⌂" },
-        { href: "/empresa#mi-equipo", label: "Miembros y usuarios", icon: "♙" },
-        { href: "/empresa#invitaciones", label: "Roles y permisos", icon: "⚿" },
-        { href: "/empresa#invitaciones", label: "Invitaciones", icon: "✉" },
-        { href: "/empresa#mi-equipo", label: "Solicitudes", icon: "☷" },
-        { href: "/empresa#mi-equipo", label: "Puestos cinematográficos", icon: "▣" },
-        { href: "/empresa#vigencia", label: "Plan y vigencia", icon: "◷" },
+        { href: "/empresa", label: "Resumen de empresa", icon: "⌂" },
+        { href: "/empresa/miembros", label: "Miembros y usuarios", icon: "♙" },
+        { href: "/empresa/roles", label: "Roles y permisos", icon: "⚿" },
+        { href: "/empresa/invitaciones", label: "Invitaciones", icon: "✉" },
+        { href: "/empresa/solicitudes", label: "Solicitudes", icon: "☷" },
+        { href: "/empresa/puestos", label: "Puestos cinematográficos", icon: "▣" },
+        { href: "/empresa/vigencia", label: "Plan y vigencia", icon: "◷" },
+        { href: "/empresa/configuracion", label: "Configuración", icon: "⚙" },
         { href: "/empresa/informes", label: "Informes de empresa", icon: "▥" },
       ].map((item) => {
-        const active = item.href === "/empresa/informes" ? isActive(item.href) : pathname === "/empresa";
-        return <Link key={item.label} href={item.href} onClick={onNavigate} aria-current={active ? "page" : undefined} className={`cf-nav-link ${active ? "is-active" : ""}`}>
+        const active = item.href === "/empresa" ? pathname === "/empresa" : isActive(item.href);
+        return <Link key={item.href} href={item.href} onClick={onNavigate} aria-current={active ? "page" : undefined} className={`cf-nav-link ${active ? "is-active" : ""}`}>
           <span className="cf-nav-icon" aria-hidden="true">{item.icon}</span><span>{item.label}</span>
         </Link>;
       })}
