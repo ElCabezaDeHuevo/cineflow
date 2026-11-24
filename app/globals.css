@@ -1143,3 +1143,12 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .cf-sidebar *, .cf-mobile-nav *, .cf-more-sheet * { scroll-behavior: auto !important; }
 }
+
+.cf-more-nav-scroll {
+  max-height: 52dvh;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
