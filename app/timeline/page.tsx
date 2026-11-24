@@ -108,6 +108,31 @@ async function TimelineContent() {
           />
         </section>
 
+        <section className="mt-8 grid gap-5 xl:grid-cols-2">
+          <article className="cf-dashboard-panel overflow-hidden">
+            <div className="border-b border-white/10 p-5"><p className="cf-eyebrow">Plan de rodaje</p><h2 className="mt-1 text-lg font-semibold">Próximas jornadas</h2><p className="mt-1 text-xs text-slate-400">Jornadas con fecha confirmada en tus proyectos.</p></div>
+            <div className="divide-y divide-white/10">
+              {shootDays?.length ? shootDays.slice(0,8).map((day) => (
+                <Link key={day.id} href={`/rodaje?project=${day.project_id}`} className="flex items-center justify-between gap-4 p-4 transition hover:bg-white/[.03]">
+                  <div className="min-w-0"><p className="text-sm font-semibold text-slate-100">Jornada {day.shoot_day_number}</p><p className="mt-1 text-xs text-slate-400">{projects?.find((project) => project.id === day.project_id)?.name ?? "Proyecto"}{day.call_time ? ` · Llamado ${day.call_time.slice(0,5)}` : ""}</p></div>
+                  <time className="shrink-0 text-xs font-semibold text-violet-200">{new Intl.DateTimeFormat("es-MX",{day:"2-digit",month:"short",timeZone:"UTC"}).format(new Date(`${day.shoot_date}T12:00:00Z`))}</time>
+                </Link>
+              )) : <p className="p-5 text-sm text-slate-400">Todavía no hay jornadas con fecha programada.</p>}
+            </div>
+          </article>
+          <article className="cf-dashboard-panel overflow-hidden">
+            <div className="border-b border-white/10 p-5"><p className="cf-eyebrow">Seguimiento</p><h2 className="mt-1 text-lg font-semibold">Próximos vencimientos</h2><p className="mt-1 text-xs text-slate-400">Tareas abiertas con fecha límite asignada.</p></div>
+            <div className="divide-y divide-white/10">
+              {dueTasks?.length ? dueTasks.slice(0,8).map((task) => (
+                <Link key={task.id} href={`/proyectos/seguimiento/${task.project_id}#task-${task.id}`} className="flex items-center justify-between gap-4 p-4 transition hover:bg-white/[.03]">
+                  <div className="min-w-0"><p className="truncate text-sm font-semibold text-slate-100">{task.title}</p><p className="mt-1 text-xs text-slate-400">{projects?.find((project) => project.id === task.project_id)?.name ?? "Proyecto"} · {task.status}</p></div>
+                  <time className="shrink-0 text-xs font-semibold text-amber-200">{new Intl.DateTimeFormat("es-MX",{day:"2-digit",month:"short",timeZone:"UTC"}).format(new Date(`${task.due_date}T12:00:00Z`))}</time>
+                </Link>
+              )) : <p className="p-5 text-sm text-slate-400">No hay tareas abiertas con fecha límite.</p>}
+            </div>
+          </article>
+        </section>
+
         <section className="cf-card mt-8 overflow-hidden rounded-2xl border border-white/10 bg-[#14151c]">
           <div className="border-b border-white/10 p-6"><h2 className="text-xl font-semibold">Historial de actividad</h2><p className="mt-1 text-sm text-gray-400">Quién hizo cada cambio y cuándo.</p></div>
           <div className="divide-y divide-white/10">
