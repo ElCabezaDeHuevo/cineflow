@@ -34,3 +34,19 @@ export async function changePassword(formData: FormData) {
   redirect("/perfil?success=Contraseña%20actualizada");
 }
 
+
+export async function changeEmail(formData: FormData) {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {
+    redirect("/perfil?error=Escribe+un+correo+electrónico+válido");
+  }
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  if (email === user.email?.toLowerCase()) {
+    redirect("/perfil?error=Ese+ya+es+tu+correo+actual");
+  }
+  const { error } = await supabase.auth.updateUser({ email });
+  if (error) redirect("/perfil?error=" + encodeURIComponent(error.message));
+  redirect("/perfil?success=" + encodeURIComponent("Solicitamos el cambio. Revisa tu correo nuevo y confirma el enlace de Supabase para completar la actualización."));
+}
