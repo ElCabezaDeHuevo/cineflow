@@ -73,8 +73,8 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
             <label className="block text-sm text-gray-300">Correo electrónico<input name="email" type="email" required className="mt-2 w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white" /></label>
             <label className="block text-sm text-gray-300">Contraseña temporal<input name="password" type="password" minLength={8} required className="mt-2 w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white" /></label>
             <label className="block text-sm text-gray-300">Puesto cinematográfico
-              <select name="cine_role" required defaultValue="viewer" className="mt-2 w-full rounded-xl border border-white/10 bg-[#0b0c10] px-4 py-3 text-white">
-                {CINE_ROLES.map((role) => <option key={role.value} value={role.value}>{role.department} · {role.label}</option>)}
+              <select name="cine_role" required defaultValue="director" className="mt-2 w-full rounded-xl border border-white/10 bg-[#0b0c10] px-4 py-3 text-white">
+                {CINE_ROLES.filter((role) => role.value !== "viewer").map((role) => <option key={role.value} value={role.value}>{role.department} · {role.label}</option>)}
               </select>
             </label>
             <label className="block text-sm text-gray-300">Permiso dentro de la empresa
