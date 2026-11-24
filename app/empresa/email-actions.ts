@@ -39,11 +39,11 @@ export async function updateCompanyMemberEmail(formData: FormData) {
     .eq("user_id", actor.id)
     .maybeSingle();
   if (actorMembershipError || !actorMembership || !["owner", "admin"].includes(actorMembership.role)) {
-    fail("No tienes permisos para administrar los correos de esta empresa.");
+    redirect(back + "?error=" + encodeURIComponent("No tienes permisos para administrar los correos de esta empresa."));
   }
 
   const admin = createSupabaseAdminClient();
-  if (!admin) fail("No está configurado el servicio administrativo seguro.");
+  if (!admin) redirect(back + "?error=" + encodeURIComponent("No está configurado el servicio administrativo seguro."));
 
   const { data: targetMembership, error: targetMembershipError } = await admin
     .from("organization_members")
@@ -51,12 +51,12 @@ export async function updateCompanyMemberEmail(formData: FormData) {
     .eq("organization_id", organizationId)
     .eq("user_id", targetUserId)
     .maybeSingle();
-  if (targetMembershipError || !targetMembership) fail("El usuario no pertenece a esta empresa.");
+  if (targetMembershipError || !targetMembership) redirect(back + "?error=" + encodeURIComponent("El usuario no pertenece a esta empresa."));
   if (targetUserId === actor.id || targetUserId === CINEFLOW_OWNER_ID || targetMembership.role === "owner") {
     fail("No puedes cambiar el correo del dueño ni el de tu propia cuenta desde esta opción.");
   }
   if (actorMembership.role === "admin" && targetMembership.role === "admin") {
-    fail("Un administrador solo puede cambiar el correo de colaboradores y productores. El dueño puede administrar cuentas de administrador.");
+    redirect(back + "?error=" + encodeURIComponent("Un administrador solo puede cambiar el correo de colaboradores y productores. El dueño puede administrar cuentas de administrador."));
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -75,11 +75,12 @@ export async function updateCompanyMemberEmail(formData: FormData) {
 
   const { data: targetResult, error: targetError } = await admin.auth.admin.getUserById(targetUserId);
   const target = targetResult?.user;
-  if (targetError || !target) fail("No se encontró la cuenta del integrante.");
+  if (targetError || !target) redirect(back + "?error=" + encodeURIComponent("No se encontró la cuenta del integrante."));
   if (target.app_metadata?.cineflow_role === "admin") fail("No se puede modificar la cuenta global de CineFlow desde una productora.");
   if (target.email?.toLowerCase() === newEmail) fail("Ese ya es el correo actual del integrante.");
 
-  const previousEmail = target.email ?? "";
+  const previousEmail = target.email;
+  if (!previousEmail) fail("La cuenta no tiene un correo anterior válido.");
   const { error: updateError } = await admin.auth.admin.updateUserById(targetUserId, {
     email: newEmail,
     email_confirm: true,
