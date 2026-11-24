@@ -17,6 +17,7 @@ import {
 } from "./actions";
 import ProjectForm from "./ProjectForm";
 import ConfirmSubmit from "@/app/ConfirmSubmit";
+import ProductionNavigation from "@/app/ProductionNavigation";
 
 export const instant = false;
 
@@ -234,17 +235,18 @@ export default async function ProjectsPage({
   return (
     <main className="cf-cinematic-page cf-bg-projects min-h-screen bg-[#0b0c10] text-white">
       <section className="mx-auto max-w-7xl p-4 sm:p-6 md:p-10">
+        <ProductionNavigation active="/proyectos" />
         <Link href="/" className="text-sm text-violet-300">
           ← Panel principal
         </Link>
-        <header className="mb-10 mt-6 flex flex-wrap items-end justify-between gap-4">
+        <header className="mb-8 mt-7 flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-sm text-violet-300">CINEFLOW / PROYECTOS</p>
             <h1 className="mt-2 text-3xl font-bold md:text-4xl">
               Proyectos cinematográficos
             </h1>
             <p className="mt-2 text-gray-400">
-              Explora proyectos y solicita unirte al equipo.
+              Administra tu cartera, descubre producciones disponibles y coordina la participación de cada equipo.
             </p>
           </div>
           <span className="rounded-full border border-white/10 px-4 py-2 text-sm text-gray-400">
@@ -392,7 +394,7 @@ export default async function ProjectsPage({
         )}
 
         <div className="grid gap-8 lg:grid-cols-[1.1fr_.9fr]">
-          <section className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5 sm:p-6">
+          <section className="cf-dashboard-panel p-5 sm:p-6">
             <h2 className="mb-5 text-xl font-semibold">Proyectos disponibles</h2>
             <form action="/proyectos" className="mb-5 grid gap-3 sm:grid-cols-[1fr_180px_180px_auto]">
               <input name="q" defaultValue={q} placeholder="Buscar por nombre o descripción" className="min-h-11 rounded-lg border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-violet-400" />
