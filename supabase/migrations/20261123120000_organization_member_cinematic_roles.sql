@@ -160,7 +160,6 @@ begin
     or v_invitation.accepted_user_id is distinct from p_user_id
     or v_invitation.accepted_at is null
     or v_invitation.registration_completed_at is not null
-    or v_invitation.accepted_at < now() - interval '48 hours'
   then
     raise exception 'La invitación no permite completar este registro o ya fue utilizada';
   end if;
