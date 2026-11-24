@@ -182,7 +182,7 @@ export async function approveCompanyMemberCineRole(formData: FormData) {
     redirect("/empresa?error=La+solicitud+ya+no+está+pendiente+o+ha+cambiado");
   }
   const { error } = await admin.auth.admin.updateUserById(userId, {
-    user_metadata: { ...target.user.user_metadata, cine_role: selectedRole, cine_role_status: "approved", cine_role_approved_by: actor.id, cine_role_approved_at: new Date().toISOString() },
+    app_metadata: { ...target.user.app_metadata, cine_role: selectedRole, cine_role_status: "approved", cine_role_approved_by: actor.id, cine_role_approved_at: new Date().toISOString() },
   });
   if (error) redirect("/empresa?error=" + encodeURIComponent(error.message));
   const { error: auditError } = await admin.from("organization_audit_log").insert({
