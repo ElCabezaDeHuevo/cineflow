@@ -51,9 +51,9 @@ export async function createShootDay(formData: FormData) {
   const callTime = textValue(formData, "call_time");
   const wrapTime = textValue(formData, "wrap_time");
   if (!Number.isInteger(number) || number < 1 || number > 365) throw new Error("El número de jornada debe estar entre 1 y 365.");
-  if (shootDate && !/^\\d{4}-\\d{2}-\\d{2}$/.test(shootDate)) throw new Error("La fecha de rodaje no es válida.");
-  if (callTime && !/^([01]\\d|2[0-3]):[0-5]\\d$/.test(callTime)) throw new Error("La hora de llamado no es válida.");
-  if (wrapTime && !/^([01]\\d|2[0-3]):[0-5]\\d$/.test(wrapTime)) throw new Error("La hora de cierre no es válida.");
+  if (shootDate && !/^\d{4}-\d{2}-\d{2}$/.test(shootDate)) throw new Error("La fecha de rodaje no es válida.");
+  if (callTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(callTime)) throw new Error("La hora de llamado no es válida.");
+  if (wrapTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(wrapTime)) throw new Error("La hora de cierre no es válida.");
   const { error } = await supabase.from("shoot_days").insert({
     project_id: projectId,
     shoot_day_number: number,
