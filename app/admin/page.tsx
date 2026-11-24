@@ -82,7 +82,7 @@ export default async function AdminDashboard({
       .in("action", ["user_password_reset_requested", "user_password_changed_after_reset"])
       .order("created_at", { ascending: false }).limit(100),
     admin.from("cineflow_admin_account_audit")
-      .select("id,actor_id,target_user_id,target_email,target_name,action,reason,metadata,created_at")
+      .select("id,actor_id,target_user_id,target_email,target_name,deleted_email,deleted_name,action,reason,metadata,created_at")
       .order("created_at", { ascending: false }).limit(100),
   ]);
   const userIds = [...new Set([
