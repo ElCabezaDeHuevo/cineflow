@@ -2,7 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import UserAvatar from "@/lib/UserAvatar";
-import { listAllAuthUsers } from "@/lib/supabase/list-all-auth-users";
 import { isCineflowAdmin } from "@/lib/admin";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { cineRoleLabel } from "@/lib/cine-roles";
@@ -33,12 +32,14 @@ export default async function TeamPage() {
     : { data: [] };
   // The profile directory is limited to people who share at least one
   // active company with the signed-in user. RLS applies the same rule again.
-  const { data: myOrganizationsErrorData, error: myOrganizationsError } = { data: myOrganizations, error: null };
+  const myOrganizationsError = null;
   const { data: companyMembers, error: companyMembersError } = organizationIds.length
     ? await supabase.from("organization_members").select("user_id").in("organization_id", organizationIds)
     : { data: [], error: null };
   const directoryUserIds = [...new Set([user.id, ...(companyMembers ?? []).map((item) => item.user_id)])];
-  const { data: myCompanyRoles } = await supabase.from("organization_members").select("role").eq("user_id", user.id).in("organization_id", organizationIds);
+  const { data: myCompanyRoles } = organizationIds.length
+    ? await supabase.from("organization_members").select("role").eq("user_id", user.id).in("organization_id", organizationIds)
+    : { data: [] };
   const { data: cinematicRoles } = organizationIds.length
     ? await supabase.from("organization_member_cinematic_roles")
         .select("organization_id,user_id,requested_role,approved_role,status")
@@ -47,7 +48,7 @@ export default async function TeamPage() {
         .order("requested_at", { ascending: false })
     : { data: [] };
   const cinematicRoleByUserId = new Map((cinematicRoles ?? []).filter((item, index, rows) => rows.findIndex((candidate) => candidate.user_id === item.user_id) === index).map((item) => [item.user_id, item]));
-  const myCompanyRole = (myCompanyRoles ?? []).some((item) => item.role === "owner") ? "owner" : (myCompanyRoles ?? []).some((item) => item.role === "admin") ? "admin" : "member";
+  const myCompanyRole = organizationIds.length > 1 ? "multiple" : (myCompanyRoles ?? []).some((item) => item.role === "owner") ? "owner" : (myCompanyRoles ?? []).some((item) => item.role === "admin") ? "admin" : "member";
   const { data: directoryProfiles, error: directoryError } = directoryUserIds.length
     ? await supabase
         .from("profiles")
@@ -86,7 +87,7 @@ export default async function TeamPage() {
         <section className="mt-8 grid gap-4 sm:grid-cols-3">
           <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Colaboradores</p><p className="mt-3 text-3xl font-bold">{userIds.length}</p></article>
           <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Proyectos compartidos</p><p className="mt-3 text-3xl font-bold">{projects?.length ?? 0}</p></article>
-          <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Tu acceso</p><p className="mt-3 text-3xl font-bold">{myCompanyRole === "owner" ? "Owner / Dueño" : myCompanyRole === "admin" ? "Administrador" : "Miembro"}</p></article>
+          <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Tu acceso</p><p className="mt-3 text-3xl font-bold">{myCompanyRole === "multiple" ? "Varias empresas" : myCompanyRole === "owner" ? "Owner / Dueño" : myCompanyRole === "admin" ? "Administrador" : "Miembro"}</p></article>
         </section>
 
         <section className="cf-card mt-8 overflow-hidden rounded-2xl border border-white/10 bg-[#14151c]">
