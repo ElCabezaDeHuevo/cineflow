@@ -42,28 +42,28 @@ export default function ProjectForm({
       <div className="grid gap-5 md:grid-cols-2">
         <Field
           name="name"
-          label="Nombre"
+          label="Nombre del proyecto"
           defaultValue={value("name")}
           error={state.fieldErrors?.name}
           required
         />
-        <Field
+        <SelectField
           name="type"
-          label="Tipo"
+          label="Tipo de producción"
           defaultValue={value("type")}
+          options={["Cortometraje", "Largometraje", "Serie", "Documental", "Videoclip", "Publicidad", "Contenido digital", "Otro"]}
           error={state.fieldErrors?.type}
-          required
         />
-        <Field
+        <SelectField
           name="stage"
-          label="Etapa"
+          label="Etapa actual"
           defaultValue={value("stage")}
+          options={["Desarrollo", "Preproducción", "Producción", "Postproducción", "Distribución"]}
           error={state.fieldErrors?.stage}
-          required
         />
         <Field
           name="owner_role"
-          label="Responsable"
+          label="Responsable del proyecto"
           defaultValue={value("owner_role")}
           error={state.fieldErrors?.owner_role}
           required
@@ -84,6 +84,16 @@ export default function ProjectForm({
           error={state.fieldErrors?.delivery_date}
           required
         />
+      </div>
+      <div className="grid gap-5 md:grid-cols-2">
+        <div className="rounded-xl border border-white/10 bg-white/[.025] p-4 text-xs text-gray-400">
+          <strong className="block text-sm text-gray-200">Inicio del proyecto</strong>
+          Define cuándo comienza formalmente el trabajo de esta producción.
+        </div>
+        <div className="rounded-xl border border-white/10 bg-white/[.025] p-4 text-xs text-gray-400">
+          <strong className="block text-sm text-gray-200">Fecha de entrega</strong>
+          Se utiliza para organizar las próximas entregas del calendario.
+        </div>
       </div>
       <label className="block text-sm text-gray-300">
         Descripción
@@ -110,6 +120,37 @@ export default function ProjectForm({
             : "Crear proyecto"}
       </button>
     </form>
+  );
+}
+function SelectField({
+  name,
+  label,
+  defaultValue,
+  options,
+  error,
+}: {
+  name: string;
+  label: string;
+  defaultValue: string;
+  options: string[];
+  error?: string;
+}) {
+  const choices = defaultValue && !options.includes(defaultValue)
+    ? [defaultValue, ...options]
+    : options;
+  return (
+    <label className="block text-sm text-gray-300">
+      {label}
+      <select
+        name={name}
+        defaultValue={defaultValue}
+        required
+        className="mt-2 w-full rounded-xl border border-white/10 bg-[#171b29] px-4 py-3 text-white outline-none focus:border-violet-400"
+      >
+        {choices.map((option) => <option key={option} value={option}>{option}</option>)}
+      </select>
+      {error && <span className="mt-1 block text-xs text-red-300">{error}</span>}
+    </label>
   );
 }
 function Field({
