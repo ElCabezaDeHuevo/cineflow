@@ -13,14 +13,33 @@ export default async function ProductionCalendarPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/calendario");
 
-  const [{ data: projects, error: projectsError }, { data: tasks, error: tasksError }] = await Promise.all([
-    supabase.from("projects").select("id,name,stage,start_date,delivery_date").order("delivery_date", { ascending: true }).limit(200),
-    supabase.from("project_tasks").select("id,project_id,title,stage,status,due_date").neq("status", "completada").not("due_date", "is", null).order("due_date", { ascending: true }).limit(300),
-  ]);
+  const { data: projects, error: projectsError } = await supabase
+    .from("projects")
+    .select("id,name,stage,start_date,delivery_date")
+    .order("delivery_date", { ascending: true })
+    .limit(200);
   const projectIds = (projects ?? []).map((project) => project.id);
-  const { data: shootDays, error: shootDaysError } = projectIds.length
-    ? await supabase.from("shoot_days").select("id,project_id,shoot_day_number,shoot_date,call_time,location").in("project_id", projectIds).not("shoot_date", "is", null).order("shoot_date", { ascending: true }).limit(300)
-    : { data: [], error: null };
+  const [{ data: tasks, error: tasksError }, { data: shootDays, error: shootDaysError }] = await Promise.all([
+    projectIds.length
+      ? supabase
+          .from("project_tasks")
+          .select("id,project_id,title,stage,status,due_date")
+          .in("project_id", projectIds)
+          .neq("status", "completada")
+          .not("due_date", "is", null)
+          .order("due_date", { ascending: true })
+          .limit(300)
+      : Promise.resolve({ data: [], error: null }),
+    projectIds.length
+      ? supabase
+          .from("shoot_days")
+          .select("id,project_id,shoot_day_number,shoot_date,call_time,location")
+          .in("project_id", projectIds)
+          .not("shoot_date", "is", null)
+          .order("shoot_date", { ascending: true })
+          .limit(300)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
   const projectName = new Map((projects ?? []).map((project) => [project.id, project.name]));
   const events = [
     ...(projects ?? []).flatMap((project) => [
