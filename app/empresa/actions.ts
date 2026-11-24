@@ -201,9 +201,8 @@ export async function updateCompanyMemberRole(formData: FormData) {
     .select("role").eq("organization_id", organizationId).eq("user_id", userId).maybeSingle();
   if (targetError || !target) redirect("/empresa?error=No+se+encontró+al+integrante");
   if (target.role === "owner") redirect("/empresa?error=Solo+el+administrador+general+puede+transferir+la+propiedad");
-  if (actorRole !== "owner" && (nextRole === "admin" || target.role === "admin")) {
-    redirect("/empresa?error=Solo+el+propietario+puede+asignar+o+modificar+administradores");
-  }
+  // Company owners and admins can manage access roles of every non-owner member.
+  // Ownership itself remains protected and cannot be granted from this form.
   const { error: updateError } = await admin.from("organization_members")
     .update({ role: nextRole }).eq("organization_id", organizationId).eq("user_id", userId);
   if (updateError) redirect("/empresa?error=" + encodeURIComponent(updateError.message));

@@ -145,6 +145,12 @@ export default async function AdminDashboard({
     (report) => report.status !== "resolved",
   ).length;
 
+  const { data: permanentDeletionAudit, error: permanentDeletionAuditError } = await admin
+    .from("cineflow_admin_account_audit")
+    .select("id,actor_id,target_user_id,target_email,action,status,reason,created_at,completed_at")
+    .order("created_at", { ascending: false })
+    .limit(50);
+
   return (
     <main className="min-h-screen bg-[#0b0c10] text-white">
       <section className="mx-auto max-w-6xl p-6 md:p-10">
@@ -251,6 +257,44 @@ export default async function AdminDashboard({
               auditOrganizationsError?.message}
           </p>
         )}
+
+        <section className="mb-8 overflow-hidden rounded-2xl border border-rose-400/20 bg-[#14151c]">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 p-5">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-rose-300">Seguridad de cuentas</p>
+              <h2 className="mt-1 text-xl font-semibold">Historial de eliminaciones permanentes</h2>
+              <p className="mt-1 text-sm text-gray-400">Registro administrativo conservado incluso después de eliminar la cuenta de acceso.</p>
+            </div>
+            <span className="rounded-full border border-rose-300/20 bg-rose-300/10 px-3 py-1 text-sm text-rose-100">{permanentDeletionAudit?.length ?? 0} registros</span>
+          </div>
+          {permanentDeletionAuditError ? (
+            <p className="p-5 text-sm text-rose-200">No se pudo cargar el historial: {permanentDeletionAuditError.message}</p>
+          ) : permanentDeletionAudit?.length ? (
+            <div className="divide-y divide-white/10">
+              {permanentDeletionAudit.map((entry) => (
+                <article key={entry.id} className="flex flex-wrap items-start justify-between gap-3 p-5">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="font-semibold text-white">{entry.target_email}</h3>
+                      <span className={entry.status === "completed" ? "rounded-full bg-rose-400/10 px-2.5 py-1 text-xs text-rose-200" : entry.status === "failed" ? "rounded-full bg-amber-400/10 px-2.5 py-1 text-xs text-amber-200" : "rounded-full bg-sky-400/10 px-2.5 py-1 text-xs text-sky-200"}>
+                        {entry.status === "completed" ? "Eliminada permanentemente" : entry.status === "failed" ? "Eliminación fallida" : "Pendiente"}
+                      </span>
+                    </div>
+                    <p className="mt-1 break-all text-xs text-gray-500">ID de cuenta: {entry.target_user_id}</p>
+                    <p className="mt-2 text-sm text-gray-300">{entry.reason}</p>
+                  </div>
+                  <div className="text-left text-xs text-gray-400 md:text-right">
+                    <p>{dateTime(entry.created_at)}</p>
+                    {entry.completed_at ? <p className="mt-1">Completada: {dateTime(entry.completed_at)}</p> : null}
+                    <p className="mt-1">Administrador: {entry.actor_id ? profileById.get(entry.actor_id)?.full_name ?? "Cuenta administrativa" : "Cuenta eliminada"}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="p-6 text-sm text-gray-400">Todavía no hay eliminaciones permanentes registradas.</p>
+          )}
+        </section>
 
         <section className="mb-8 overflow-hidden rounded-2xl border border-rose-400/20 bg-[#14151c]">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 p-5">
