@@ -1,6 +1,7 @@
 "use server";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { CINE_ROLES } from "@/lib/cine-roles";
 
 export async function signIn(formData: FormData) {
