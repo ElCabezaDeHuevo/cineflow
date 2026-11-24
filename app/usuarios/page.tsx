@@ -73,7 +73,8 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
             <label className="block text-sm text-gray-300">Correo electrónico<input name="email" type="email" required className="mt-2 w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white" /></label>
             <label className="block text-sm text-gray-300">Contraseña temporal<input name="password" type="password" minLength={8} required className="mt-2 w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white" /></label>
             <label className="block text-sm text-gray-300">Puesto cinematográfico
-              <select name="cine_role" required defaultValue="director" className="mt-2 w-full rounded-xl border border-white/10 bg-[#0b0c10] px-4 py-3 text-white">
+              <select name="cine_role" required defaultValue="" className="mt-2 w-full rounded-xl border border-white/10 bg-[#0b0c10] px-4 py-3 text-white">
+                <option value="" disabled>Selecciona un puesto cinematográfico</option>
                 {CINE_ROLES.filter((role) => role.value !== "viewer").map((role) => <option key={role.value} value={role.value}>{role.department} · {role.label}</option>)}
               </select>
             </label>
@@ -126,7 +127,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
                         <button type="submit" className="rounded-lg border border-violet-400/30 bg-violet-500/15 px-3 py-2 text-xs font-semibold text-violet-100 hover:bg-violet-500/25">Guardar rol</button>
                       </form>
                       <PasswordResetControl userId={member.user_id} />
-                      {member.role !== "owner" && account?.email && <DeleteUserButton userId={member.user_id} email={account.email} />}
+                      {member.role !== "owner" && account?.email && account.app_metadata?.cineflow_role !== "admin" && <DeleteUserButton userId={member.user_id} email={account.email} />}
                     </div>
                   </div>;
                 })}
@@ -147,7 +148,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
               const displayName = profile?.full_name || String(account.user_metadata?.full_name ?? "Sin nombre");
               return <div key={account.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
                 <div className="min-w-0"><p className="truncate font-medium">{displayName}</p><p className="truncate text-sm text-gray-400">{account.email ?? "Sin correo"}</p><p className="mt-1 text-xs text-gray-500">Cuenta creada: {new Date(account.created_at).toLocaleDateString("es-MX")}</p></div>
-                <div className="flex flex-wrap items-end gap-2"><form action={assignExistingUser} className="flex flex-wrap items-end gap-2"><input type="hidden" name="user_id" value={account.id} /><label className="min-w-[180px] text-xs text-gray-400">Asignar a<select name="organization_id" required defaultValue="" className="mt-1 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white"><option value="" disabled>Seleccionar productora</option>{(companies ?? []).map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}</select></label><label className="min-w-[150px] text-xs text-gray-400">Permiso<select name="organization_role" defaultValue="member" className="mt-1 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white"><option value="admin">Administrador</option><option value="producer">Productor</option><option value="member">Colaborador</option><option value="viewer">Solo lectura</option></select></label><button disabled={!companies?.length} className="rounded-lg bg-violet-500 px-4 py-2 text-sm font-semibold hover:bg-violet-400 disabled:opacity-40">Vincular cuenta</button></form><DeleteUserButton userId={account.id} email={account.email ?? ""} /></div>
+                <div className="flex flex-wrap items-end gap-2"><form action={assignExistingUser} className="flex flex-wrap items-end gap-2"><input type="hidden" name="user_id" value={account.id} /><label className="min-w-[180px] text-xs text-gray-400">Asignar a<select name="organization_id" required defaultValue="" className="mt-1 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white"><option value="" disabled>Seleccionar productora</option>{(companies ?? []).map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}</select></label><label className="min-w-[150px] text-xs text-gray-400">Permiso<select name="organization_role" defaultValue="member" className="mt-1 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-2 text-sm text-white"><option value="admin">Administrador</option><option value="producer">Productor</option><option value="member">Colaborador</option><option value="viewer">Solo lectura</option></select></label><button disabled={!companies?.length} className="rounded-lg bg-violet-500 px-4 py-2 text-sm font-semibold hover:bg-violet-400 disabled:opacity-40">Vincular cuenta</button></form>{account.app_metadata?.cineflow_role !== "admin" && account.email && <DeleteUserButton userId={account.id} email={account.email} />}</div>
               </div>;
             })}
           </div> : <p className="p-5 text-sm text-gray-500">No hay cuentas pendientes de asignar.</p>}
