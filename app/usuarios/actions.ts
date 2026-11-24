@@ -253,9 +253,19 @@ export async function permanentlyDeleteUser(formData: FormData) {
     redirect(`/usuarios?error=${message("Supabase no pudo eliminar la cuenta. El intento quedó registrado: " + deleteError.message)}`);
   }
 
+  // Auth deletion does not automatically clean every application table in projects
+  // without explicit foreign keys. Remove only the live profile and memberships;
+  // all project activity, audit logs, notes and historical records remain intact.
+  const [{ error: membershipCleanupError }, { error: profileCleanupError }] = await Promise.all([
+    admin.from("organization_members").delete().eq("user_id", userId),
+    admin.from("profiles").delete().eq("id", userId),
+  ]);
+  const cleanupErrors = [membershipCleanupError?.message, profileCleanupError?.message].filter(Boolean);
+
   const { error: finalizeError } = await admin.from("cineflow_admin_account_audit").update({
     metadata: {
-      status: "completed",
+      status: cleanupErrors.length ? "completed_with_cleanup_warnings" : "completed",
+      cleanup_warnings: cleanupErrors,
       actor_email: actorAccount?.user?.email ?? actor.email ?? null,
       actor_name: actorProfile?.full_name ?? null,
       snapshot,
