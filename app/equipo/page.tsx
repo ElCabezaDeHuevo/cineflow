@@ -16,11 +16,15 @@ export default async function TeamPage() {
   if (!user) redirect("/login");
   const isAdmin = isCineflowAdmin(user);
 
-  const { data: myOrganizations } = await supabase
-    .from("organization_members")
-    .select("organization_id")
-    .eq("user_id", user.id);
-  const organizationIds = [...new Set((myOrganizations ?? []).map((item) => item.organization_id))];
+  // La cuenta propietaria de CineFlow es global y nunca participa en
+  // directorios ni equipos de productoras.
+  const { data: myOrganizations } = isAdmin
+    ? { data: [] }
+    : await supabase
+        .from("organization_members")
+        .select("organization_id")
+        .eq("user_id", user.id);
+  const organizationIds = isAdmin ? [] : [...new Set((myOrganizations ?? []).map((item) => item.organization_id))];
   const { data: projects } = organizationIds.length
     ? await supabase.from("projects").select("id, name, stage, owner_role, organization_id")
         .in("organization_id", organizationIds).order("name")
@@ -36,7 +40,7 @@ export default async function TeamPage() {
   const { data: companyMembers, error: companyMembersError } = organizationIds.length
     ? await supabase.from("organization_members").select("user_id").in("organization_id", organizationIds)
     : { data: [], error: null };
-  const directoryUserIds = [...new Set([user.id, ...(companyMembers ?? []).map((item) => item.user_id)])];
+  const directoryUserIds = [...new Set((companyMembers ?? []).map((item) => item.user_id).filter((id) => !isAdmin || id !== user.id))];
   const { data: myCompanyRoles } = organizationIds.length
     ? await supabase.from("organization_members").select("role").eq("user_id", user.id).in("organization_id", organizationIds)
     : { data: [] };
@@ -48,7 +52,7 @@ export default async function TeamPage() {
         .order("requested_at", { ascending: false })
     : { data: [] };
   const cinematicRoleByUserId = new Map((cinematicRoles ?? []).filter((item, index, rows) => rows.findIndex((candidate) => candidate.user_id === item.user_id) === index).map((item) => [item.user_id, item]));
-  const myCompanyRole = organizationIds.length > 1 ? "multiple" : (myCompanyRoles ?? []).some((item) => item.role === "owner") ? "owner" : (myCompanyRoles ?? []).some((item) => item.role === "admin") ? "admin" : "member";
+  const myCompanyRole = isAdmin ? "global_admin" : organizationIds.length > 1 ? "multiple" : (myCompanyRoles ?? []).some((item) => item.role === "owner") ? "owner" : (myCompanyRoles ?? []).some((item) => item.role === "admin") ? "admin" : "member";
   const { data: directoryProfiles, error: directoryError } = directoryUserIds.length
     ? await supabase
         .from("profiles")
@@ -87,7 +91,7 @@ export default async function TeamPage() {
         <section className="mt-8 grid gap-4 sm:grid-cols-3">
           <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Colaboradores</p><p className="mt-3 text-3xl font-bold">{userIds.length}</p></article>
           <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Proyectos compartidos</p><p className="mt-3 text-3xl font-bold">{projects?.length ?? 0}</p></article>
-          <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Tu acceso</p><p className="mt-3 text-3xl font-bold">{myCompanyRole === "multiple" ? "Varias empresas" : myCompanyRole === "owner" ? "Owner / Dueño" : myCompanyRole === "admin" ? "Administrador" : "Miembro"}</p></article>
+          <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Tu acceso</p><p className="mt-3 text-3xl font-bold">{myCompanyRole === "global_admin" ? "Dueño de CineFlow" : myCompanyRole === "multiple" ? "Varias empresas" : myCompanyRole === "owner" ? "Owner / Dueño" : myCompanyRole === "admin" ? "Administrador" : "Miembro"}</p></article>
         </section>
 
         <section className="cf-card mt-8 overflow-hidden rounded-2xl border border-white/10 bg-[#14151c]">
