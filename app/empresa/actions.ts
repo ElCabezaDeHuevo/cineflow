@@ -27,10 +27,16 @@ async function ownerContext(requestedOrganizationId: string, allowWhenSubscripti
   if (suspensionLookupError) redirect("/empresa?error=No+se+pudo+verificar+el+estado+de+tu+acceso");
   if (activeSuspension) redirect("/?error=Tu+acceso+a+esta+empresa+está+suspendido");
   if (!allowWhenSubscriptionInactive) {
-    const { data: subscription } = await admin.from("subscriptions")
-      .select("status").eq("organization_id", membership.organization_id).maybeSingle();
-    if (subscription?.status === "paused" || subscription?.status === "expired" || subscription?.status === "canceled") {
-      redirect("/empresa?error=El+servicio+está+suspendido.+Contacta+al+soporte");
+    const { data: subscription, error: subscriptionError } = await admin.from("subscriptions")
+      .select("status,trial_end,current_period_end").eq("organization_id", membership.organization_id).maybeSingle();
+    const now = Date.now();
+    const expiry = subscription?.status === "trialing"
+      ? subscription.trial_end
+      : subscription?.current_period_end ?? subscription?.trial_end;
+    const hasValidPeriod = Boolean(expiry && new Date(expiry).getTime() > now);
+    const statusAllowsAccess = subscription?.status === "trialing" || subscription?.status === "active";
+    if (subscriptionError || !subscription || !statusAllowsAccess || !hasValidPeriod) {
+      redirect("/empresa?error=La+vigencia+de+esta+productora+terminó+o+no+está+activa.+Contacta+al+soporte");
     }
   }
   return { admin, user, organizationId: membership.organization_id, actorRole: membership.role };
