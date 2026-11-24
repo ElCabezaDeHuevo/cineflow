@@ -396,11 +396,11 @@ export default async function ProjectsPage({
         <div className="grid gap-8 lg:grid-cols-[1.1fr_.9fr]">
           <section className="cf-dashboard-panel p-5 sm:p-6">
             <h2 className="mb-5 text-xl font-semibold">Proyectos disponibles</h2>
-            <form action="/proyectos" className="mb-5 grid gap-3 sm:grid-cols-[1fr_180px_180px_auto]">
-              <input name="q" defaultValue={q} placeholder="Buscar por nombre o descripción" className="min-h-11 rounded-lg border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-violet-400" />
-              <select name="etapa" defaultValue={etapa} className="min-h-11 rounded-lg border border-white/10 bg-black/20 px-3 text-sm text-white"><option value="">Todas las etapas</option>{[...new Set((projects ?? []).map((p) => p.stage))].map((stage) => <option key={stage} value={stage}>{stage}</option>)}</select>
-              <select name="tipo" defaultValue={tipo} className="min-h-11 rounded-lg border border-white/10 bg-black/20 px-3 text-sm text-white"><option value="">Todos los tipos</option>{[...new Set((projects ?? []).map((p) => p.type))].map((type) => <option key={type} value={type}>{type}</option>)}</select>
-              <button className="rounded-lg bg-violet-500 px-4 py-2 text-sm font-semibold">Filtrar</button>
+            <form action="/proyectos" className="mb-5 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
+              <input name="q" defaultValue={q} placeholder="Buscar por nombre o descripción" className="min-h-11 min-w-0 rounded-lg border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-violet-400 sm:col-span-2" />
+              <select name="etapa" defaultValue={etapa} className="min-h-11 min-w-0 w-full rounded-lg border border-white/10 bg-black/20 px-3 text-sm text-white"><option value="">Todas las etapas</option>{[...new Set((projects ?? []).map((p) => p.stage))].map((stage) => <option key={stage} value={stage}>{stage}</option>)}</select>
+              <select name="tipo" defaultValue={tipo} className="min-h-11 min-w-0 w-full rounded-lg border border-white/10 bg-black/20 px-3 text-sm text-white"><option value="">Todos los tipos</option>{[...new Set((projects ?? []).map((p) => p.type))].map((type) => <option key={type} value={type}>{type}</option>)}</select>
+              <button className="min-h-11 w-full rounded-lg bg-violet-500 px-4 py-2 text-sm font-semibold transition hover:bg-violet-400 sm:col-span-2">Filtrar</button>
             </form>
             <div className="space-y-3">
               {visibleProjects.length ? (
