@@ -48,12 +48,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const companyRole = (companyMemberships ?? []).map((membership) => membership.role).sort((a, b) => (companyRolePriority[b] ?? 0) - (companyRolePriority[a] ?? 0))[0] ?? null;
   const { data: navProfile } = user ? await supabase.from("profiles").select("full_name,avatar_url").eq("id", user.id).maybeSingle() : { data: null };
   const displayName = navProfile?.full_name || user?.email?.split("@")[0] || "Mi cuenta";
-  console.log("[v0] admin check:", {
-    email: user?.email ?? null,
-    appRole: user?.app_metadata?.cineflow_role ?? null,
-    userMetadataRole: user?.user_metadata?.cineflow_role ?? user?.user_metadata?.role ?? null,
-    isAdmin,
-  });
 
   return (
     <html
