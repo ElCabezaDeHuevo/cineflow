@@ -857,3 +857,39 @@ body {
   .cf-dashboard-hero { border-radius: 21px; padding: 21px; }
   .cf-metric-card { padding: 16px; }
 }
+
+
+/* Fotografía contextual para módulos que todavía tenían fondos neutros */
+.cf-bg-company { --cf-section-image: url("https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=2200&q=80"); }
+.cf-bg-workspace { --cf-section-image: url("https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=2200&q=80"); }
+.cf-bg-admin-products { --cf-section-image: url("https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=2200&q=80"); }
+.cf-bg-admin-reports { --cf-section-image: url("https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=2200&q=80"); }
+.cf-bg-admin-attendance { --cf-section-image: url("https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=2200&q=80"); }
+.cf-bg-requests { --cf-section-image: url("https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=2200&q=80"); }
+.cf-bg-company-reports { --cf-section-image: url("https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=2200&q=80"); }
+
+/* Ajustes reales para teléfonos pequeños, teclado virtual y orientación horizontal */
+@media (max-width: 767px) {
+  .cf-app-frame main > section { min-width: 0; }
+  .cf-app-frame main :is(input, select, textarea) { min-width: 0; font-size: 16px; }
+  .cf-app-frame main table { display: block; max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
+  .cf-app-frame main :is(pre, .overflow-x-auto) { max-width: 100%; overscroll-behavior-inline: contain; }
+  .cf-app-frame main :is(article, section)[class*="rounded-2xl"] { min-width: 0; }
+  .cf-app-frame main :is(form) { gap: 12px; }
+  .cf-mobile-nav { min-height: calc(66px + env(safe-area-inset-bottom)); }
+  .cf-mobile-nav a, .cf-mobile-nav button { min-width: 0; min-height: 48px; padding-inline: 2px; }
+  .cf-mobile-nav a small, .cf-mobile-nav button small { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cf-more-sheet { padding-bottom: calc(28px + env(safe-area-inset-bottom)); }
+  .cf-more-sheet .cf-nav-link { min-height: 46px; }
+}
+@media (max-width: 360px) {
+  .cf-mobile-nav { grid-template-columns: repeat(5, minmax(0, 1fr)); padding-inline: 4px; }
+  .cf-mobile-nav a small, .cf-mobile-nav button small { font-size: 8px; letter-spacing: -.02em; }
+  .cf-mobile-header { padding-inline: 12px; }
+  .cf-app-frame main > section { padding-inline: 12px; }
+}
+@media (max-height: 520px) and (max-width: 767px) {
+  .cf-mobile-nav { min-height: 54px; padding-top: 4px; padding-bottom: calc(4px + env(safe-area-inset-bottom)); }
+  .cf-mobile-nav a, .cf-mobile-nav button { min-height: 42px; gap: 1px; }
+  .cf-more-sheet { max-height: 88dvh; }
+}
