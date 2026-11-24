@@ -27,6 +27,16 @@ function message(value: unknown) {
   return encodeURIComponent(String(value ?? "Ocurrió un error inesperado."));
 }
 
+async function requireGlobalAdmin() {
+  const supabase = await createSupabaseServerClient();
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) redirect("/login");
+  if (!isCineflowAdmin(user)) redirect("/?error=No%20tienes%20permisos%20de%20administrador%20general");
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect("/usuarios?error=Falta%20configurar%20SUPABASE_SERVICE_ROLE_KEY");
+  return { admin, user };
+}
+
 export async function createUser(formData: FormData) {
   const { admin, user: creator } = await requireAdmin();
   const organizationId = String(formData.get("organization_id") ?? "");
@@ -192,7 +202,7 @@ export async function deleteUser(formData: FormData) {
 }
 
 export async function assignGlobalCinematicRole(formData: FormData) {
-  const { admin, user: actor } = await requireAdmin();
+  const { admin, user: actor } = await requireGlobalAdmin();
   const organizationId = String(formData.get("organization_id") ?? "").trim();
   const userId = String(formData.get("user_id") ?? "").trim();
   const cineRole = String(formData.get("cine_role") ?? "").trim();
@@ -218,11 +228,11 @@ export async function assignGlobalCinematicRole(formData: FormData) {
 }
 
 export async function deleteUserPermanently(formData: FormData) {
-  const { admin, user: actor } = await requireAdmin();
+  const { admin, user: actor } = await requireGlobalAdmin();
   const userId = String(formData.get("user_id") ?? "").trim();
   const emailConfirmation = String(formData.get("email_confirmation") ?? "").trim().toLowerCase();
   const confirmationPhrase = String(formData.get("confirmation_phrase") ?? "");
-  const reason = String(formData.get("reason") ?? "Eliminación permanente solicitada desde el panel de administración.").trim().slice(0, 300);
+  const reason = (String(formData.get("reason") ?? "").trim() || "Eliminación permanente solicitada desde el panel de administración.").slice(0, 300);
   if (!userId || userId === actor.id) redirect("/usuarios?error=" + message("No puedes eliminar tu propia cuenta."));
   if (confirmationPhrase !== "ELIMINAR PERMANENTEMENTE") {
     redirect("/usuarios?error=" + message("No se completó la segunda confirmación."));
