@@ -33,6 +33,13 @@ export default async function TeamPage() {
     : { data: [], error: null };
   const directoryUserIds = [...new Set([user.id, ...(companyMembers ?? []).map((item) => item.user_id)])];
   const { data: myCompanyRoles } = await supabase.from("organization_members").select("role").eq("user_id", user.id).in("organization_id", organizationIds);
+  const { data: cinematicRoles } = organizationIds.length
+    ? await supabase.from("organization_member_cinematic_roles")
+        .select("organization_id,user_id,requested_role,approved_role,status")
+        .in("organization_id", organizationIds)
+        .in("user_id", directoryUserIds)
+    : { data: [] };
+  const cinematicRoleByUserId = new Map((cinematicRoles ?? []).map((item) => [item.user_id, item]));
   const myCompanyRole = (myCompanyRoles ?? []).some((item) => item.role === "owner") ? "owner" : (myCompanyRoles ?? []).some((item) => item.role === "admin") ? "admin" : "member";
   const { data: directoryProfiles, error: directoryError } = directoryUserIds.length
     ? await supabase
@@ -90,7 +97,7 @@ export default async function TeamPage() {
             <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
               {directoryProfiles.map((profile) => {
                 const authUser = authUserById.get(profile.id);
-                const metadata = { ...(authUser?.user_metadata ?? {}), ...(authUser?.app_metadata ?? {}) };
+                const roleRequest = cinematicRoleByUserId.get(profile.id);
                 const emailName = authUser?.email?.split("@")[0]?.trim();
                 const name = [profile.full_name, metadata.full_name, metadata.name, metadata.display_name, metadata.username, emailName]
                   .find((value) => typeof value === "string" && value.trim().length > 0)?.trim() || "Integrante";
@@ -104,7 +111,7 @@ export default async function TeamPage() {
                     <span className="min-w-0">
                       <span className="block truncate font-medium">{name}</span>
                       <span className="mt-1 block truncate text-sm text-gray-500">
-                        {metadata.cine_role_status === "pending" ? `Pendiente de aprobación · ${cineRoleLabel(metadata.cine_role_requested)}` : metadata.cine_role_status === "approved" ? cineRoleLabel(metadata.cine_role) : profile.bio || "Ver perfil"}
+                        {roleRequest?.status === "pending" ? `Pendiente de aprobación · ${cineRoleLabel(roleRequest.requested_role)}` : roleRequest?.status === "approved" ? cineRoleLabel(roleRequest.approved_role) : roleRequest?.status === "rejected" ? "Puesto no aprobado" : profile.bio || "Ver perfil"}
                       </span>
                     </span>
                   </Link>
