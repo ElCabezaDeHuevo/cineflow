@@ -176,6 +176,11 @@ export default async function AdminDashboard({
             <h2 className="mt-2 text-xl font-semibold">Cambiar correo de CineFlow</h2>
             <p className="mt-1 text-sm text-gray-300">Actualizar el correo de acceso de la cuenta propietaria con doble confirmación y auditoría.</p>
           </Link>}
+          {user.id === "0a12ae9b-a119-42f8-8103-4f1bf3ab5467" && <Link href="/admin/puestos" className="rounded-2xl border border-emerald-400/30 bg-emerald-400/[0.07] p-5 transition hover:bg-emerald-400/10">
+            <p className="text-xs font-semibold uppercase tracking-widest text-emerald-200">Equipo cinematográfico</p>
+            <h2 className="mt-2 text-xl font-semibold">Asignar puestos</h2>
+            <p className="mt-1 text-sm text-gray-300">Elegir productora, integrante y asignarle su especialidad cinematográfica.</p>
+          </Link>}
           <Link href="/usuarios" className="rounded-2xl border border-white/10 bg-[#14151c] p-5 transition hover:bg-white/5">
             <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">Administración</p>
             <h2 className="mt-2 text-xl font-semibold">Cuentas de usuario</h2>
