@@ -62,7 +62,7 @@ export default async function CompanyReportsPage({ searchParams }: {
   const openSessions = [...rows.values()].reduce((sum, row) => sum + row.active, 0);
   const pendingReviews = [...rows.values()].reduce((sum, row) => sum + row.pending, 0);
 
-  return <main className="cf-cinematic-page cf-bg-admin min-h-screen bg-[#0b0c10] px-4 py-8 text-white md:px-8">
+  return <main className="cf-cinematic-page cf-bg-company-reports min-h-screen bg-[#0b0c10] px-4 py-8 text-white md:px-8">
     <section className="mx-auto max-w-6xl">
       <Link href="/empresa" className="text-sm text-violet-300">← Espacio de empresa</Link>
       <header className="mb-8 mt-6"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-300">CineFlow / Informes de productora</p><h1 className="mt-2 text-3xl font-bold">Informes de {organization?.name ?? "mi empresa"}</h1><p className="mt-2 text-gray-400">Indicadores de asistencia y carga operativa exclusivamente de los integrantes de esta productora.</p></header>
