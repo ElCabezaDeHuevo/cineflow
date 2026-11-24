@@ -45,7 +45,7 @@ function NavItems({ pathname, isAdmin, companyRole, onNavigate }: {
       <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[.2em] text-zinc-500">{group.label}</p>
       <div className="space-y-1">{group.items.map((item) => {
         const active = isActive(item.href);
-        return <Link key={item.href} href={item.href} onClick={onNavigate} aria-current={active ? "page" : undefined} className={`cf-nav-link ${active ? "is-active" : ""}`}>
+        return <Link key={item.href} href={item.href} onClick={onNavigate} aria-current={active ? "page" : undefined} className={`cf-nav-link ${active ? "is-active" : ""}`} title={item.label} aria-label={item.label}>
           <span className="cf-nav-icon" aria-hidden="true">{item.icon}</span><span>{item.label}</span>
         </Link>;
       })}</div>
