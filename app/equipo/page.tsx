@@ -5,6 +5,7 @@ import UserAvatar from "@/lib/UserAvatar";
 import { listAllAuthUsers } from "@/lib/supabase/list-all-auth-users";
 import { isCineflowAdmin } from "@/lib/admin";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { cineRoleLabel } from "@/lib/cine-roles";
 
 export const instant = false;
 
@@ -31,6 +32,7 @@ export default async function TeamPage() {
     ? await supabase.from("organization_members").select("user_id").in("organization_id", organizationIds)
     : { data: [], error: null };
   const directoryUserIds = [...new Set([user.id, ...(companyMembers ?? []).map((item) => item.user_id)])];
+  const { data: myCompanyRole } = await supabase.from("organization_members").select("role").eq("user_id", user.id).in("organization_id", organizationIds).order("role").limit(1).maybeSingle();
   const { data: directoryProfiles, error: directoryError } = directoryUserIds.length
     ? await supabase
         .from("profiles")
@@ -69,7 +71,7 @@ export default async function TeamPage() {
         <section className="mt-8 grid gap-4 sm:grid-cols-3">
           <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Colaboradores</p><p className="mt-3 text-3xl font-bold">{userIds.length}</p></article>
           <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Proyectos compartidos</p><p className="mt-3 text-3xl font-bold">{projects?.length ?? 0}</p></article>
-          <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Tu acceso</p><p className="mt-3 text-3xl font-bold">{memberships?.some((member) => member.user_id === user.id && member.role === "owner") ? "Owner" : "Miembro"}</p></article>
+          <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5"><p className="text-sm text-gray-400">Tu acceso</p><p className="mt-3 text-3xl font-bold">{myCompanyRole?.role === "owner" ? "Owner / Dueño" : myCompanyRole?.role === "admin" ? "Administrador" : "Miembro"}</p></article>
         </section>
 
         <section className="cf-card mt-8 overflow-hidden rounded-2xl border border-white/10 bg-[#14151c]">
