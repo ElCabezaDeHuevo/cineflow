@@ -171,11 +171,11 @@ export default async function AdminDashboard({
             <h2 className="mt-2 text-xl font-semibold">Productoras y pagos</h2>
             <p className="mt-1 text-sm text-gray-400">Registrar empresas, asignar dueños, controlar pruebas, pagos y acceso.</p>
           </Link>
-          <Link href="/admin/correo" className="rounded-2xl border border-violet-400/30 bg-violet-400/10 p-5 transition hover:bg-violet-400/15">
+          {user.id === "0a12ae9b-a119-42f8-8103-4f1bf3ab5467" && <Link href="/admin/correo" className="rounded-2xl border border-violet-400/30 bg-violet-400/10 p-5 transition hover:bg-violet-400/15">
             <p className="text-xs font-semibold uppercase tracking-widest text-violet-300">Cuenta propietaria</p>
             <h2 className="mt-2 text-xl font-semibold">Cambiar correo de CineFlow</h2>
             <p className="mt-1 text-sm text-gray-300">Actualizar el correo de acceso de la cuenta propietaria con doble confirmación y auditoría.</p>
-          </Link>
+          </Link>}
           <Link href="/usuarios" className="rounded-2xl border border-white/10 bg-[#14151c] p-5 transition hover:bg-white/5">
             <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">Administración</p>
             <h2 className="mt-2 text-xl font-semibold">Cuentas de usuario</h2>
