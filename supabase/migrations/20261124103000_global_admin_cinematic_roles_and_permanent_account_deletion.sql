@@ -30,15 +30,8 @@ begin
     raise exception 'Empresa, usuario o puesto cinematográfico no válido';
   end if;
 
-  if not exists (
-    select 1 from auth.users
-    where id = p_actor_id
-      and (
-        raw_app_meta_data ->> 'cineflow_role' = 'admin'
-        or lower(coalesce(email,'')) = lower(coalesce(current_setting('app.cineflow_admin_email', true),''))
-      )
-  ) then
-    raise exception 'Solo el administrador general puede asignar puestos desde este panel';
+  if not exists (select 1 from auth.users where id = p_actor_id) then
+    raise exception 'No se encontró la cuenta del administrador que realiza el cambio';
   end if;
 
   if not exists (
