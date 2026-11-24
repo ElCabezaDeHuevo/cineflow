@@ -11,6 +11,7 @@ import {
 import ProjectForm from "../ProjectForm";
 import UserAvatar from "@/lib/UserAvatar";
 import ProjectVisitTracker from "@/app/ProjectVisitTracker";
+import ProductionNavigation from "@/app/ProductionNavigation";
 
 export const instant = false;
 
@@ -76,6 +77,7 @@ export default async function ProjectDetailPage({
     <main className="cf-cinematic-page cf-bg-projects min-h-screen bg-[#0b0c10] text-white">
       <ProjectVisitTracker userId={user.id} projectId={project.id} />
       <section className="mx-auto max-w-5xl p-4 sm:p-6 md:p-10">
+        <ProductionNavigation active="/proyectos" />
         <Link href="/proyectos" className="text-sm text-violet-300">
           ← Volver a proyectos
         </Link>
