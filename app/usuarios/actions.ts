@@ -179,6 +179,98 @@ export async function deleteUser(formData: FormData) {
   redirect("/usuarios?success=Cuenta%20desactivada.%20Se%20conservaron%20sus%20registros.");
 }
 
+
+export async function permanentlyDeleteUser(formData: FormData) {
+  const { admin, user: actor } = await requireAdmin();
+  const userId = String(formData.get("user_id") ?? "").trim();
+  const confirmation = String(formData.get("confirmation_phrase") ?? "").trim();
+  const confirmedEmail = String(formData.get("confirmation_email") ?? "").trim().toLowerCase();
+  const reason = String(formData.get("reason") ?? "").trim().slice(0, 500);
+
+  if (!userId || userId === actor.id) redirect("/usuarios?error=No%20puedes%20eliminar%20tu%20propia%20cuenta");
+  if (confirmation !== "ELIMINAR" || !confirmedEmail || !reason) {
+    redirect("/usuarios?error=La%20doble%20verificaci%C3%B3n%20no%20se%20complet%C3%B3");
+  }
+
+  const { data: ownership, error: ownershipError } = await admin.from("organization_members")
+    .select("organization_id").eq("user_id", userId).eq("role", "owner").limit(1);
+  if (ownershipError) redirect(`/usuarios?error=${message(ownershipError.message)}`);
+  if (ownership?.length) redirect("/usuarios?error=No%20puedes%20eliminar%20al%20due%C3%B1o%20de%20una%20empresa.%20Transfiere%20la%20propiedad%20primero.");
+
+  const [{ data: account, error: lookupError }, { data: profile, error: profileError }, { data: memberships, error: membershipsError }] = await Promise.all([
+    admin.auth.admin.getUserById(userId),
+    admin.from("profiles").select("id,full_name,avatar_url,bio,created_at,updated_at").eq("id", userId).maybeSingle(),
+    admin.from("organization_members").select("organization_id,role,invited_by,joined_at").eq("user_id", userId),
+  ]);
+  if (lookupError || !account?.user?.email) redirect(`/usuarios?error=${message(lookupError?.message ?? "No se encontró la cuenta.")}`);
+  if (profileError || membershipsError) redirect("/usuarios?error=No%20se%20pudo%20preparar%20el%20respaldo.%20No%20se%20elimin%C3%B3%20la%20cuenta.");
+  if (account.user.email.toLowerCase() !== confirmedEmail) {
+    redirect("/usuarios?error=El%20correo%20de%20confirmaci%C3%B3n%20no%20coincide.%20No%20se%20elimin%C3%B3%20la%20cuenta.");
+  }
+
+  const [{ data: actorProfile }, { data: actorAccount }] = await Promise.all([
+    admin.from("profiles").select("full_name").eq("id", actor.id).maybeSingle(),
+    admin.auth.admin.getUserById(actor.id),
+  ]);
+  const targetName = profile?.full_name || String(account.user.user_metadata?.full_name ?? "");
+  const snapshot = {
+    profile: profile ?? null,
+    user_metadata: account.user.user_metadata ?? {},
+    app_metadata: account.user.app_metadata ?? {},
+    memberships: memberships ?? [],
+    restore_note: "La contraseña no puede recuperarse. Para restaurar el acceso, recrea la cuenta y solicita un restablecimiento de contraseña.",
+  };
+
+  const { data: audit, error: auditError } = await admin.from("cineflow_admin_account_audit").insert({
+    actor_id: actor.id,
+    admin_id: actor.id,
+    performed_by: actor.id,
+    target_user_id: userId,
+    deleted_user_id: userId,
+    target_email: account.user.email,
+    deleted_email: account.user.email,
+    target_name: targetName,
+    deleted_name: targetName,
+    action: "permanent_account_deletion",
+    reason,
+    metadata: {
+      status: "pending",
+      actor_email: actorAccount?.user?.email ?? actor.email ?? null,
+      actor_name: actorProfile?.full_name ?? null,
+      snapshot,
+      verification: { phrase_confirmed: true, email_confirmed: true },
+    },
+  }).select("id").single();
+  if (auditError || !audit) {
+    redirect(`/usuarios?error=${message("No se pudo guardar el historial permanente. La cuenta no fue eliminada.")}`);
+  }
+
+  const { error: deleteError } = await admin.auth.admin.deleteUser(userId);
+  if (deleteError) {
+    await admin.from("cineflow_admin_account_audit").update({
+      metadata: { status: "failed", failure: deleteError.message, snapshot },
+    }).eq("id", audit.id);
+    redirect(`/usuarios?error=${message("Supabase no pudo eliminar la cuenta. El intento quedó registrado: " + deleteError.message)}`);
+  }
+
+  const { error: finalizeError } = await admin.from("cineflow_admin_account_audit").update({
+    metadata: {
+      status: "completed",
+      actor_email: actorAccount?.user?.email ?? actor.email ?? null,
+      actor_name: actorProfile?.full_name ?? null,
+      snapshot,
+      verification: { phrase_confirmed: true, email_confirmed: true },
+    },
+  }).eq("id", audit.id);
+  if (finalizeError) {
+    console.error("[cineflow] La cuenta fue eliminada, pero no se pudo actualizar el estado final del registro:", finalizeError.message);
+  }
+
+  revalidatePath("/usuarios");
+  revalidatePath("/admin");
+  redirect("/usuarios?success=Cuenta%20eliminada%20permanentemente.%20El%20historial%20y%20el%20respaldo%20de%20restauraci%C3%B3n%20quedaron%20conservados.");
+}
+
 export async function updateUserRole(formData: FormData) {
   const { admin, user } = await requireAdmin();
   const userId = String(formData.get("user_id") ?? "");
