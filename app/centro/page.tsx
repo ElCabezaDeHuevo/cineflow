@@ -40,6 +40,8 @@ export default async function ProductionCenter() {
   const total = (expenses ?? []).reduce((sum,e)=>sum+Number(e.amount),0);
   const unread = (notifications ?? []).filter(n=>!n.read_at).length;
   const myTasks = (tasks ?? []).filter(t=>t.assigned_to === user.id);
+  // Server-rendered snapshot: compare event times against the request-time clock.
+  // eslint-disable-next-line react-hooks/purity
   const upcoming = (events ?? []).filter(e=>new Date(e.starts_at).getTime()>=Date.now()).slice(0,12);
   return <main className="cf-cinematic-page cf-bg-team min-h-screen bg-[#0b0c10] px-5 py-8 text-white md:px-10">
     <div className="mx-auto max-w-7xl space-y-8">
