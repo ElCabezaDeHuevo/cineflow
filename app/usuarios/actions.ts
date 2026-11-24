@@ -37,7 +37,7 @@ export async function createUser(formData: FormData) {
   const organizationRole = String(formData.get("organization_role") ?? "member");
 
   if (!organizationId || !fullName || !email || password.length < 8 ||
-      !CINE_ROLES.some((role) => role.value === cineRole) ||
+      !CINE_ROLES.some((role) => role.value === cineRole && role.value !== "viewer") ||
       !["admin", "producer", "member", "viewer"].includes(organizationRole)) {
     redirect("/usuarios?error=Revisa%20los%20datos%20del%20usuario");
   }
@@ -58,7 +58,7 @@ export async function createUser(formData: FormData) {
 
   const { data, error } = await admin.auth.admin.createUser({
     email, password, email_confirm: true,
-    user_metadata: { full_name: fullName, cine_role: cineRole },
+    user_metadata: { full_name: fullName },
     app_metadata: { cineflow_role: "user", organization_id: organizationId },
   });
   if (error || !data.user) redirect(`/usuarios?error=${message(error?.message ?? "No se pudo crear la cuenta.")}`);
@@ -76,6 +76,18 @@ export async function createUser(formData: FormData) {
   if (memberError) {
     await admin.auth.admin.deleteUser(data.user.id);
     redirect(`/usuarios?error=${message(memberError.message)}`);
+  }
+
+  const { error: cinematicRoleError } = await admin.rpc("admin_set_organization_member_cinematic_role", {
+    p_organization_id: organizationId,
+    p_user_id: data.user.id,
+    p_actor_id: creator.id,
+    p_cinematic_role: cineRole,
+  });
+  if (cinematicRoleError) {
+    await admin.from("organization_members").delete().eq("organization_id", organizationId).eq("user_id", data.user.id);
+    await admin.auth.admin.deleteUser(data.user.id);
+    redirect(`/usuarios?error=${message("No se pudo asignar el puesto cinematográfico: " + cinematicRoleError.message)}`);
   }
 
   const { error: auditError } = await admin.from("organization_audit_log").insert({
