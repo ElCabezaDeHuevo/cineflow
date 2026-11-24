@@ -17,7 +17,7 @@ export default async function CompaniesAdmin({ searchParams }: { searchParams: P
   if (!user) redirect("/login");
   if (!isCineflowAdmin(user)) redirect("/");
   const admin = createSupabaseAdminClient();
-  if (!admin) return <main className="cf-cinematic-page cf-bg-admin min-h-screen bg-[#0b0c10] p-8 text-white">Falta configurar SUPABASE_SERVICE_ROLE_KEY.</main>;
+  if (!admin) return <main className="cf-cinematic-page cf-bg-admin-products min-h-screen bg-[#0b0c10] p-8 text-white">Falta configurar SUPABASE_SERVICE_ROLE_KEY.</main>;
   const [{ data: companies, error: companiesError }, accountsResult, { data: subscriptions }, { data: payments }] = await Promise.all([
     admin.from("organizations").select("id,name,slug,created_at,billing_email,organization_members(user_id,role)").order("created_at", { ascending: false }),
     listAllAuthUsers(admin).then((users) => ({ users, error: null })).catch((error: unknown) => ({ users: [], error: error instanceof Error ? error : new Error("No se pudieron consultar todas las cuentas") })),
