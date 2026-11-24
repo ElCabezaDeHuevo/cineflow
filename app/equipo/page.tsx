@@ -38,8 +38,9 @@ export default async function TeamPage() {
         .select("organization_id,user_id,requested_role,approved_role,status")
         .in("organization_id", organizationIds)
         .in("user_id", directoryUserIds)
+        .order("requested_at", { ascending: false })
     : { data: [] };
-  const cinematicRoleByUserId = new Map((cinematicRoles ?? []).map((item) => [item.user_id, item]));
+  const cinematicRoleByUserId = new Map((cinematicRoles ?? []).filter((item, index, rows) => rows.findIndex((candidate) => candidate.user_id === item.user_id) === index).map((item) => [item.user_id, item]));
   const myCompanyRole = (myCompanyRoles ?? []).some((item) => item.role === "owner") ? "owner" : (myCompanyRoles ?? []).some((item) => item.role === "admin") ? "admin" : "member";
   const { data: directoryProfiles, error: directoryError } = directoryUserIds.length
     ? await supabase
@@ -99,7 +100,7 @@ export default async function TeamPage() {
                 const authUser = authUserById.get(profile.id);
                 const roleRequest = cinematicRoleByUserId.get(profile.id);
                 const emailName = authUser?.email?.split("@")[0]?.trim();
-                const name = [profile.full_name, metadata.full_name, metadata.name, metadata.display_name, metadata.username, emailName]
+                const name = [profile.full_name, authUser?.user_metadata?.full_name, authUser?.user_metadata?.name, authUser?.user_metadata?.display_name, authUser?.user_metadata?.username, emailName]
                   .find((value) => typeof value === "string" && value.trim().length > 0)?.trim() || "Integrante";
                 return (
                   <Link
