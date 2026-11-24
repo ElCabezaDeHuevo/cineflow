@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
@@ -72,32 +71,6 @@ async function HomeContent({
   const isAdmin = isCineflowAdmin(user);
 
   await connection();
-  const { data: activeWorkSessions, error: activeSessionsError } =
-    await supabase
-      .from("work_sessions")
-      .select("user_id,clock_in")
-      .is("clock_out", null)
-      .is("deleted_at", null)
-      .order("clock_in", { ascending: true });
-  if (activeSessionsError) {
-    throw new Error(
-      `No se pudo cargar el equipo que está trabajando: ${activeSessionsError.message}`,
-    );
-  }
-  const activeUserIds = (activeWorkSessions ?? []).map(
-    (session) => session.user_id,
-  );
-  const { data: activeProfiles, error: activeProfilesError } = activeUserIds.length
-    ? await supabase
-        .from("profiles")
-        .select("id,full_name,avatar_url")
-        .in("id", activeUserIds)
-    : { data: [], error: null };
-  if (activeProfilesError) {
-    throw new Error(
-      `No se pudieron cargar los perfiles del equipo: ${activeProfilesError.message}`,
-    );
-  }
   const { data: allProjects, error: projectsError } = user
     ? await supabase
         .from("projects")
@@ -130,6 +103,38 @@ async function HomeContent({
   }
   if (coversError) {
     throw new Error(`No se pudieron cargar las portadas: ${coversError.message}`);
+  }
+  const { data: projectMembers, error: projectMembersError } = projectIds.length
+    ? await supabase
+        .from("project_members")
+        .select("user_id")
+        .in("project_id", projectIds)
+    : { data: [], error: null };
+  if (projectMembersError) {
+    throw new Error(`No se pudo cargar el equipo de tus proyectos: ${projectMembersError.message}`);
+  }
+  const teamUserIds = [...new Set((projectMembers ?? []).map((member) => member.user_id))];
+  const { data: activeWorkSessions, error: activeSessionsError } = teamUserIds.length
+    ? await supabase
+        .from("work_sessions")
+        .select("user_id,clock_in")
+        .in("user_id", teamUserIds)
+        .is("clock_out", null)
+        .is("deleted_at", null)
+        .order("clock_in", { ascending: true })
+    : { data: [], error: null };
+  if (activeSessionsError) {
+    throw new Error(`No se pudo cargar el equipo que está trabajando: ${activeSessionsError.message}`);
+  }
+  const activeUserIds = [...new Set((activeWorkSessions ?? []).map((session) => session.user_id))];
+  const { data: activeProfiles, error: activeProfilesError } = activeUserIds.length
+    ? await supabase
+        .from("profiles")
+        .select("id,full_name,avatar_url")
+        .in("id", activeUserIds)
+    : { data: [], error: null };
+  if (activeProfilesError) {
+    throw new Error(`No se pudieron cargar los perfiles del equipo: ${activeProfilesError.message}`);
   }
   const projectNameById = new Map(
     (allProjects ?? []).map((project) => [project.id, project.name]),
@@ -203,6 +208,10 @@ async function HomeContent({
   });
   const panel = {
     total: projects.length,
+    active: projects.filter((project) => {
+      const stage = project.stage.toLowerCase();
+      return !["entrega", "final", "complet", "cancel"].some((term) => stage.includes(term));
+    }).length,
     rodaje: projects.filter(
       (project) =>
         project.stage.toLowerCase().includes("rodaje") ||
@@ -213,331 +222,156 @@ async function HomeContent({
       project.stage.toLowerCase().includes("post"),
     ).length,
   };
+  const myOpenTasks = (projectTasks ?? []).filter(
+    (task) => task.assigned_to === user.id && task.status !== "completada",
+  ).length;
   const deliveryDates = projects.map((project) => project.delivery_date);
 
   return (
-    <main className="cf-cinematic-page cf-bg-dashboard min-h-screen bg-[#0b0c10] text-white">
-      <section className="mx-auto max-w-7xl p-4 sm:p-6 md:p-10">
+    <main className="cf-cinematic-page cf-dashboard min-h-screen text-white">
+      <section className="mx-auto max-w-[1500px] p-4 sm:p-6 xl:p-10">
         {created && (
-          <div className="mb-6 rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-300">
-            Proyecto creado correctamente.
+          <div role="status" className="mb-6 rounded-2xl border border-emerald-400/25 bg-emerald-400/10 px-5 py-4 text-sm font-medium text-emerald-200">
+            <span className="mr-2">✓</span> Proyecto creado correctamente. Ya puedes organizar su equipo y calendario.
           </div>
         )}
-        <header className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm text-violet-300">
-              ESPACIO DE TRABAJO / GENERAL
-            </p>
-            <h1 className="mt-2 text-3xl font-bold md:text-4xl">
-              Panel de producción
-            </h1>
-            <p className="mt-2 text-sm text-gray-400 sm:text-base">
-              Todo tu universo cinematográfico en un solo lugar.
-            </p>
-          </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <Link
-              href="/proyectos"
-              className="cf-action rounded-xl bg-violet-500 px-5 py-3 text-center font-semibold transition hover:bg-violet-400"
-            >
-              + Nuevo proyecto
-            </Link>
-            {isAdmin && (
-              <Link
-                href="/admin"
-                className="rounded-xl border border-amber-400/30 bg-amber-400/10 px-5 py-3 text-center font-semibold text-amber-200 transition hover:bg-amber-400/20"
-              >
-                Panel de administración
+        <header className="cf-dashboard-hero mb-8 overflow-hidden rounded-[28px] border border-white/10 p-6 sm:p-8 xl:p-10">
+          <div className="relative z-10 flex flex-col justify-between gap-8 xl:flex-row xl:items-end">
+            <div className="max-w-2xl">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-violet-300/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.2em] text-violet-200">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
+                CineFlow Studio Workspace
+              </div>
+              <p className="text-sm font-medium text-violet-200">Tu centro de producción</p>
+              <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl xl:text-5xl">
+                Hola, {displayName}
+              </h1>
+              <p className="mt-3 max-w-xl text-sm leading-6 text-slate-300 sm:text-base">
+                Organiza tus proyectos, coordina a tu equipo y mantén cada etapa de la producción bajo control.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link href="/proyectos" className="cf-dashboard-primary">
+                <span aria-hidden="true">＋</span> Crear proyecto
               </Link>
-            )}
+              <Link href="/rodaje" className="cf-dashboard-secondary">
+                <span aria-hidden="true">▤</span> Planificar rodaje
+              </Link>
+              {isAdmin && <Link href="/admin" className="cf-dashboard-secondary">
+                <span aria-hidden="true">⚙</span> Administración
+              </Link>}
+            </div>
+          </div>
+          <div className="relative z-10 mt-8 grid gap-3 border-t border-white/10 pt-6 sm:grid-cols-3">
+            <div><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-slate-400">Proyectos en cartera</p><p className="mt-1 text-sm font-semibold text-white">{panel.total} proyectos visibles</p></div>
+            <div><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-slate-400">Actividad asignada</p><p className="mt-1 text-sm font-semibold text-white">{myOpenTasks} tareas abiertas para ti</p></div>
+            <div><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-slate-400">Equipo en jornada</p><p className="mt-1 text-sm font-semibold text-white">{activeWorkSessions?.length ?? 0} personas trabajando en tus proyectos</p></div>
           </div>
         </header>
 
-        <PendingLogbookNotifications
-          tasks={pendingLogbookTasks}
-          signInKey={user.last_sign_in_at ?? user.id}
-        />
+        <PendingLogbookNotifications tasks={pendingLogbookTasks} signInKey={user.last_sign_in_at ?? user.id} />
 
-        <div className="mb-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {[
-            [
-              "Proyectos activos",
-              String(panel.total).padStart(2, "0"),
-              "En desarrollo",
-            ],
-            ["En producción", String(panel.rodaje).padStart(2, "0"), "Rodajes activos"],
-            ["En postproducción", String(panel.postproduccion).padStart(2, "0"), "En edición y acabado"],
-          ].map(([titulo, valor, detalle]) => (
-            <article
-              key={titulo}
-              className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5"
-            >
-              <p className="text-sm text-gray-400">{titulo}</p>
-              <p className="my-3 text-4xl font-bold">{valor}</p>
-              <p className="text-xs text-gray-500">{detalle}</p>
+        <section className="mb-9" aria-label="Indicadores de producción">
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+            <div><p className="cf-eyebrow">Visión general</p><h2 className="mt-1 text-xl font-semibold">Tu producción de un vistazo</h2></div>
+            <Link href="/estadisticas" className="text-sm font-medium text-violet-200 hover:text-white">Ver estadísticas completas →</Link>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <article className="cf-metric-card">
+              <div className="flex items-center justify-between"><span className="cf-metric-icon">▣</span><span className="cf-metric-tag">Cartera</span></div>
+              <p className="mt-5 text-sm text-slate-400">Proyectos visibles</p>
+              <p className="mt-1 text-4xl font-bold tracking-tight">{String(panel.total).padStart(2,"0")}</p>
+              <p className="mt-2 text-xs text-slate-500">{panel.active} en etapas activas</p>
             </article>
-          ))}
-          <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5">
-            <p className="text-sm text-gray-400">Próximas entregas</p>
-            <p className="my-3 text-4xl font-bold">
-              <UpcomingDeliveryCount
-                deliveryDates={deliveryDates}
-                total={panel.total}
-              />
-            </p>
-            <p className="text-xs text-gray-500">Siguientes 30 días</p>
-          </article>
-        </div>
+            <article className="cf-metric-card">
+              <div className="flex items-center justify-between"><span className="cf-metric-icon cf-metric-amber">▤</span><span className="cf-metric-tag">Rodaje</span></div>
+              <p className="mt-5 text-sm text-slate-400">En producción</p>
+              <p className="mt-1 text-4xl font-bold tracking-tight">{String(panel.rodaje).padStart(2,"0")}</p>
+              <p className="mt-2 text-xs text-slate-500">Proyectos en filmación</p>
+            </article>
+            <article className="cf-metric-card">
+              <div className="flex items-center justify-between"><span className="cf-metric-icon cf-metric-cyan">◷</span><span className="cf-metric-tag">Postproducción</span></div>
+              <p className="mt-5 text-sm text-slate-400">En edición y acabado</p>
+              <p className="mt-1 text-4xl font-bold tracking-tight">{String(panel.postproduccion).padStart(2,"0")}</p>
+              <p className="mt-2 text-xs text-slate-500">Proyectos en etapa final</p>
+            </article>
+            <article className="cf-metric-card">
+              <div className="flex items-center justify-between"><span className="cf-metric-icon cf-metric-green">⌁</span><span className="cf-metric-tag">Entregas</span></div>
+              <p className="mt-5 text-sm text-slate-400">Próximos 30 días</p>
+              <p className="mt-1 text-4xl font-bold tracking-tight"><UpcomingDeliveryCount deliveryDates={deliveryDates} total={panel.total} /></p>
+              <p className="mt-2 text-xs text-slate-500">Fechas de entrega programadas</p>
+            </article>
+          </div>
+        </section>
 
-        <section className="mb-10 grid gap-5 lg:grid-cols-[1.4fr_1fr]">
-          <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-6">
-            <div className="mb-6 flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-widest text-violet-300">
-                  Resumen operativo
-                </p>
-                <h2 className="mt-2 text-xl font-semibold">
-                  Estado de la producción
-                </h2>
-                <p className="mt-1 text-sm text-gray-400">
-                  Una lectura rápida de tu cartera actual.
-                </p>
-              </div>
-              <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-xs font-medium text-emerald-300">
-                Datos actuales
-              </span>
+        <section className="mb-9 grid gap-5 xl:grid-cols-[1.3fr_.9fr]">
+          <article className="cf-dashboard-panel p-5 sm:p-7">
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+              <div><p className="cf-eyebrow">Flujo de trabajo</p><h2 className="mt-1 text-xl font-semibold">Etapas de producción</h2><p className="mt-1 text-sm text-slate-400">Distribución de proyectos y tareas por fase.</p></div>
+              <Link href="/timeline" className="text-sm font-medium text-violet-200">Abrir línea de tiempo →</Link>
             </div>
             <div className="space-y-5">
-              {[
-                ["Proyectos en rodaje", panel.rodaje, "bg-amber-400"],
-                [
-                  "Proyectos en postproducción",
-                  panel.postproduccion,
-                  "bg-violet-400",
-                ],
-              ].map(([label, value, color]) => (
-                <div key={String(label)}>
-                  <div className="mb-2 flex justify-between text-sm">
-                    <span className="text-gray-300">{label}</span>
-                    <span className="font-semibold text-white">{value}</span>
+              {etapaResumen.map((etapa,index) => (
+                <div key={etapa.nombre}>
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-3"><span className="flex h-8 w-8 items-center justify-center rounded-xl border border-violet-300/15 bg-violet-300/10 text-xs font-bold text-violet-200">{String(index+1).padStart(2,"0")}</span><div><p className="text-sm font-semibold text-slate-100">{etapa.nombre}</p><p className="text-xs text-slate-500">{etapa.projects.length} proyectos · {etapa.taskCount} tareas</p></div></div>
+                    <span className="text-sm font-semibold text-slate-200">{etapa.progress}%</span>
                   </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                    <div
-                      className={`h-full rounded-full ${color}`}
-                      style={{
-                        width: `${panel.total ? Math.max(8, (Number(value) / panel.total) * 100) : 0}%`,
-                      }}
-                    />
+                  <div className="h-2 overflow-hidden rounded-full bg-white/[.07]" role="progressbar" aria-label={`Avance de ${etapa.nombre}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={etapa.progress}>
+                    <div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-cyan-300" style={{width:`${etapa.progress}%`}} />
                   </div>
                 </div>
               ))}
-              <UpcomingDeliveryCount
-                deliveryDates={deliveryDates}
-                total={panel.total}
-                showProgress
-              />
             </div>
           </article>
-          <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-6">
-            <p className="text-xs uppercase tracking-widest text-violet-300">
-              Centro de acción
-            </p>
-            <h2 className="mt-2 text-xl font-semibold">Siguiente paso</h2>
-            <p className="mt-2 text-sm leading-6 text-gray-400">
-              Organiza tus producciones, revisa las fechas de entrega y mantén
-              al equipo alineado desde un mismo espacio.
-            </p>
-            <div className="mt-6 grid gap-3">
-              <Link
-                href="/proyectos"
-                className="cf-action rounded-xl bg-violet-500 px-4 py-3 text-center text-sm font-semibold transition hover:bg-violet-400"
-              >
-                Gestionar proyectos
-              </Link>
-              <Link
-                href="/horarios"
-                className="rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-center text-sm font-semibold text-emerald-200 transition hover:bg-emerald-400/20"
-              >
-                Registros de entradas y salidas
-              </Link>
-              <Link
-                href="/perfil"
-                className="rounded-xl border border-white/10 px-4 py-3 text-center text-sm font-semibold text-gray-300 transition hover:border-violet-400/50 hover:text-white"
-              >
-                Revisar mi perfil
-              </Link>
+
+          <article className="cf-dashboard-panel p-5 sm:p-7">
+            <p className="cf-eyebrow">Accesos directos</p>
+            <h2 className="mt-1 text-xl font-semibold">¿Qué necesitas hacer?</h2>
+            <p className="mt-1 text-sm text-slate-400">Entra directamente a las herramientas de tu día.</p>
+            <div className="mt-6 grid gap-2.5">
+              <Link href="/proyectos" className="cf-quick-link"><span className="cf-quick-icon">▣</span><span><strong>Proyectos</strong><small>Crear, explorar y administrar producciones</small></span><span className="ml-auto">→</span></Link>
+              <Link href="/rodaje" className="cf-quick-link"><span className="cf-quick-icon">▤</span><span><strong>Planificador de rodaje</strong><small>Escenas, jornadas y locaciones</small></span><span className="ml-auto">→</span></Link>
+              <Link href="/calendario" className="cf-quick-link"><span className="cf-quick-icon">▦</span><span><strong>Calendario</strong><small>Entregas, tareas y días de rodaje</small></span><span className="ml-auto">→</span></Link>
+              <Link href="/equipo" className="cf-quick-link"><span className="cf-quick-icon">♙</span><span><strong>Equipo</strong><small>Personas y perfiles de producción</small></span><span className="ml-auto">→</span></Link>
+              <Link href="/centro" className="cf-quick-link"><span className="cf-quick-icon">⌂</span><span><strong>Centro de trabajo</strong><small>Herramientas y actividad del equipo</small></span><span className="ml-auto">→</span></Link>
             </div>
           </article>
         </section>
 
-        <section id="proyectos" className="mb-10">
-          <div className="mb-5 flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold">Proyectos recientes</h2>
-              <p className="mt-1 text-sm text-gray-400">
-                Seguimiento general de tus producciones.
-              </p>
-            </div>
-            <Link href="/timeline" className="text-sm text-violet-300">
-              Abrir línea de tiempo →
-            </Link>
+        <section id="proyectos" className="mb-9">
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+            <div><p className="cf-eyebrow">Actividad reciente</p><h2 className="mt-1 text-xl font-semibold">Proyectos recientes</h2><p className="mt-1 text-sm text-slate-400">Continúa donde dejaste cada producción.</p></div>
+            <Link href="/proyectos" className="text-sm font-medium text-violet-200 hover:text-white">Ver todos los proyectos →</Link>
           </div>
-
-          <RecentProjects
-            userId={user?.id ?? null}
-            projects={dashboardProjects}
-            signedIn={Boolean(user)}
-          />
+          <RecentProjects userId={user.id} projects={dashboardProjects} signedIn />
         </section>
 
-        <section
-          id="timeline"
-          className="mb-10 rounded-2xl border border-white/10 bg-[#14151c] p-6"
-        >
-          <h2 className="text-xl font-semibold">Etapas de producción</h2>
-          <p className="mb-6 mt-1 text-sm text-gray-400">
-            Avance de proyectos y partes en cada fase del flujo de trabajo.
-          </p>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            {etapaResumen.map((etapa, index) => (
-              <article
-                key={etapa.nombre}
-                className="cf-card rounded-xl border border-white/10 bg-white/[0.03] p-4"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-500/15 text-sm font-semibold text-violet-300">
-                    {index + 1}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-semibold text-white">{etapa.nombre}</h3>
-                    <p className="mt-1 text-xs text-gray-400">
-                      {etapa.descripcion}
-                    </p>
-                  </div>
-                  <span className="rounded-full bg-violet-400/10 px-2.5 py-1 text-xs font-medium text-violet-200">
-                    {etapa.projects.length}{" "}
-                    {etapa.projects.length === 1 ? "proyecto" : "proyectos"}
-                  </span>
-                </div>
-                <div className="mt-4">
-                  <div className="flex flex-wrap justify-between gap-2 text-xs">
-                    <span className="text-gray-300">
-                      {etapa.completed}/{etapa.taskCount} partes completadas
-                    </span>
-                    <span className="text-amber-200">
-                      {etapa.pending} pendientes
-                    </span>
-                  </div>
-                  <div
-                    className="mt-2 h-2 overflow-hidden rounded-full bg-white/10"
-                    role="progressbar"
-                    aria-label={`Avance de ${etapa.nombre}`}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-valuenow={etapa.progress}
-                  >
-                    <div
-                      className="cf-progress-fill h-full rounded-full bg-emerald-400 transition-all"
-                      style={{ width: `${etapa.progress}%` }}
-                    />
-                  </div>
-                  <p className="mt-1 text-right text-xs text-gray-500">
-                    {etapa.progress}% completado
-                  </p>
-                </div>
-                {etapa.projects.length ? (
-                  <ul className="mt-3 space-y-1 border-t border-white/10 pt-3">
-                    {etapa.projects.slice(0, 3).map((project) => (
-                      <li key={project.id}>
-                        <Link
-                          href={`/proyectos/${project.id}`}
-                          className="block truncate text-sm text-violet-200 transition hover:text-violet-100 hover:underline"
-                        >
-                          {project.name}
-                        </Link>
-                      </li>
-                    ))}
-                    {etapa.projects.length > 3 && (
-                      <li className="text-xs text-gray-500">
-                        y {etapa.projects.length - 3} más
-                      </li>
-                    )}
-                  </ul>
-                ) : (
-                  <p className="mt-3 border-t border-white/10 pt-3 text-xs text-gray-500">
-                    No hay proyectos en esta etapa.
-                  </p>
-                )}
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section
-          id="equipo"
-          className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-6"
-        >
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h2 className="text-xl font-semibold">Equipo de producción</h2>
-              <p className="mt-1 text-sm text-gray-400">
-                Personas que registraron su entrada y siguen en jornada.
-              </p>
-            </div>
-            <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-sm font-semibold text-emerald-200">
-              {activeWorkSessions?.length ?? 0} trabajando
-            </span>
+        <section id="equipo" className="cf-dashboard-panel p-5 sm:p-7">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div><p className="cf-eyebrow">En tiempo real</p><h2 className="mt-1 text-xl font-semibold">Equipo en jornada</h2><p className="mt-1 text-sm text-slate-400">Personas con una jornada abierta en proyectos a los que perteneces.</p></div>
+            <span className="rounded-full border border-emerald-300/15 bg-emerald-300/10 px-3 py-1.5 text-xs font-semibold text-emerald-200">{activeWorkSessions?.length ?? 0} trabajando</span>
           </div>
           {activeWorkSessions?.length ? (
-            <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {activeWorkSessions.map((session) => {
-                const activeProfile = activeProfiles?.find(
-                  (item) => item.id === session.user_id,
-                );
-                const name =
-                  activeProfile?.full_name || "Usuario sin nombre";
-                return (
-                  <li
-                    key={session.user_id}
-                    className="flex items-center gap-3 rounded-xl border border-emerald-400/15 bg-emerald-400/[0.04] p-4"
-                  >
-                    <UserAvatar
-                      name={name}
-                      avatarUrl={activeProfile?.avatar_url}
-                    />
-                    <div className="min-w-0">
-                      <p className="truncate font-medium text-white">{name}</p>
-                      <p className="mt-1 text-xs text-gray-400">
-                        Entrada{" "}
-                        {new Intl.DateTimeFormat("es-MX", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        }).format(new Date(session.clock_in))}
-                      </p>
-                    </div>
-                    <span
-                      aria-label="En jornada"
-                      className="ml-auto h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-400"
-                    />
-                  </li>
-                );
+                const activeProfile = activeProfiles?.find((item) => item.id === session.user_id);
+                const name = activeProfile?.full_name || "Usuario";
+                return <li key={session.user_id} className="flex min-w-0 items-center gap-3 rounded-2xl border border-white/[.07] bg-white/[.025] p-3.5">
+                  <UserAvatar name={name} avatarUrl={activeProfile?.avatar_url} className="h-10 w-10" />
+                  <div className="min-w-0"><p className="truncate text-sm font-semibold text-slate-100">{name}</p><p className="mt-0.5 text-xs text-slate-500">En jornada desde {new Intl.DateTimeFormat("es-MX",{hour:"2-digit",minute:"2-digit"}).format(new Date(session.clock_in))}</p></div>
+                  <span className="ml-auto h-2 w-2 shrink-0 rounded-full bg-emerald-300" aria-label="En jornada" />
+                </li>;
               })}
             </ul>
-          ) : (
-            <p className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-gray-400">
-              Nadie ha registrado su entrada todavía.
-            </p>
-          )}
+          ) : <div className="mt-6 rounded-2xl border border-dashed border-white/10 p-8 text-center"><p className="text-sm font-medium text-slate-200">Todavía no hay jornadas activas</p><p className="mt-1 text-xs text-slate-500">Cuando un integrante registre su entrada, aparecerá aquí.</p><Link href="/horarios" className="mt-4 inline-flex text-sm font-semibold text-violet-200">Ir a mis jornadas →</Link></div>}
         </section>
-
-        <footer className="py-8 text-center text-xs text-gray-600">
-          CINEFLOW STUDIO · GESTIÓN DE PRODUCCIÓN AUDIOVISUAL
-        </footer>
+        <footer className="py-8 text-center text-[10px] font-medium uppercase tracking-[.2em] text-slate-600">CineFlow Studio · Producción conectada</footer>
       </section>
     </main>
   );
+
 }
 
 export default function Home({
