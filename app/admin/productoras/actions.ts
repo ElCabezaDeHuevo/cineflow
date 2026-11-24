@@ -74,18 +74,24 @@ export async function recordCompanyPayment(formData: FormData) {
   const method = String(formData.get("payment_method") ?? "transferencia");
   const reference = String(formData.get("reference") ?? "").trim().slice(0, 160);
   const notes = String(formData.get("notes") ?? "").trim().slice(0, 1000);
-  if (!organizationId || !Number.isFinite(amount) || amount < 0 || !["monthly", "annual"].includes(interval) || !["transferencia", "efectivo", "deposito", "otro"].includes(method)) fail("Datos del pago no válidos.");
+  if (!organizationId || !Number.isFinite(amount) || amount <= 0 || !["monthly", "annual"].includes(interval) || !["transferencia", "efectivo", "deposito", "otro"].includes(method)) fail("Datos del pago no válidos.");
   const { data: subscription, error: subError } = await admin.from("subscriptions")
     .select("*").eq("organization_id", organizationId).maybeSingle();
   if (subError || !subscription) fail(subError?.message ?? "La productora no tiene una suscripción.");
   const now = new Date();
-  const end = new Date(now);
+  const existingEnd = subscription.status === "active" && subscription.current_period_end
+    ? new Date(subscription.current_period_end)
+    : null;
+  const periodStart = existingEnd && existingEnd.getTime() > now.getTime()
+    ? existingEnd
+    : now;
+  const end = new Date(periodStart);
   if (interval === "annual") end.setFullYear(end.getFullYear() + 1);
   else end.setMonth(end.getMonth() + 1);
   const { data: payment, error: paymentError } = await admin.from("organization_manual_payments").insert({
     organization_id: organizationId, subscription_id: subscription.id, amount_mxn: amount,
     billing_interval: interval, paid_at: now.toISOString(),
-    period_start: now.toISOString().slice(0, 10), period_end: end.toISOString().slice(0, 10),
+    period_start: periodStart.toISOString().slice(0, 10), period_end: end.toISOString().slice(0, 10),
     payment_method: method, reference: reference || null, notes: notes || null, recorded_by: user.id,
   }).select("id").single();
   if (paymentError || !payment) fail(paymentError?.message ?? "No se pudo guardar el pago.");
@@ -129,14 +135,15 @@ export async function setCompanyAccess(formData: FormData) {
   const now = new Date().toISOString();
   const { data: sub, error } = await admin.from("subscriptions").select("*").eq("organization_id", organizationId).maybeSingle();
   if (error || !sub) fail(error?.message ?? "No existe una suscripción para esa productora.");
-  if (mode === "reactivate") {
-    const expiry = sub.current_period_end ?? sub.trial_end;
-    if (!expiry || new Date(expiry).getTime() <= Date.now()) {
-      fail("No se puede reactivar: la vigencia terminó. Registra primero un pago para renovar el servicio.");
-    }
+  const paidExpiry = sub.current_period_end ? new Date(sub.current_period_end) : null;
+  const trialExpiry = sub.trial_end ? new Date(sub.trial_end) : null;
+  const hasPaidTime = Boolean(paidExpiry && paidExpiry.getTime() > Date.now());
+  const hasTrialTime = Boolean(trialExpiry && trialExpiry.getTime() > Date.now());
+  if (mode === "reactivate" && !hasPaidTime && !hasTrialTime) {
+    fail("No se puede reactivar: la vigencia terminó. Registra primero un pago para renovar el servicio.");
   }
   const { error: updateError } = await admin.from("subscriptions").update({
-    status: mode === "suspend" ? "paused" : (sub.current_period_end ? "active" : "trialing"),
+    status: mode === "suspend" ? "paused" : (hasPaidTime ? "active" : "trialing"),
     access_suspended_at: mode === "suspend" ? now : null,
     updated_at: now,
   }).eq("id", sub.id);
