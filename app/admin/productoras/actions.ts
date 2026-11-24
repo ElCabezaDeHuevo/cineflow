@@ -129,8 +129,14 @@ export async function setCompanyAccess(formData: FormData) {
   const now = new Date().toISOString();
   const { data: sub, error } = await admin.from("subscriptions").select("*").eq("organization_id", organizationId).maybeSingle();
   if (error || !sub) fail(error?.message ?? "No existe una suscripción para esa productora.");
+  if (mode === "reactivate") {
+    const expiry = sub.current_period_end ?? sub.trial_end;
+    if (!expiry || new Date(expiry).getTime() <= Date.now()) {
+      fail("No se puede reactivar: la vigencia terminó. Registra primero un pago para renovar el servicio.");
+    }
+  }
   const { error: updateError } = await admin.from("subscriptions").update({
-    status: mode === "suspend" ? "paused" : "active",
+    status: mode === "suspend" ? "paused" : (sub.current_period_end ? "active" : "trialing"),
     access_suspended_at: mode === "suspend" ? now : null,
     updated_at: now,
   }).eq("id", sub.id);
