@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type CompanyRole = "owner" | "admin" | "producer" | "member" | "viewer";
 type Props = { name: string; email: string; avatarUrl?: string | null; isAdmin: boolean; companyRole: CompanyRole | null };
@@ -83,6 +83,21 @@ function NavItems({ pathname, isAdmin, companyRole, onNavigate }: {
 export default function AppNavigation({ name, email, avatarUrl, isAdmin, companyRole }: Props) {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
+
+  useEffect(() => {
+    if (!moreOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMoreOpen(false);
+    };
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [moreOpen]);
+
   if (pathname === "/login" || pathname.startsWith("/auth/")) return null;
   const initials = name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "CF";
   const primary = [
@@ -112,7 +127,7 @@ export default function AppNavigation({ name, email, avatarUrl, isAdmin, company
           <span aria-hidden="true">{item.icon}</span><small>{item.label}</small>
         </Link>;
       })}
-      <button type="button" onClick={() => setMoreOpen((open) => !open)} aria-expanded={moreOpen} aria-controls="cf-more-menu">
+      <button type="button" onClick={() => setMoreOpen((open) => !open)} aria-label={moreOpen ? "Cerrar más secciones" : "Abrir más secciones"} aria-haspopup="dialog" aria-expanded={moreOpen} aria-controls="cf-more-menu">
         <span aria-hidden="true">•••</span><small>Más</small>
       </button>
     </nav>
