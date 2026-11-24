@@ -69,10 +69,12 @@ async function HomeContent({
   const displayName =
     profile?.full_name || user?.email?.split("@")[0] || "Invitado";
   const isAdmin = isCineflowAdmin(user);
-  const { data: companyMemberships, error: companyMembershipsError } = await supabase
-    .from("organization_members")
-    .select("role")
-    .eq("user_id", user.id);
+  const { data: companyMemberships, error: companyMembershipsError } = isAdmin
+    ? { data: [], error: null }
+    : await supabase
+        .from("organization_members")
+        .select("role")
+        .eq("user_id", user.id);
   if (companyMembershipsError) {
     throw new Error(`No se pudo determinar tu rol en la productora: ${companyMembershipsError.message}`);
   }
