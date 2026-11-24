@@ -12,9 +12,25 @@ export async function updateProfile(formData: FormData) {
   const avatarUrl = String(formData.get("avatar_url") ?? "").trim();
   const bio = String(formData.get("bio") ?? "").trim();
   if (!fullName) redirect("/perfil?error=El%20nombre%20es%20obligatorio");
-  const { error } = await supabase.from("profiles").upsert({ id: user.id, full_name: fullName, avatar_url: avatarUrl, bio, updated_at: new Date().toISOString() });
-  if (error) redirect(`/perfil?error=${encodeURIComponent(error.message)}`);
-  await supabase.auth.updateUser({ data: { full_name: fullName, avatar_url: avatarUrl } });
+  const { error } = await supabase.from("profiles")
+    .upsert({
+      id: user.id,
+      full_name: fullName,
+      avatar_url: avatarUrl,
+      bio,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "id" })
+    .select("id")
+    .single();
+  if (error) {
+    redirect(`/perfil?error=${encodeURIComponent("No se pudo guardar el perfil: " + error.message)}`);
+  }
+  const { error: metadataError } = await supabase.auth.updateUser({
+    data: { full_name: fullName, avatar_url: avatarUrl },
+  });
+  if (metadataError) {
+    redirect("/perfil?success=" + encodeURIComponent("Tus datos del perfil se guardaron, pero no se pudo sincronizar la información de la cuenta: " + metadataError.message));
+  }
   revalidatePath("/");
   revalidatePath("/perfil");
   revalidatePath("/proyectos", "layout");
