@@ -43,7 +43,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         .maybeSingle()
     : { data: null };
   const isAdmin = isCineflowAdmin(user);
-  const { data: companyMemberships } = user ? await supabase.from("organization_members").select("role").eq("user_id", user.id) : { data: [] };
+  const { data: companyMemberships } = user && !isAdmin ? await supabase.from("organization_members").select("role").eq("user_id", user.id) : { data: [] };
   const companyRolePriority: Record<string, number> = { owner: 5, admin: 4, producer: 3, member: 2, viewer: 1 };
   const companyRole = (companyMemberships ?? []).map((membership) => membership.role).sort((a, b) => (companyRolePriority[b] ?? 0) - (companyRolePriority[a] ?? 0))[0] ?? null;
   const { data: navProfile } = user ? await supabase.from("profiles").select("full_name,avatar_url").eq("id", user.id).maybeSingle() : { data: null };
