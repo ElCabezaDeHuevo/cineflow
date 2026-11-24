@@ -48,13 +48,20 @@ export default async function UserProfileDetailPage({
     );
   }
 
+  const { data: myOrganizations } = await supabase.from("organization_members")
+    .select("organization_id").eq("user_id", user.id);
+  const organizationIds = (myOrganizations ?? []).map((item) => item.organization_id);
+  const { data: sharedMembership } = organizationIds.length
+    ? await supabase.from("organization_members").select("user_id")
+        .eq("user_id", id).in("organization_id", organizationIds).limit(1).maybeSingle()
+    : { data: null };
+  const canViewTeamProfile = isAdmin || id === user.id || Boolean(sharedMembership);
+
   const [{ data: profile, error: profileError }, targetUserResult, notesResult] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("id, full_name, avatar_url, bio")
-      .eq("id", id)
-      .maybeSingle(),
-    isAdmin && admin
+    canViewTeamProfile
+      ? supabase.from("profiles").select("id, full_name, avatar_url, bio").eq("id", id).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+    canViewTeamProfile && admin
       ? admin.auth.admin.getUserById(id)
       : Promise.resolve({ data: null, error: null }),
     isAdmin && admin
@@ -68,7 +75,7 @@ export default async function UserProfileDetailPage({
   if (profileError) {
     throw new Error(`No se pudo cargar el perfil: ${profileError.message}`);
   }
-  if (!profile) notFound();
+  if (!canViewTeamProfile || !profile) notFound();
 
   const targetUser = targetUserResult.data?.user ?? null;
   const notes = notesResult.data ?? [];
