@@ -10,7 +10,7 @@ function uuidValue(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 function revalidateProduction(projectId: string) {
-  revalidateProduction(projectId);
+  revalidatePath("/rodaje");
   revalidatePath("/calendario");
   revalidatePath("/timeline");
   revalidatePath("/proyectos");
@@ -94,6 +94,11 @@ export async function unscheduleFilmScene(formData: FormData) {
   const sceneId = textValue(formData, "scene_id");
   const supabase = await projectAccess(projectId);
   if (!uuidValue(shootDayId) || !uuidValue(sceneId)) throw new Error("Escena o jornada no válida.");
+  const [{ data: day }, { data: scene }] = await Promise.all([
+    supabase.from("shoot_days").select("id,project_id").eq("id", shootDayId).eq("project_id", projectId).maybeSingle(),
+    supabase.from("film_scenes").select("id,project_id").eq("id", sceneId).eq("project_id", projectId).maybeSingle(),
+  ]);
+  if (!day || !scene) throw new Error("La escena y la jornada deben pertenecer al mismo proyecto.");
   const { error } = await supabase.from("shoot_day_scenes").delete().eq("shoot_day_id", shootDayId).eq("scene_id", sceneId);
   if (error) throw new Error(error.message);
   const { data: remaining, error: remainingError } = await supabase.from("shoot_day_scenes").select("shoot_day_id").eq("scene_id", sceneId).limit(1);
