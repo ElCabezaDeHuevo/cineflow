@@ -30,7 +30,13 @@ export default async function CompaniesAdmin({ searchParams }: { searchParams: P
   const subByOrg = new Map((subscriptions ?? []).map((x) => [x.organization_id, x]));
   const latestPaymentByOrg = new Map<string, { amount_mxn: number; paid_at: string; billing_interval: string; payment_method: string; reference: string | null }>();
   for (const payment of payments ?? []) if (!latestPaymentByOrg.has(payment.organization_id)) latestPaymentByOrg.set(payment.organization_id, payment);
-  const activeCount = (subscriptions ?? []).filter((x) => x.status === "active" || x.status === "trialing").length;
+  const now = Date.now();
+  const isSubscriptionValid = (sub: (typeof subscriptions extends (infer T)[] | null ? T : never) | undefined) => {
+    if (!sub || !["active", "trialing"].includes(sub.status)) return false;
+    const expiry = sub.status === "trialing" ? sub.trial_end : (sub.current_period_end ?? sub.trial_end);
+    return Boolean(expiry && new Date(expiry).getTime() > now);
+  };
+  const activeCount = (subscriptions ?? []).filter((x) => isSubscriptionValid(x)).length;
   return (
     <main className="cf-cinematic-page cf-bg-admin min-h-screen bg-[#0b0c10] text-white"><section className="mx-auto max-w-7xl p-6 md:p-10">
       <Link href="/admin" className="text-sm text-violet-300">← Panel técnico</Link>
@@ -57,7 +63,9 @@ export default async function CompaniesAdmin({ searchParams }: { searchParams: P
           const owner = ownerMembership ? accountById.get(ownerMembership.user_id) : null;
           const latest = latestPaymentByOrg.get(company.id);
           const status = sub?.status ?? "sin_suscripcion";
-          const statusLabel = status === "trialing" ? "Prueba gratuita" : status === "active" ? "Pagada / activa" : status === "paused" ? "Suspendida" : status === "past_due" ? "Pago pendiente" : status;
+          const expiry = status === "trialing" ? sub?.trial_end : (sub?.current_period_end ?? sub?.trial_end);
+          const validUntil = Boolean(expiry && new Date(expiry).getTime() > now);
+          const statusLabel = !sub ? "Sin suscripción" : !validUntil && ["active", "trialing"].includes(status) ? "Vencida" : status === "trialing" || (status === "active" && !sub?.current_period_end && Boolean(sub?.trial_end)) ? "Prueba gratuita" : status === "active" ? "Pagada / activa" : status === "paused" ? "Suspendida" : status === "past_due" ? "Pago pendiente" : status;
           return <article key={company.id} className="rounded-2xl border border-white/10 bg-[#14151c] p-6">
             <div className="flex flex-wrap items-start justify-between gap-4"><div><h2 className="text-xl font-semibold">{company.name}</h2><p className="mt-1 text-sm text-gray-400">{owner?.email ?? "Sin dueño asignado"} · {company.slug}</p><p className="mt-1 text-xs text-gray-500">Alta: {dateLabel(company.created_at)}</p></div><span className="rounded-full border border-white/10 px-3 py-1 text-xs">{statusLabel}</span></div>
             <div className="mt-5 grid gap-3 sm:grid-cols-3">
