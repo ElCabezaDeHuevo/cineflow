@@ -9,6 +9,13 @@ function textValue(data: FormData, key: string) {
 function uuidValue(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
+function revalidateProduction(projectId: string) {
+  revalidateProduction(projectId);
+  revalidatePath("/calendario");
+  revalidatePath("/timeline");
+  revalidatePath("/proyectos");
+  revalidatePath(`/proyectos/seguimiento/${projectId}`);
+}
 async function projectAccess(projectId: string, write = true) {
   if (!uuidValue(projectId)) throw new Error("Proyecto no válido.");
   const supabase = await createSupabaseServerClient();
@@ -29,20 +36,35 @@ export async function createFilmScene(formData: FormData) {
   const location = textValue(formData, "location").slice(0, 180);
   const pages = Number(textValue(formData, "page_count") || "0");
   const color = textValue(formData, "color_tag");
+  const notes = textValue(formData, "notes").slice(0, 2000);
   if (!sceneNumber || !heading || !["INT","EXT","INT/EXT"].includes(intExt) || !["DÍA","NOCHE","AMANECER","ATARDECER"].includes(dayNight) || !Number.isFinite(pages) || pages < 0 || pages > 100 || !["yellow","red","blue","green","white"].includes(color)) throw new Error("Revisa los datos de la escena.");
-  const { error } = await supabase.from("film_scenes").insert({ project_id: projectId, scene_number: sceneNumber, heading, int_ext: intExt, day_night: dayNight, location, page_count: pages, color_tag: color });
+  const { error } = await supabase.from("film_scenes").insert({ project_id: projectId, scene_number: sceneNumber, heading, int_ext: intExt, day_night: dayNight, location, page_count: pages, color_tag: color, notes });
   if (error) throw new Error(error.message);
-  revalidatePath("/rodaje");
+  revalidateProduction(projectId);
 }
 
 export async function createShootDay(formData: FormData) {
   const projectId = textValue(formData, "project_id");
   const supabase = await projectAccess(projectId);
   const number = Number(textValue(formData, "shoot_day_number"));
+  const shootDate = textValue(formData, "shoot_date");
+  const callTime = textValue(formData, "call_time");
+  const wrapTime = textValue(formData, "wrap_time");
   if (!Number.isInteger(number) || number < 1 || number > 365) throw new Error("El número de jornada debe estar entre 1 y 365.");
-  const { error } = await supabase.from("shoot_days").insert({ project_id: projectId, shoot_day_number: number, shoot_date: textValue(formData, "shoot_date") || null, location: textValue(formData, "location").slice(0,180), notes: textValue(formData, "notes").slice(0,2000) });
+  if (shootDate && !/^\\d{4}-\\d{2}-\\d{2}$/.test(shootDate)) throw new Error("La fecha de rodaje no es válida.");
+  if (callTime && !/^([01]\\d|2[0-3]):[0-5]\\d$/.test(callTime)) throw new Error("La hora de llamado no es válida.");
+  if (wrapTime && !/^([01]\\d|2[0-3]):[0-5]\\d$/.test(wrapTime)) throw new Error("La hora de cierre no es válida.");
+  const { error } = await supabase.from("shoot_days").insert({
+    project_id: projectId,
+    shoot_day_number: number,
+    shoot_date: shootDate || null,
+    call_time: callTime || null,
+    wrap_time: wrapTime || null,
+    location: textValue(formData, "location").slice(0,180),
+    notes: textValue(formData, "notes").slice(0,2000),
+  });
   if (error) throw new Error(error.message);
-  revalidatePath("/rodaje");
+  revalidateProduction(projectId);
 }
 
 export async function scheduleFilmScene(formData: FormData) {
@@ -63,7 +85,7 @@ export async function scheduleFilmScene(formData: FormData) {
     await supabase.from("shoot_day_scenes").delete().eq("shoot_day_id", shootDayId).eq("scene_id", sceneId);
     throw new Error(`No se pudo actualizar el estado de la escena: ${statusError.message}`);
   }
-  revalidatePath("/rodaje");
+  revalidateProduction(projectId);
 }
 
 export async function unscheduleFilmScene(formData: FormData) {
@@ -80,5 +102,5 @@ export async function unscheduleFilmScene(formData: FormData) {
     const { error: statusError } = await supabase.from("film_scenes").update({ status: "unscheduled" }).eq("id", sceneId).eq("project_id", projectId);
     if (statusError) throw new Error(`Se quitó la escena, pero no se pudo actualizar su estado: ${statusError.message}`);
   }
-  revalidatePath("/rodaje");
+  revalidateProduction(projectId);
 }
