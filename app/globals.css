@@ -1008,3 +1008,97 @@ body {
     backdrop-filter: blur(10px) saturate(120%);
   }
 }
+
+
+/* CineFlow luminous glass refresh — consistent across all authenticated modules */
+:root {
+  --cf-bg: #101827;
+  --cf-surface: #202b40;
+  --cf-surface-raised: #27344b;
+  --cf-surface-hover: #30405a;
+  --cf-border: rgb(205 218 255 / 20%);
+  --cf-border-strong: rgb(205 218 255 / 30%);
+  --cf-text: #fbfcff;
+  --cf-muted: #c2cce0;
+  --cf-subtle: #a4b1ca;
+}
+.cf-app-frame > main {
+  background-color: #101827;
+  background-image:
+    linear-gradient(115deg, rgb(10 17 31 / .76), rgb(13 22 39 / .62) 52%, rgb(10 17 31 / .74)),
+    radial-gradient(ellipse at 14% 5%, rgb(139 92 246 / .22), transparent 38rem),
+    radial-gradient(ellipse at 88% 18%, rgb(34 211 238 / .15), transparent 34rem),
+    url("https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=2200&q=80");
+  background-position: center;
+  background-size: cover;
+  background-attachment: fixed;
+}
+.cf-app-frame main :is(article, aside, .cf-card, .cf-glass, .cf-dashboard-panel, .cf-metric-card) {
+  border-color: rgb(210 222 255 / 22%) !important;
+  background: linear-gradient(145deg, rgb(43 54 77 / 76%), rgb(25 35 54 / 70%)) !important;
+  box-shadow: 0 14px 38px rgb(0 0 0 / 16%), inset 0 1px 0 rgb(255 255 255 / 9%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+}
+.cf-app-frame main :is(article, aside, .cf-card, .cf-glass, .cf-dashboard-panel, .cf-metric-card):hover {
+  border-color: rgb(190 174 255 / 38%) !important;
+}
+.cf-app-frame main :is([class*="rounded-xl"][class*="border"], [class*="rounded-2xl"][class*="border"]) {
+  border-color: rgb(205 218 255 / 19%);
+  background-color: rgb(35 46 67 / 58%);
+}
+.cf-app-frame main :is(h1, h2, h3, h4, strong) { color: #fbfcff; }
+.cf-app-frame main :is(p, li, label, small, .text-gray-400, .text-zinc-400) { color: #c2cce0; }
+.cf-app-frame main :is(.text-gray-500, .text-zinc-500) { color: #a4b1ca !important; }
+.cf-app-frame main :is(input, select, textarea) {
+  border-color: rgb(205 218 255 / 26%);
+  background-color: rgb(17 27 44 / 78%);
+}
+.cf-sidebar {
+  background: rgb(20 29 46 / 91%);
+  border-right-color: rgb(205 218 255 / 18%);
+  -webkit-backdrop-filter: blur(24px) saturate(135%);
+  backdrop-filter: blur(24px) saturate(135%);
+}
+.cf-mobile-header, .cf-mobile-nav {
+  background: rgb(20 29 46 / 92%);
+  border-color: rgb(205 218 255 / 19%);
+  -webkit-backdrop-filter: blur(22px) saturate(135%);
+  backdrop-filter: blur(22px) saturate(135%);
+}
+.cf-account, .cf-more-sheet {
+  background: rgb(35 46 67 / 82%);
+  border-color: rgb(205 218 255 / 20%);
+}
+.cf-nav-link { color: #c2cce0; }
+.cf-nav-link:hover { background: rgb(255 255 255 / 9%); color: #fff; }
+.cf-nav-link.is-active {
+  background: linear-gradient(100deg, rgb(139 110 245 / 31%), rgb(139 110 245 / 14%));
+  border-color: rgb(190 174 255 / 34%);
+}
+.cf-dashboard .cf-metric-card,
+.cf-dashboard .cf-quick-link {
+  background: linear-gradient(145deg, rgb(53 65 91 / 67%), rgb(30 42 63 / 58%)) !important;
+  border-color: rgb(220 229 255 / 24%) !important;
+  box-shadow: 0 12px 32px rgb(0 0 0 / 13%), inset 0 1px 0 rgb(255 255 255 / 11%);
+  -webkit-backdrop-filter: blur(19px) saturate(145%);
+  backdrop-filter: blur(19px) saturate(145%);
+}
+.cf-dashboard .cf-dashboard-panel {
+  background: linear-gradient(145deg, rgb(43 55 79 / 78%), rgb(27 39 60 / 72%)) !important;
+  border-color: rgb(220 229 255 / 25%) !important;
+}
+@media (max-width: 767px) {
+  .cf-app-frame > main { background-attachment: scroll; }
+  .cf-app-frame main :is(article, aside, .cf-card, .cf-glass, .cf-dashboard-panel, .cf-metric-card) {
+    -webkit-backdrop-filter: blur(13px) saturate(135%);
+    backdrop-filter: blur(13px) saturate(135%);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .cf-app-frame main :is(article, aside, .cf-card, .cf-glass, .cf-dashboard-panel, .cf-metric-card) {
+    background: rgb(28 39 59 / 96%) !important;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
