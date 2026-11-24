@@ -84,7 +84,6 @@ export default async function UserProfileDetailPage({
   if (!canViewTeamProfile || !profile) notFound();
 
   const targetUser = targetUserResult.data?.user ?? null;
-  const targetMetadata = targetUser ? { ...targetUser.user_metadata, ...targetUser.app_metadata } : {};
   const notes = notesResult.data ?? [];
   const notesError = notesResult.error;
 
