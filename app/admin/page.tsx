@@ -62,6 +62,7 @@ export default async function AdminDashboard({
     { count: accountCount, error: accountsError },
     { data: deletionRequests, error: deletionRequestsError },
     { data: passwordAuditRows, error: passwordAuditError },
+    { data: permanentDeletionRows, error: permanentDeletionError },
   ] = await Promise.all([
     admin
       .from("error_reports")
@@ -79,6 +80,9 @@ export default async function AdminDashboard({
     admin.from("organization_audit_log")
       .select("id,organization_id,actor_id,action,target_id,metadata,created_at")
       .in("action", ["user_password_reset_requested", "user_password_changed_after_reset"])
+      .order("created_at", { ascending: false }).limit(100),
+    admin.from("cineflow_admin_account_audit")
+      .select("id,actor_id,target_user_id,target_email,target_name,action,reason,metadata,created_at")
       .order("created_at", { ascending: false }).limit(100),
   ]);
   const userIds = [...new Set([
@@ -185,6 +189,50 @@ export default async function AdminDashboard({
           </p>
         </header>
 
+        <section className="mb-8 overflow-hidden rounded-2xl border border-rose-400/20 bg-[#14151c]">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 p-5">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-rose-300">Seguridad de cuentas</p>
+              <h2 className="mt-1 text-xl font-semibold">Historial de eliminaciones permanentes</h2>
+              <p className="mt-1 text-sm text-gray-400">Registro administrativo, motivo y respaldo conservado para restauración manual.</p>
+            </div>
+            <span className="rounded-full border border-rose-300/20 bg-rose-300/10 px-3 py-1 text-sm text-rose-100">{permanentDeletionRows?.length ?? 0} registros</span>
+          </div>
+          {permanentDeletionError ? (
+            <p className="p-5 text-sm text-rose-200">No se pudo cargar el historial: {permanentDeletionError.message}</p>
+          ) : permanentDeletionRows?.length ? (
+            <div className="divide-y divide-white/10">
+              {permanentDeletionRows.map((event) => {
+                const metadata = (event.metadata ?? {}) as Record<string, unknown>;
+                const status = String(metadata.status ?? "registrado");
+                const statusLabel = status === "completed" ? "Eliminación completada" : status === "failed" ? "Eliminación fallida" : "Registro pendiente";
+                const actorName = String(metadata.actor_name ?? "Administrador");
+                return (
+                  <article key={event.id} className="grid gap-3 p-5 md:grid-cols-[1fr_auto]">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-semibold">{event.target_name || event.deleted_email || event.target_email || "Cuenta sin nombre"}</h3>
+                        <span className={status === "completed" ? "rounded-full bg-emerald-400/10 px-2.5 py-1 text-xs text-emerald-200" : "rounded-full bg-amber-400/10 px-2.5 py-1 text-xs text-amber-100"}>{statusLabel}</span>
+                      </div>
+                      <p className="mt-1 break-all text-sm text-gray-400">{event.target_email || "Correo no disponible"}</p>
+                      <p className="mt-2 text-sm text-gray-300">Realizado por <strong className="text-gray-100">{actorName}</strong></p>
+                      <div className="mt-3 rounded-lg border border-white/10 bg-black/20 p-3">
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Motivo</p>
+                        <p className="mt-1 whitespace-pre-wrap text-sm text-gray-200">{event.reason || "No se indicó motivo."}</p>
+                      </div>
+                      {typeof metadata.failure === "string" ? <p className="mt-2 text-xs text-rose-200">Error: {metadata.failure}</p> : null}
+                      <p className="mt-2 text-xs text-gray-500">ID de auditoría: {event.id}</p>
+                    </div>
+                    <div className="text-left text-xs text-gray-400 md:text-right">{dateTime(event.created_at)}</div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="p-6 text-sm text-gray-400">Todavía no hay eliminaciones permanentes registradas.</p>
+          )}
+        </section>
+
         <section className="mb-8 overflow-hidden rounded-2xl border border-amber-400/20 bg-[#14151c]">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 p-5">
             <div>
@@ -239,7 +287,7 @@ export default async function AdminDashboard({
           )}
         </section>
 
-        {(reportsError || assignmentsError || accountsError || profilesError || deletionRequestsError || passwordAuditError || auditOrganizationsError) && (
+        {(reportsError || assignmentsError || accountsError || profilesError || deletionRequestsError || passwordAuditError || auditOrganizationsError || permanentDeletionError) && (
           <p className="mb-6 rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-200">
             No se pudo cargar toda la información:{" "}
             {reportsError?.message ??
