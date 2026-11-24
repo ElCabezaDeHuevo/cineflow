@@ -50,92 +50,30 @@ export async function GET(request: NextRequest) {
     return loginError(request, "El permiso de esta invitación no es válido.");
   }
 
-  // Claim the invitation before creating membership. This makes concurrent
-  // callbacks mutually exclusive and prevents a losing request from reverting
-  // metadata written by the request that actually accepted the invitation.
-  const acceptedAt = new Date().toISOString();
-  const { data: claimedInvitation, error: claimError } = await admin
-    .from("organization_invitations")
-    .update({ accepted_at: acceptedAt, token_hash: "" })
-    .eq("id", invitation.id)
-    .eq("token_hash", tokenHash)
-    .is("accepted_at", null)
-    .select("id")
-    .maybeSingle();
-  if (claimError || !claimedInvitation) {
-    return loginError(request, claimError
-      ? "No se pudo completar la aceptación. Contacta al administrador."
-      : "Esta invitación ya fue utilizada.");
-  }
-
-  const releaseClaim = async () => {
-    await admin.from("organization_invitations")
-      .update({ accepted_at: null, token_hash: tokenHash })
-      .eq("id", invitation.id)
-      .eq("accepted_at", acceptedAt)
-      .eq("token_hash", "");
-  };
-
-  const { error: memberError } = await admin.from("organization_members").insert({
-    organization_id: invitation.organization_id,
-    user_id: user.id,
-    role: invitation.role,
-    invited_by: invitation.invited_by,
+  const { data: organizationId, error: acceptanceError } = await admin.rpc("accept_organization_invitation", {
+    p_invitation_id: invitation.id,
+    p_token_hash: tokenHash,
+    p_user_id: user.id,
+    p_email: user.email,
   });
-  let membershipInserted = !memberError;
-  if (memberError) {
-    if (memberError.code !== "23505") {
-      await releaseClaim();
-      return loginError(request, "No se pudo activar tu acceso. Contacta al administrador.");
-    }
-
-    // A duplicate membership must never silently overwrite an existing role.
-    const { data: existingMembership, error: existingMembershipError } = await admin
-      .from("organization_members")
-      .select("role")
-      .eq("organization_id", invitation.organization_id)
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (existingMembershipError || !existingMembership || existingMembership.role !== invitation.role) {
-      await releaseClaim();
-      return loginError(request, "Esta cuenta ya pertenece a la productora con otro permiso. Contacta al administrador.");
-    }
-    membershipInserted = false;
+  if (acceptanceError || !organizationId) {
+    await supabase.auth.signOut();
+    return loginError(request, acceptanceError?.message ?? "No se pudo aceptar la invitación.");
   }
 
   const previousAppMetadata = user.app_metadata ?? {};
   const { error: metadataError } = await admin.auth.admin.updateUserById(user.id, {
-    app_metadata: { ...previousAppMetadata, organization_id: invitation.organization_id },
+    app_metadata: { ...previousAppMetadata, organization_id: organizationId },
   });
   if (metadataError) {
-    if (membershipInserted) {
-      await admin.from("organization_members").delete()
-        .eq("organization_id", invitation.organization_id).eq("user_id", user.id);
-    }
-    await releaseClaim();
-    return loginError(request, "No se pudo actualizar el acceso de la cuenta. Contacta al administrador.");
+    // Membership and audit are already committed atomically. Keep the session
+    // valid and let the user continue; organization_id is only a convenience
+    // selector, never an authorization source.
+    console.error("No se pudo actualizar organization_id de la sesión:", metadataError.message);
   }
 
   const { data: org } = await admin.from("organizations").select("name")
-    .eq("id", invitation.organization_id).maybeSingle();
-  const { error: auditError } = await admin.from("organization_audit_log").insert({
-    organization_id: invitation.organization_id,
-    actor_id: user.id,
-    action: "invitation_accepted",
-    target_type: "user",
-    target_id: user.id,
-    metadata: { email: user.email, role: invitation.role },
-  });
-  if (auditError) {
-    await admin.auth.admin.updateUserById(user.id, { app_metadata: previousAppMetadata });
-    if (membershipInserted) {
-      await admin.from("organization_members").delete()
-        .eq("organization_id", invitation.organization_id).eq("user_id", user.id);
-    }
-    await releaseClaim();
-    return loginError(request, "No se pudo registrar la aceptación. Contacta al administrador.");
-  }
+    .eq("id", organizationId).maybeSingle();
 
   const destination = new URL("/auth/complete-invitation", request.url);
   destination.searchParams.set("welcome", org?.name ?? "CineFlow");
