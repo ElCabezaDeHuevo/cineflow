@@ -63,11 +63,11 @@ export async function updateCompanyMemberEmail(formData: FormData) {
   const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !publishableKey) fail("No está configurada la verificación de identidad.");
 
-  const verifier = createClient(supabaseUrl, publishableKey, {
+  const verifier = createClient(supabaseUrl!, publishableKey!, {
     auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
   });
   const { error: verificationError } = await verifier.auth.signInWithPassword({
-    email: actor.email,
+    email: actor.email!,
     password,
   });
   await verifier.auth.signOut();
