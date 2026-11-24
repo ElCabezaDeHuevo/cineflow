@@ -32,7 +32,10 @@ export default async function ShootingBoard({ searchParams }: { searchParams: Pr
     supabase.from("film_scenes").select("id,project_id,scene_number,heading,int_ext,day_night,location,page_count,status,color_tag,notes").eq("project_id",projectId).order("scene_number"),
     supabase.from("shoot_days").select("id,project_id,shoot_day_number,shoot_date,call_time,wrap_time,location,notes").eq("project_id",projectId).order("shoot_day_number"),
   ]) : [{data:[],error:null},{data:[],error:null}];
-  const { data: scheduled } = projectId && days?.length ? await supabase.from("shoot_day_scenes").select("shoot_day_id,scene_id,sort_order").in("shoot_day_id",days.map((d)=>d.id)).order("sort_order") : {data:[] as {shoot_day_id:string;scene_id:string;sort_order:number}[]};
+  const { data: scheduled, error: scheduledError } = projectId && days?.length
+    ? await supabase.from("shoot_day_scenes").select("shoot_day_id,scene_id,sort_order").in("shoot_day_id",days.map((d)=>d.id)).order("sort_order")
+    : {data:[] as {shoot_day_id:string;scene_id:string;sort_order:number}[],error:null};
+
   const sceneById = new Map((scenes ?? []).map((s)=>[s.id,s]));
   const scheduledIds = new Set((scheduled ?? []).map((s)=>s.scene_id));
   const unscheduled = (scenes ?? []).filter((s)=>!scheduledIds.has(s.id) && s.status!=="shot" && s.status!=="omitted");
@@ -44,7 +47,7 @@ export default async function ShootingBoard({ searchParams }: { searchParams: Pr
         <header className="my-7 flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs uppercase tracking-[.2em] text-violet-300">CineFlow / Producción</p><h1 className="mt-2 text-3xl font-bold">Planificador de rodaje</h1><p className="mt-2 text-sm text-gray-400">Escenas sin programar y jornadas de filmación por proyecto.</p></div>
         <form action="/rodaje" className="flex items-center gap-2"><label className="text-xs text-gray-400" htmlFor="project">Proyecto</label><select id="project" name="project" defaultValue={projectId ?? ""} className="rounded-lg border border-white/10 bg-[#171923] px-3 py-2 text-sm">{(projects ?? []).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select><button className="rounded-lg bg-violet-500 px-3 py-2 text-sm font-semibold">Abrir</button></form></header>
         {!selectedProject ? <div className="rounded-2xl border border-white/10 bg-[#14151c] p-8 text-center"><p className="text-gray-300">Todavía no tienes proyectos disponibles.</p><Link href="/proyectos" className="mt-3 inline-flex text-violet-300">Crear o unirte a un proyecto →</Link></div> : <>
-          {(sceneError || dayError) && <p role="alert" className="mb-4 rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-200">No se pudo cargar toda la información del rodaje.</p>}
+          {(sceneError || dayError || scheduledError) && <p role="alert" className="mb-4 rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-200">No se pudo cargar toda la información del rodaje. Actualiza la página o revisa los permisos del proyecto.</p>}
           <div className="grid gap-5 xl:grid-cols-[330px_1fr]">
             <aside className="cf-dashboard-panel p-4 sm:p-5">
               <div className="flex items-center justify-between"><h2 className="font-semibold">Escenas sin programar</h2><span className="rounded-full bg-white/10 px-2 py-1 text-xs">{unscheduled.length}</span></div>
