@@ -223,7 +223,7 @@ async function HomeContent({
           </div>
         )}
 
-        <header className="cf-dashboard-hero mb-8 overflow-hidden rounded-[28px] border border-white/10 p-6 sm:p-8 xl:p-10">
+        <header className="cf-dashboard-hero cf-motion-hero mb-8 overflow-hidden rounded-[28px] border border-white/10 p-6 sm:p-8 xl:p-10">
           <div className="relative z-10 flex flex-col justify-between gap-8 xl:flex-row xl:items-end">
             <div className="max-w-2xl">
               <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-violet-300/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.2em] text-violet-200">
@@ -266,13 +266,13 @@ async function HomeContent({
 
         <PendingLogbookNotifications tasks={pendingLogbookTasks} signInKey={user.last_sign_in_at ?? user.id} />
 
-        <section className="mb-9" aria-label="Indicadores de producción">
+        <section className="cf-motion-section cf-motion-delay-1 mb-9" aria-label="Indicadores de producción">
           <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
             <div><p className="cf-eyebrow">Visión general</p><h2 className="mt-1 text-xl font-semibold">Tu producción de un vistazo</h2></div>
             <Link href="/estadisticas" className="text-sm font-medium text-violet-200 hover:text-white">Ver estadísticas completas →</Link>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <article className="cf-metric-card">
+            <article className="cf-metric-card cf-motion-card">
               <div className="flex items-center justify-between"><span className="cf-metric-icon">▣</span><span className="cf-metric-tag">Cartera</span></div>
               <p className="mt-5 text-sm text-slate-400">Proyectos visibles</p>
               <p className="mt-1 text-4xl font-bold tracking-tight">{String(panel.total).padStart(2,"0")}</p>
@@ -299,8 +299,8 @@ async function HomeContent({
           </div>
         </section>
 
-        <section className="mb-9 grid gap-5 xl:grid-cols-[1.3fr_.9fr]">
-          <article className="cf-dashboard-panel p-5 sm:p-7">
+        <section className="cf-motion-section cf-motion-delay-2 mb-9 grid gap-5 xl:grid-cols-[1.3fr_.9fr]">
+          <article className="cf-dashboard-panel cf-motion-panel p-5 sm:p-7">
             <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
               <div><p className="cf-eyebrow">Flujo de trabajo</p><h2 className="mt-1 text-xl font-semibold">Etapas de producción</h2><p className="mt-1 text-sm text-slate-400">Distribución de proyectos y tareas por fase.</p></div>
               <Link href="/timeline" className="text-sm font-medium text-violet-200">Abrir línea de tiempo →</Link>
@@ -334,7 +334,7 @@ async function HomeContent({
           </article>
         </section>
 
-        <section id="proyectos" className="mb-9">
+        <section id="proyectos" className="cf-motion-section cf-motion-delay-3 mb-9">
           <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
             <div><p className="cf-eyebrow">Actividad reciente</p><h2 className="mt-1 text-xl font-semibold">Proyectos recientes</h2><p className="mt-1 text-sm text-slate-400">Continúa donde dejaste cada producción.</p></div>
             <Link href="/proyectos" className="text-sm font-medium text-violet-200 hover:text-white">Ver todos los proyectos →</Link>
@@ -342,7 +342,7 @@ async function HomeContent({
           <RecentProjects userId={user.id} projects={dashboardProjects} signedIn />
         </section>
 
-        <section id="mi-jornada" className="cf-dashboard-panel flex flex-wrap items-center justify-between gap-5 p-5 sm:p-7">
+        <section id="mi-jornada" className="cf-dashboard-panel cf-motion-section cf-motion-delay-4 flex flex-wrap items-center justify-between gap-5 p-5 sm:p-7">
           <div className="flex items-center gap-4">
             <span className={ownActiveSession ? "flex h-12 w-12 items-center justify-center rounded-2xl border border-emerald-300/20 bg-emerald-300/10 text-xl text-emerald-200" : "flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[.04] text-xl text-slate-300"} aria-hidden="true">◷</span>
             <div><p className="cf-eyebrow">Control personal</p><h2 className="mt-1 text-lg font-semibold">Mi jornada</h2><p className="mt-1 text-sm text-slate-400">{ownActiveSession ? `Tu jornada está abierta desde las ${new Intl.DateTimeFormat("es-MX",{hour:"2-digit",minute:"2-digit"}).format(new Date(ownActiveSession.clock_in))}.` : "Todavía no tienes una jornada activa."}</p></div>
