@@ -239,7 +239,7 @@ async function HomeContent({
               </p>
               <p className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.04] px-3 py-1.5 text-xs text-slate-300">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
-                {companyRole === "owner" ? "Dueño de productora" : companyRole === "admin" ? "Administrador de productora" : companyRole === "producer" ? "Productor" : companyRole === "member" ? "Colaborador" : companyRole === "viewer" ? "Acceso de solo lectura" : isAdmin ? "Administrador global" : "Espacio personal"}
+                {isAdmin ? "Dueño de CineFlow" : companyRole === "owner" ? "Dueño de productora" : companyRole === "admin" ? "Administrador de productora" : companyRole === "producer" ? "Productor" : companyRole === "member" ? "Colaborador" : companyRole === "viewer" ? "Acceso de solo lectura" : "Espacio personal"}
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
