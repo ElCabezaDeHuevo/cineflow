@@ -116,38 +116,15 @@ async function HomeContent({
   if (coversError) {
     throw new Error(`No se pudieron cargar las portadas: ${coversError.message}`);
   }
-  const { data: projectMembers, error: projectMembersError } = projectIds.length
-    ? await supabase
-        .from("project_members")
-        .select("user_id")
-        .in("project_id", projectIds)
-    : { data: [], error: null };
-  if (projectMembersError) {
-    throw new Error(`No se pudo cargar el equipo de tus proyectos: ${projectMembersError.message}`);
-  }
-  const teamUserIds = [...new Set((projectMembers ?? []).map((member) => member.user_id))];
-  const { data: activeWorkSessions, error: activeSessionsError } = teamUserIds.length
-    ? await supabase
-        .from("work_sessions")
-        .select("user_id,clock_in")
-        .in("user_id", teamUserIds)
-        .is("clock_out", null)
-        .is("deleted_at", null)
-        .order("clock_in", { ascending: true })
-    : { data: [], error: null };
-  if (activeSessionsError) {
-    throw new Error(`No se pudo cargar el equipo que está trabajando: ${activeSessionsError.message}`);
-  }
-  const activeTeamSessions = [...new Map((activeWorkSessions ?? []).map((session) => [session.user_id, session])).values()];
-  const activeUserIds = activeTeamSessions.map((session) => session.user_id);
-  const { data: activeProfiles, error: activeProfilesError } = activeUserIds.length
-    ? await supabase
-        .from("profiles")
-        .select("id,full_name,avatar_url")
-        .in("id", activeUserIds)
-    : { data: [], error: null };
-  if (activeProfilesError) {
-    throw new Error(`No se pudieron cargar los perfiles del equipo: ${activeProfilesError.message}`);
+  const { data: ownActiveSession, error: ownActiveSessionError } = await supabase
+    .from("work_sessions")
+    .select("clock_in")
+    .eq("user_id", user.id)
+    .is("clock_out", null)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (ownActiveSessionError) {
+    throw new Error(`No se pudo consultar tu jornada actual: ${ownActiveSessionError.message}`);
   }
   const projectNameById = new Map(
     (allProjects ?? []).map((project) => [project.id, project.name]),
@@ -281,7 +258,7 @@ async function HomeContent({
           <div className="relative z-10 mt-8 grid gap-3 border-t border-white/10 pt-6 sm:grid-cols-3">
             <div><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-slate-400">Proyectos en cartera</p><p className="mt-1 text-sm font-semibold text-white">{panel.total} proyectos visibles</p></div>
             <div><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-slate-400">Actividad asignada</p><p className="mt-1 text-sm font-semibold text-white">{myOpenTasks} tareas abiertas para ti</p></div>
-            <div><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-slate-400">Equipo en jornada</p><p className="mt-1 text-sm font-semibold text-white">{activeTeamSessions.length} integrantes con jornada activa</p></div>
+            <div><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-slate-400">Mi jornada</p><p className="mt-1 text-sm font-semibold text-white">{ownActiveSession ? `En curso desde ${new Intl.DateTimeFormat("es-MX",{hour:"2-digit",minute:"2-digit"}).format(new Date(ownActiveSession.clock_in))}` : "Sin jornada activa"}</p></div>
           </div>
         </header>
 
@@ -363,24 +340,12 @@ async function HomeContent({
           <RecentProjects userId={user.id} projects={dashboardProjects} signedIn />
         </section>
 
-        <section id="equipo" className="cf-dashboard-panel p-5 sm:p-7">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div><p className="cf-eyebrow">En tiempo real</p><h2 className="mt-1 text-xl font-semibold">Equipo en jornada</h2><p className="mt-1 text-sm text-slate-400">Integrantes de tus proyectos que tienen una jornada abierta.</p></div>
-            <span className="rounded-full border border-emerald-300/15 bg-emerald-300/10 px-3 py-1.5 text-xs font-semibold text-emerald-200">{activeTeamSessions.length} trabajando</span>
+        <section id="mi-jornada" className="cf-dashboard-panel flex flex-wrap items-center justify-between gap-5 p-5 sm:p-7">
+          <div className="flex items-center gap-4">
+            <span className={ownActiveSession ? "flex h-12 w-12 items-center justify-center rounded-2xl border border-emerald-300/20 bg-emerald-300/10 text-xl text-emerald-200" : "flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[.04] text-xl text-slate-300"} aria-hidden="true">◷</span>
+            <div><p className="cf-eyebrow">Control personal</p><h2 className="mt-1 text-lg font-semibold">Mi jornada</h2><p className="mt-1 text-sm text-slate-400">{ownActiveSession ? `Tu jornada está abierta desde las ${new Intl.DateTimeFormat("es-MX",{hour:"2-digit",minute:"2-digit"}).format(new Date(ownActiveSession.clock_in))}.` : "Todavía no tienes una jornada activa."}</p></div>
           </div>
-          {activeTeamSessions.length ? (
-            <ul className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {activeTeamSessions.map((session) => {
-                const activeProfile = activeProfiles?.find((item) => item.id === session.user_id);
-                const name = activeProfile?.full_name || "Usuario";
-                return <li key={session.user_id} className="flex min-w-0 items-center gap-3 rounded-2xl border border-white/[.07] bg-white/[.025] p-3.5">
-                  <UserAvatar name={name} avatarUrl={activeProfile?.avatar_url} className="h-10 w-10" />
-                  <div className="min-w-0"><p className="truncate text-sm font-semibold text-slate-100">{name}</p><p className="mt-0.5 text-xs text-slate-500">En jornada desde {new Intl.DateTimeFormat("es-MX",{hour:"2-digit",minute:"2-digit"}).format(new Date(session.clock_in))}</p></div>
-                  <span className="ml-auto h-2 w-2 shrink-0 rounded-full bg-emerald-300" aria-label="En jornada" />
-                </li>;
-              })}
-            </ul>
-          ) : <div className="mt-6 rounded-2xl border border-dashed border-white/10 p-8 text-center"><p className="text-sm font-medium text-slate-200">Todavía no hay jornadas activas</p><p className="mt-1 text-xs text-slate-500">Cuando un integrante registre su entrada, aparecerá aquí.</p><Link href="/horarios" className="mt-4 inline-flex text-sm font-semibold text-violet-200">Ir a mis jornadas →</Link></div>}
+          <Link href="/horarios" className="cf-dashboard-secondary">Consultar mis jornadas →</Link>
         </section>
         <footer className="py-8 text-center text-[10px] font-medium uppercase tracking-[.2em] text-slate-600">CineFlow Studio · Producción conectada</footer>
       </section>
