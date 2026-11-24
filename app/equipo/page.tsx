@@ -17,17 +17,23 @@ export default async function TeamPage() {
   if (!user) redirect("/login");
   const isAdmin = isCineflowAdmin(user);
 
-  const [{ data: projects }, { data: memberships }] = await Promise.all([
-    supabase.from("projects").select("id, name, stage, owner_role").order("name"),
-    supabase.from("project_members").select("project_id, user_id, role").order("created_at"),
-  ]);
-  // The profile directory is limited to people who share at least one
-  // active company with the signed-in user. RLS applies the same rule again.
-  const { data: myOrganizations, error: myOrganizationsError } = await supabase
+  const { data: myOrganizations } = await supabase
     .from("organization_members")
     .select("organization_id")
     .eq("user_id", user.id);
   const organizationIds = [...new Set((myOrganizations ?? []).map((item) => item.organization_id))];
+  const { data: projects } = organizationIds.length
+    ? await supabase.from("projects").select("id, name, stage, owner_role, organization_id")
+        .in("organization_id", organizationIds).order("name")
+    : { data: [] };
+  const projectIds = (projects ?? []).map((project) => project.id);
+  const { data: memberships } = projectIds.length
+    ? await supabase.from("project_members").select("project_id, user_id, role")
+        .in("project_id", projectIds).order("created_at")
+    : { data: [] };
+  // The profile directory is limited to people who share at least one
+  // active company with the signed-in user. RLS applies the same rule again.
+  const { data: myOrganizationsErrorData, error: myOrganizationsError } = { data: myOrganizations, error: null };
   const { data: companyMembers, error: companyMembersError } = organizationIds.length
     ? await supabase.from("organization_members").select("user_id").in("organization_id", organizationIds)
     : { data: [], error: null };
