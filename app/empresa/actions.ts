@@ -165,6 +165,67 @@ export async function inviteCompanyMember(formData: FormData) {
 
 
 
+
+
+export async function assignCompanyMemberCinematicPosition(formData: FormData) {
+  const organizationId = String(formData.get("organization_id") ?? "").trim();
+  const userId = String(formData.get("user_id") ?? "").trim();
+  const selectedRole = String(formData.get("cine_role") ?? "").trim();
+  if (!organizationId || !userId || !CINE_ROLES.some((role) => role.value === selectedRole && role.value !== "viewer")) {
+    redirect("/empresa/puestos?error=Selecciona+un+integrante+y+un+puesto+válido");
+  }
+
+  const { admin, user: actor, actorRole } = await ownerContext(organizationId);
+  if (actor.id === userId) redirect("/empresa/puestos?error=No+puedes+asignarte+un+puesto+desde+esta+herramienta");
+  const { data: target, error: targetError } = await admin.from("organization_members")
+    .select("role").eq("organization_id", organizationId).eq("user_id", userId).maybeSingle();
+  if (targetError || !target) redirect("/empresa/puestos?error=El+integrante+no+pertenece+a+esta+productora");
+  if (target.role === "owner") redirect("/empresa/puestos?error=El+puesto+del+dueño+está+protegido");
+
+  const { data: previous, error: previousError } = await admin.from("organization_member_cinematic_roles")
+    .select("organization_id,user_id,requested_role,approved_role,status,review_reason,requested_at,reviewed_by,reviewed_at")
+    .eq("organization_id", organizationId).eq("user_id", userId).maybeSingle();
+  if (previousError) redirect("/empresa/puestos?error=" + encodeURIComponent(previousError.message));
+
+  const now = new Date().toISOString();
+  const { error: assignmentError } = await admin.from("organization_member_cinematic_roles").upsert({
+    organization_id: organizationId,
+    user_id: userId,
+    requested_role: selectedRole,
+    approved_role: selectedRole,
+    status: "approved",
+    review_reason: "Asignado por " + (actorRole === "owner" ? "el dueño" : "un administrador") + " de la productora",
+    reviewed_by: actor.id,
+    reviewed_at: now,
+  }, { onConflict: "organization_id,user_id" });
+  if (assignmentError) redirect("/empresa/puestos?error=" + encodeURIComponent(assignmentError.message));
+
+  const { error: auditError } = await admin.from("organization_audit_log").insert({
+    organization_id: organizationId,
+    actor_id: actor.id,
+    action: "company_member_cinematic_role_assigned",
+    target_type: "user",
+    target_id: userId,
+    metadata: {
+      previous_role: previous?.approved_role ?? previous?.requested_role ?? null,
+      new_role: selectedRole,
+      assignment_source: actorRole,
+    },
+  });
+  if (auditError) {
+    if (previous) await admin.from("organization_member_cinematic_roles").upsert(previous, { onConflict: "organization_id,user_id" });
+    else await admin.from("organization_member_cinematic_roles").delete().eq("organization_id", organizationId).eq("user_id", userId);
+    redirect("/empresa/puestos?error=No+se+pudo+registrar+la+auditoría.+Se+revirtió+la+asignación");
+  }
+
+  revalidatePath("/empresa/puestos");
+  revalidatePath("/empresa/miembros");
+  revalidatePath("/empresa/solicitudes");
+  revalidatePath("/equipo");
+  revalidatePath("/usuarios/" + userId);
+  redirect("/empresa/puestos?organization_id=" + encodeURIComponent(organizationId) + "&success=Puesto+cinematográfico+asignado");
+}
+
 export async function approveCompanyMemberCineRole(formData: FormData) {
   const organizationId = String(formData.get("organization_id") ?? "").trim();
   const userId = String(formData.get("user_id") ?? "").trim();
