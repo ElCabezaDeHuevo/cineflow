@@ -27,7 +27,7 @@ export default function AppNavigation({ name, email, avatarUrl, isAdmin, company
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
   if (pathname === "/login" || pathname.startsWith("/auth/")) return null;
-  const initials = name.trim().split(/\\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "CF";
+  const initials = name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "CF";
   const primary = [{ href: "/", label: "Inicio", icon: "▦" }, { href: "/proyectos", label: "Proyectos", icon: "▣" }, { href: "/timeline", label: "Timeline", icon: "◷" }, { href: "/equipo", label: "Equipo", icon: "♙" }];
   return <>
     <aside className="cf-sidebar hidden md:flex">
