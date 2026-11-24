@@ -179,6 +179,97 @@ export async function deleteUser(formData: FormData) {
   redirect("/usuarios?success=Cuenta%20desactivada.%20Se%20conservaron%20sus%20registros.");
 }
 
+export async function assignGlobalCinematicRole(formData: FormData) {
+  const { admin, user: actor } = await requireAdmin();
+  const organizationId = String(formData.get("organization_id") ?? "").trim();
+  const userId = String(formData.get("user_id") ?? "").trim();
+  const cineRole = String(formData.get("cine_role") ?? "").trim();
+  if (!organizationId || !userId || !CINE_ROLES.some((role) => role.value === cineRole && role.value !== "viewer")) {
+    redirect("/usuarios?error=" + message("Selecciona una empresa, una cuenta y un puesto cinematográfico válidos."));
+  }
+  if (userId === actor.id) redirect("/usuarios?error=" + message("No puedes asignarte un puesto desde este formulario."));
+  const { data: membership, error: membershipError } = await admin.from("organization_members")
+    .select("user_id").eq("organization_id", organizationId).eq("user_id", userId).maybeSingle();
+  if (membershipError || !membership) redirect("/usuarios?error=" + message("El usuario no pertenece a esa empresa."));
+  const { error } = await admin.rpc("admin_set_organization_member_cinematic_role", {
+    p_organization_id: organizationId,
+    p_user_id: userId,
+    p_actor_id: actor.id,
+    p_cinematic_role: cineRole,
+  });
+  if (error) redirect("/usuarios?error=" + message(error.message));
+  revalidatePath("/usuarios");
+  revalidatePath("/equipo");
+  revalidatePath("/empresa");
+  revalidatePath("/admin");
+  redirect("/usuarios?success=" + message("Puesto cinematográfico asignado o actualizado. El cambio quedó registrado."));
+}
+
+export async function deleteUserPermanently(formData: FormData) {
+  const { admin, user: actor } = await requireAdmin();
+  const userId = String(formData.get("user_id") ?? "").trim();
+  const emailConfirmation = String(formData.get("email_confirmation") ?? "").trim().toLowerCase();
+  const confirmationPhrase = String(formData.get("confirmation_phrase") ?? "");
+  const reason = String(formData.get("reason") ?? "Eliminación permanente solicitada desde el panel de administración.").trim().slice(0, 300);
+  if (!userId || userId === actor.id) redirect("/usuarios?error=" + message("No puedes eliminar tu propia cuenta."));
+  if (confirmationPhrase !== "ELIMINAR PERMANENTEMENTE") {
+    redirect("/usuarios?error=" + message("No se completó la segunda confirmación."));
+  }
+  const [{ data: target, error: targetError }, { data: ownership, error: ownershipError }, { data: memberships, error: membershipsError }] = await Promise.all([
+    admin.auth.admin.getUserById(userId),
+    admin.from("organization_members").select("organization_id").eq("user_id", userId).eq("role", "owner"),
+    admin.from("organization_members").select("organization_id,role").eq("user_id", userId),
+  ]);
+  if (targetError || !target?.user?.email) redirect("/usuarios?error=" + message("No se encontró la cuenta que intentas eliminar."));
+  if (emailConfirmation !== target.user.email.toLowerCase()) {
+    redirect("/usuarios?error=" + message("El correo de confirmación no coincide. No se eliminó la cuenta."));
+  }
+  if (ownershipError || ownership?.length) redirect("/usuarios?error=" + message("No se puede eliminar una cuenta que es dueña de una empresa. Transfiere primero la propiedad."));
+  if (membershipsError) redirect("/usuarios?error=" + message("No se pudieron verificar las empresas de la cuenta."));
+  if (target.user.app_metadata?.cineflow_role === "admin") {
+    redirect("/usuarios?error=" + message("Por seguridad, no se permite eliminar una cuenta de administrador general desde este panel."));
+  }
+
+  const { data: audit, error: auditInsertError } = await admin.from("cineflow_admin_account_audit").insert({
+    actor_id: actor.id,
+    target_user_id: userId,
+    target_email: target.user.email,
+    action: "permanent_account_deletion_pending",
+    status: "pending",
+    reason,
+    metadata: {
+      memberships: (memberships ?? []).map((item) => item.organization_id),
+      confirmation_method: "confirm_dialog_and_exact_email_and_phrase",
+    },
+  }).select("id").single();
+  if (auditInsertError || !audit) {
+    redirect("/usuarios?error=" + message("No se pudo registrar la auditoría previa. La cuenta se conservó."));
+  }
+
+  const { error: deleteError } = await admin.auth.admin.deleteUser(userId);
+  if (deleteError) {
+    await admin.from("cineflow_admin_account_audit").update({
+      action: "permanent_account_deletion_failed",
+      status: "failed",
+      metadata: { error: deleteError.message, previous_metadata: { memberships: (memberships ?? []).map((item) => item.organization_id) } },
+    }).eq("id", audit.id);
+    redirect("/usuarios?error=" + message("Supabase no pudo eliminar la cuenta: " + deleteError.message));
+  }
+
+  const { error: completionError } = await admin.from("cineflow_admin_account_audit").update({
+    action: "permanent_account_deleted",
+    status: "completed",
+    completed_at: new Date().toISOString(),
+    metadata: { deleted: true, memberships: (memberships ?? []).map((item) => item.organization_id) },
+  }).eq("id", audit.id);
+  revalidatePath("/usuarios");
+  revalidatePath("/admin");
+  if (completionError) {
+    redirect("/usuarios?error=" + message("La cuenta fue eliminada, pero no se pudo actualizar el estado final del registro de auditoría. Conservamos el evento previo."));
+  }
+  redirect("/usuarios?success=" + message("Cuenta eliminada permanentemente. El registro administrativo de la operación se conservó."));
+}
+
 export async function updateUserRole(formData: FormData) {
   const { admin, user } = await requireAdmin();
   const userId = String(formData.get("user_id") ?? "");
