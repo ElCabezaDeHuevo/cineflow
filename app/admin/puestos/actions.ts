@@ -49,7 +49,7 @@ export async function assignCinematicPosition(formData: FormData) {
   const { error: assignmentError } = await admin.from("organization_member_cinematic_roles").upsert({
     organization_id: organizationId,
     user_id: userId,
-    requested_role: role,
+    requested_role: previous?.requested_role ?? role,
     approved_role: role,
     status: "approved",
     review_reason: "Asignado directamente por el administrador general de CineFlow",
@@ -66,6 +66,7 @@ export async function assignCinematicPosition(formData: FormData) {
     target_id: userId,
     metadata: {
       organization_name: organization.name,
+      previous_request: previous?.requested_role ?? null,
       previous_role: previous?.approved_role ?? previous?.requested_role ?? null,
       new_role: role,
       assignment_source: "cineflow_global_admin",

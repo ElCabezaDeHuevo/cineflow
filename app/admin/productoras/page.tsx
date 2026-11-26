@@ -5,6 +5,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isCineflowAdmin } from "@/lib/admin";
 import { createCompany, recordCompanyPayment, setCompanyAccess } from "./actions";
 import ConfirmSubmit from "@/app/ConfirmSubmit";
+import { subscriptionIsActive } from "@/lib/subscriptions";
 import { listAllAuthUsers } from "@/lib/supabase/list-all-auth-users";
 
 const dateLabel = (value?: string | null) => value ? new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeZone: "America/Tijuana" }).format(new Date(value)) : "—";
@@ -30,13 +31,7 @@ export default async function CompaniesAdmin({ searchParams }: { searchParams: P
   const subByOrg = new Map((subscriptions ?? []).map((x) => [x.organization_id, x]));
   const latestPaymentByOrg = new Map<string, { amount_mxn: number; paid_at: string; billing_interval: string; payment_method: string; reference: string | null }>();
   for (const payment of payments ?? []) if (!latestPaymentByOrg.has(payment.organization_id)) latestPaymentByOrg.set(payment.organization_id, payment);
-  const now = Date.now();
-  const isSubscriptionValid = (sub: (typeof subscriptions extends (infer T)[] | null ? T : never) | undefined) => {
-    if (!sub || !["active", "trialing"].includes(sub.status)) return false;
-    const expiry = sub.status === "trialing" ? sub.trial_end : (sub.current_period_end ?? sub.trial_end);
-    return Boolean(expiry && new Date(expiry).getTime() > now);
-  };
-  const activeCount = (subscriptions ?? []).filter((x) => isSubscriptionValid(x)).length;
+  const activeCount = (subscriptions ?? []).filter(sub => subscriptionIsActive(sub)).length;
   return (
     <main className="cf-cinematic-page cf-bg-admin min-h-screen bg-[#0b0c10] text-white"><section className="mx-auto max-w-7xl p-6 md:p-10">
       <Link href="/admin" className="text-sm text-violet-300">← Panel técnico</Link>
@@ -53,7 +48,7 @@ export default async function CompaniesAdmin({ searchParams }: { searchParams: P
       <form action={createCompany} className="mb-8 grid gap-4 rounded-2xl border border-violet-400/20 bg-[#14151c] p-6 md:grid-cols-3">
         <h2 className="text-lg font-semibold md:col-span-3">Registrar productora · 14 días de prueba</h2>
         <label className="block text-sm text-gray-300">Nombre de empresa<input name="name" required minLength={2} maxLength={120} placeholder="Ej. Horizonte Films" className="mt-2 w-full rounded-lg border border-white/10 bg-black/20 px-3 py-3 text-white" /></label>
-        <label className="block text-sm text-gray-300">Cuenta del dueño<select name="owner_id" required defaultValue="" className="mt-2 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-3 text-white"><option value="" disabled>Seleccionar usuario</option>{accounts.map((account) => <option key={account.id} value={account.id}>{account.email} · {String(account.user_metadata?.full_name ?? "Sin nombre")}</option>)}</select></label>
+        <label className="block text-sm text-gray-300">Cuenta del dueño<select name="owner_id" required defaultValue="" className="mt-2 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-3 text-white"><option value="" disabled>Seleccionar usuario</option>{accounts.filter(account => !isCineflowAdmin(account)).map((account) => <option key={account.id} value={account.id}>{account.email} · {String(account.user_metadata?.full_name ?? "Sin nombre")}</option>)}</select></label>
         <div className="flex items-end gap-3"><label className="block flex-1 text-sm text-gray-300">Cobro<select name="billing_interval" className="mt-2 w-full rounded-lg border border-white/10 bg-[#0b0c10] px-3 py-3 text-white"><option value="monthly">Mensual</option><option value="annual">Anual</option></select></label><button className="rounded-lg bg-violet-500 px-5 py-3 font-semibold hover:bg-violet-400">Crear empresa</button></div>
       </form>
       <section className="space-y-5">

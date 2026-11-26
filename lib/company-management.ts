@@ -1,3 +1,4 @@
+import { subscriptionIsActive } from "@/lib/subscriptions";
 import "server-only";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -25,13 +26,7 @@ export async function ownerContext(requestedOrganizationId: string, allowWhenSub
   if (!allowWhenSubscriptionInactive) {
     const { data: subscription, error: subscriptionError } = await admin.from("subscriptions")
       .select("status,trial_end,current_period_end").eq("organization_id", membership.organization_id).maybeSingle();
-    const now = Date.now();
-    const expiry = subscription?.status === "trialing"
-      ? subscription.trial_end
-      : subscription?.current_period_end ?? subscription?.trial_end;
-    const hasValidPeriod = Boolean(expiry && new Date(expiry).getTime() > now);
-    const statusAllowsAccess = subscription?.status === "trialing" || subscription?.status === "active";
-    if (subscriptionError || !subscription || !statusAllowsAccess || !hasValidPeriod) {
+    if (subscriptionError || !subscriptionIsActive(subscription)) {
       redirect("/empresa?error=La+vigencia+de+esta+productora+terminó+o+no+está+activa.+Contacta+al+soporte");
     }
   }

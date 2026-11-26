@@ -3,8 +3,6 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { clockIn, clockOut } from "./actions";
 
-const reviewLabel: Record<string, string> = { normal: "Normal", pending_review: "Pendiente por revisar", reviewed: "Revisada" };
-
 export const instant = false;
 
 const formatTime = (value: string | null) =>

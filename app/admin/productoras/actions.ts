@@ -27,6 +27,7 @@ export async function createCompany(formData: FormData) {
   if (name.length < 2 || !ownerId || !["monthly", "annual"].includes(interval)) fail("Completa nombre, propietario y periodo.");
   const { data: owner, error: ownerError } = await admin.auth.admin.getUserById(ownerId);
   if (ownerError || !owner.user) fail("No se encontró la cuenta del dueño.");
+  if (isCineflowAdmin(owner.user) || ownerId === "0a12ae9b-a119-42f8-8103-4f1bf3ab5467") fail("La cuenta global no puede pertenecer a una productora.");
   const slug = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + crypto.randomUUID().slice(0, 6);
   const { data: org, error: orgError } = await admin.from("organizations").insert({
     name, slug, created_by: ownerId, billing_email: owner.user.email ?? null,

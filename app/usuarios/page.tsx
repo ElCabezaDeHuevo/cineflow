@@ -11,11 +11,6 @@ import { listAllAuthUsers } from "@/lib/supabase/list-all-auth-users";
 
 export const instant = false;
 
-const roleLabels: Record<string, string> = {
-  owner: "Dueño", admin: "Administrador", producer: "Productor",
-  member: "Colaborador", viewer: "Solo lectura",
-};
-
 export default async function UsersPage({ searchParams }: { searchParams: Promise<{ error?: string; success?: string }> }) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();

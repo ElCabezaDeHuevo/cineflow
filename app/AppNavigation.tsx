@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -90,7 +91,7 @@ function NavItems({ pathname, isAdmin, companyRole, onNavigate }: {
   </>;
 }
 
-export default function AppNavigation({ name, email, avatarUrl, isAdmin, companyRole }: Props) {
+export default function AppNavigation({ name, avatarUrl, isAdmin, companyRole }: Props) {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
 
@@ -121,14 +122,14 @@ export default function AppNavigation({ name, email, avatarUrl, isAdmin, company
       <Link href="/" className="cf-brand"><span className="cf-brand-mark">C</span><span>CINE<span>FLOW</span><small>STUDIO WORKSPACE</small></span></Link>
       <div className="cf-sidebar-scroll"><NavItems pathname={pathname} isAdmin={isAdmin} companyRole={companyRole} /></div>
       <Link href="/perfil" className="cf-account" aria-label="Abrir mi perfil">
-        <span className="cf-avatar">{avatarUrl ? <img src={avatarUrl} alt="" /> : initials}</span>
+        <span className="cf-avatar">{avatarUrl ? <Image src={avatarUrl} alt="" width={40} height={40} unoptimized /> : initials}</span>
         <span className="min-w-0"><strong>{name}</strong><small>{isAdmin ? "Dueño de CineFlow" : roleLabels[companyRole ?? "viewer"]}</small></span>
         <span className="ml-auto text-zinc-500" aria-hidden="true">↗</span>
       </Link>
     </aside>
     <header className="cf-mobile-header md:hidden">
       <Link href="/" className="cf-brand"><span className="cf-brand-mark">C</span><span>CINE<span>FLOW</span><small>STUDIO</small></span></Link>
-      <Link href="/perfil" className="cf-avatar" aria-label="Mi perfil">{avatarUrl ? <img src={avatarUrl} alt="" /> : initials}</Link>
+      <Link href="/perfil" className="cf-avatar" aria-label="Mi perfil">{avatarUrl ? <Image src={avatarUrl} alt="" width={40} height={40} unoptimized /> : initials}</Link>
     </header>
     <nav className="cf-mobile-nav md:hidden" aria-label="Navegación principal">
       {primary.map((item) => {
@@ -148,7 +149,7 @@ export default function AppNavigation({ name, email, avatarUrl, isAdmin, company
           <button type="button" onClick={() => setMoreOpen(false)} aria-label="Cerrar menú" className="flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-white/10 px-3 text-zinc-300">✕</button>
         </div>
         <Link href="/perfil" onClick={() => setMoreOpen(false)} className="mb-4 flex min-h-14 items-center gap-3 rounded-xl border border-violet-300/15 bg-violet-300/[.06] p-3">
-          <span className="cf-avatar">{avatarUrl ? <img src={avatarUrl} alt="" /> : initials}</span>
+          <span className="cf-avatar">{avatarUrl ? <Image src={avatarUrl} alt="" width={40} height={40} unoptimized /> : initials}</span>
           <span className="min-w-0"><strong className="block truncate text-sm text-white">{name}</strong><small className="block truncate text-xs text-zinc-400">Perfil, contraseña y seguridad</small></span>
           <span className="ml-auto text-zinc-500" aria-hidden="true">↗</span>
         </Link>

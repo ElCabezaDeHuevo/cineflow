@@ -148,7 +148,7 @@ export async function assignCompanyMemberCinematicPosition(formData: FormData) {
   const { error: assignmentError } = await admin.from("organization_member_cinematic_roles").upsert({
     organization_id: organizationId,
     user_id: userId,
-    requested_role: selectedRole,
+    requested_role: previous?.requested_role ?? selectedRole,
     approved_role: selectedRole,
     status: "approved",
     review_reason: "Asignado por " + (actorRole === "owner" ? "el dueño" : "un administrador") + " de la productora",
@@ -164,6 +164,7 @@ export async function assignCompanyMemberCinematicPosition(formData: FormData) {
     target_type: "user",
     target_id: userId,
     metadata: {
+      previous_request: previous?.requested_role ?? null,
       previous_role: previous?.approved_role ?? previous?.requested_role ?? null,
       new_role: selectedRole,
       assignment_source: actorRole,

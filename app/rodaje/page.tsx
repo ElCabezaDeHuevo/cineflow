@@ -21,10 +21,9 @@ export default async function ShootingBoard({ searchParams }: { searchParams: Pr
   const { project: requestedProject } = await searchParams;
   const { data: memberships } = await supabase.from("project_members").select("project_id,role").eq("user_id",user.id);
   const projectIds = (memberships ?? []).map((m)=>m.project_id);
-  const [{ data: projects }, { data: profile }] = await Promise.all([
-    projectIds.length ? supabase.from("projects").select("id,name,stage").in("id",projectIds).order("name") : Promise.resolve({data:[] as {id:string;name:string;stage:string}[]}),
-    supabase.from("profiles").select("full_name").eq("id",user.id).maybeSingle(),
-  ]);
+  const { data: projects } = projectIds.length
+    ? await supabase.from("projects").select("id,name,stage").in("id", projectIds).order("name")
+    : { data: [] as { id: string; name: string; stage: string }[] };
   const projectId = (projects ?? []).some((p)=>p.id===requestedProject) ? requestedProject! : projects?.[0]?.id;
   const selectedProject = (projects ?? []).find((p)=>p.id===projectId);
   const canEdit = (memberships ?? []).some((m)=>m.project_id===projectId && ["owner","editor"].includes(m.role));
