@@ -3,19 +3,11 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isCineflowAdmin } from "@/lib/admin";
-import ProductionNavigation from "@/app/ProductionNavigation";
-
-const destinations = [
-  { group: "Planificación", title: "Proyectos", description: "Consulta la cartera, crea producciones y administra equipos de proyecto.", href: "/proyectos", icon: "▣", action: "Abrir proyectos" },
-  { group: "Planificación", title: "Planificador de rodaje", description: "Organiza escenas por jornada, llamado, locación y fecha.", href: "/rodaje", icon: "▤", action: "Planificar rodaje" },
-  { group: "Planificación", title: "Agenda", description: "Revisa entregas, tareas por vencer, rodajes y eventos.", href: "/calendario", icon: "▦", action: "Abrir agenda" },
-  { group: "Seguimiento", title: "Avance y actividad", description: "Consulta el progreso por proyecto, tareas abiertas y cambios recientes.", href: "/timeline", icon: "◷", action: "Ver seguimiento" },
-  { group: "Seguimiento", title: "Centro de producción", description: "Consulta tus partes, notificaciones, presupuesto y agenda de trabajo.", href: "/centro", icon: "⌂", action: "Abrir centro" },
-  { group: "Seguimiento", title: "Equipo de producción", description: "Consulta colaboradores y responsabilidades del proyecto.", href: "/equipo", icon: "♙", action: "Ver equipo" },
-];
-const toolGroups = [
-  { title: "Planificación", description: "Define el proyecto, organiza jornadas y revisa fechas.", items: destinations.filter((item) => item.group === "Planificación") },
-  { title: "Seguimiento y equipo", description: "Consulta avances y coordina a las personas del proyecto.", items: destinations.filter((item) => item.group === "Seguimiento") },
+const modules = [
+  { number: "01", title: "Proyectos", description: "Cartera, responsables y equipos.", href: "/proyectos" },
+  { number: "02", title: "Rodaje", description: "Escenas, jornadas y locaciones.", href: "/rodaje" },
+  { number: "03", title: "Agenda", description: "Fechas, tareas y entregas.", href: "/calendario" },
+  { number: "04", title: "Seguimiento", description: "Avance y actividad de producción.", href: "/timeline" },
 ];
 
 export default async function ProductionHomePage() {
@@ -56,7 +48,6 @@ export default async function ProductionHomePage() {
   return (
     <main className="cf-cinematic-page cf-production-surface min-h-screen px-4 py-8 text-white md:px-8">
       <section className="mx-auto max-w-7xl">
-        <ProductionNavigation active="/produccion" />
         <header className="mb-7 mt-5 border-b border-white/10 pb-6">
           <p className="text-xs font-semibold uppercase tracking-[.2em] text-violet-300">CineFlow / Espacio de producción</p>
           <h1 className="mt-3 text-3xl font-bold md:text-4xl">Producción</h1>
@@ -83,23 +74,16 @@ export default async function ProductionHomePage() {
             {nextShootDays.length ? <ul className="mt-3 divide-y divide-white/10">{nextShootDays.map((day) => <li key={day.id} className="flex items-start justify-between gap-3 py-3"><div className="min-w-0"><Link href={`/rodaje?project=${day.project_id}`} className="block truncate text-sm font-medium hover:text-violet-200">Jornada {day.shoot_day_number}</Link><p className="mt-1 truncate text-xs text-gray-500">{projectNames.get(day.project_id) ?? "Proyecto"} · {day.location || "Locación pendiente"}</p></div><time className="shrink-0 text-xs text-gray-400">{day.shoot_date}</time></li>)}</ul> : <p className="mt-3 text-sm text-gray-400">No hay rodajes próximos registrados.</p>}
           </article>
         </section>
-        <section aria-labelledby="production-tools-title" className="mb-4">
-          <p className="text-xs font-semibold uppercase tracking-[.14em] text-gray-400">Herramientas</p>
-          <h2 id="production-tools-title" className="mt-1 text-xl font-semibold">Organiza el trabajo</h2>
+        <section aria-labelledby="production-tools-title" className="mb-4 mt-10">
+          <p className="text-xs font-semibold uppercase tracking-[.14em] text-gray-400">Accesos de producción</p>
+          <h2 id="production-tools-title" className="mt-1 text-xl font-semibold">Elige una ventana</h2>
         </section>
-        <div className="grid gap-4 xl:grid-cols-2">
-          {toolGroups.map((group) => <section key={group.title} className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-4 sm:p-5">
-            <header className="mb-2 border-b border-white/10 pb-3">
-              <h3 className="font-semibold">{group.title}</h3>
-              <p className="mt-1 text-sm text-gray-400">{group.description}</p>
-            </header>
-            <div className="divide-y divide-white/10">
-              {group.items.map((item) => <Link key={item.href} href={item.href} className="group flex min-h-14 items-center justify-between gap-4 py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet-300">
-                <span className="min-w-0"><strong className="block text-sm font-medium text-gray-100 group-hover:text-white">{item.title}</strong><small className="mt-1 block text-xs text-gray-400">{item.description}</small></span>
-                <span aria-hidden="true" className="shrink-0 text-gray-500 transition group-hover:translate-x-1 group-hover:text-gray-200">→</span>
-              </Link>)}
-            </div>
-          </section>)}
+        <div className="grid gap-4 sm:grid-cols-2">
+          {modules.map((module) => <Link key={module.href} href={module.href} className="cf-card group flex min-h-28 items-center gap-4 rounded-2xl border border-white/10 bg-[#14151c] p-5 transition-colors hover:border-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-300">
+            <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[.035] text-xs font-semibold tracking-wide text-gray-400">{module.number}</span>
+            <span className="min-w-0 flex-1"><strong className="block text-base font-semibold text-white">{module.title}</strong><small className="mt-1 block text-sm text-gray-400">{module.description}</small></span>
+            <span aria-hidden="true" className="shrink-0 text-lg text-gray-500 transition-transform group-hover:translate-x-1 group-hover:text-gray-200">→</span>
+          </Link>)}
         </div>
       </section>
     </main>
