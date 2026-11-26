@@ -24,16 +24,16 @@ export default async function ProductionHomePage() {
   const dataClient = isAdmin && admin ? admin : supabase;
   const { data: projects, error: projectsError } = await dataClient
     .from("projects")
-    .select("id,stage,delivery_date")
+    .select("id,name,stage,delivery_date")
     .order("delivery_date", { ascending: true })
     .limit(500);
   const projectIds = (projects ?? []).map((project) => project.id);
   const [{ data: tasks }, { data: shootDays }] = await Promise.all([
     projectIds.length
-      ? dataClient.from("project_tasks").select("id,status,due_date").in("project_id", projectIds).neq("status", "completada")
+      ? dataClient.from("project_tasks").select("id,project_id,title,status,due_date").in("project_id", projectIds).neq("status", "completada")
       : Promise.resolve({ data: [] }),
     projectIds.length
-      ? dataClient.from("shoot_days").select("id,shoot_date").in("project_id", projectIds).not("shoot_date", "is", null)
+      ? dataClient.from("shoot_days").select("id,project_id,shoot_day_number,shoot_date,location").in("project_id", projectIds).not("shoot_date", "is", null)
       : Promise.resolve({ data: [] }),
   ]);
   const todayParts = new Intl.DateTimeFormat("en", { timeZone: "America/Tijuana", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
@@ -45,6 +45,9 @@ export default async function ProductionHomePage() {
   const activeProjects = (projects ?? []).filter((project) => project.stage !== "Distribución").length;
   const upcomingTasks = (tasks ?? []).filter((task) => task.due_date && task.due_date >= today).length;
   const upcomingShootDays = (shootDays ?? []).filter((day) => day.shoot_date && day.shoot_date >= today && day.shoot_date <= monthAhead).length;
+  const projectNames = new Map((projects ?? []).map((project) => [project.id, project.name]));
+  const nextTasks = (tasks ?? []).filter((task) => task.due_date && task.due_date <= monthAhead).sort((a, b) => a.due_date!.localeCompare(b.due_date!)).slice(0, 5);
+  const nextShootDays = (shootDays ?? []).filter((day) => day.shoot_date && day.shoot_date >= today).sort((a, b) => a.shoot_date!.localeCompare(b.shoot_date!)).slice(0, 5);
 
   return (
     <main className="cf-cinematic-page cf-bg-timeline min-h-screen bg-[#0b0c10] px-4 py-8 text-white md:px-8">
@@ -65,6 +68,16 @@ export default async function ProductionHomePage() {
             <p className="text-xs text-gray-400 sm:text-sm">{label}</p>
             <p className="mt-2 text-2xl font-bold text-violet-200 sm:text-3xl">{value}</p>
           </article>)}
+        </section>
+        <section className="mb-8 grid gap-4 lg:grid-cols-2">
+          <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5">
+            <div className="flex items-center justify-between"><h2 className="font-semibold">Próximas tareas</h2><Link href="/calendario?type=tarea&range=month" className="text-xs text-violet-300">Ver agenda →</Link></div>
+            {nextTasks.length ? <ul className="mt-3 divide-y divide-white/10">{nextTasks.map((task) => <li key={task.id} className="flex items-start justify-between gap-3 py-3"><div className="min-w-0"><Link href={`/proyectos/seguimiento/${task.project_id}#task-${task.id}`} className="block truncate text-sm font-medium hover:text-violet-200">{task.title}</Link><p className="mt-1 truncate text-xs text-gray-500">{projectNames.get(task.project_id) ?? "Proyecto"}</p></div><time className={`shrink-0 text-xs ${task.due_date! < today ? "text-rose-300" : "text-gray-400"}`}>{task.due_date}{task.due_date! < today ? " · vencida" : ""}</time></li>)}</ul> : <p className="mt-3 text-sm text-gray-400">No hay tareas abiertas con vencimiento en los próximos 30 días.</p>}
+          </article>
+          <article className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-5">
+            <div className="flex items-center justify-between"><h2 className="font-semibold">Próximos rodajes</h2><Link href="/calendario?type=rodaje&range=month" className="text-xs text-violet-300">Ver agenda →</Link></div>
+            {nextShootDays.length ? <ul className="mt-3 divide-y divide-white/10">{nextShootDays.map((day) => <li key={day.id} className="flex items-start justify-between gap-3 py-3"><div className="min-w-0"><Link href={`/rodaje?project=${day.project_id}`} className="block truncate text-sm font-medium hover:text-violet-200">Jornada {day.shoot_day_number}</Link><p className="mt-1 truncate text-xs text-gray-500">{projectNames.get(day.project_id) ?? "Proyecto"} · {day.location || "Locación pendiente"}</p></div><time className="shrink-0 text-xs text-gray-400">{day.shoot_date}</time></li>)}</ul> : <p className="mt-3 text-sm text-gray-400">No hay rodajes próximos registrados.</p>}
+          </article>
         </section>
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div><p className="text-xs font-semibold uppercase tracking-[.18em] text-violet-300">Herramientas</p><h2 className="mt-1 text-xl font-semibold">Elige qué quieres organizar</h2></div>

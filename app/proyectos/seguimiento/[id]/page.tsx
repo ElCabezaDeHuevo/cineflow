@@ -7,6 +7,7 @@ import { hasOpenWorkSession } from "@/lib/attendance";
 import { isCineflowAdmin } from "@/lib/admin";
 import UserAvatar from "@/lib/UserAvatar";
 import ProductionNavigation from "@/app/ProductionNavigation";
+import ProjectWorkspaceNavigation from "@/app/proyectos/ProjectWorkspaceNavigation";
 import ScreenshotCard from "../ScreenshotCard";
 import StageWindows from "../StageWindows";
 import ProjectVisitTracker from "@/app/ProjectVisitTracker";
@@ -299,6 +300,7 @@ export default async function ProjectTrackingPage({
             Ver jornadas del equipo →
           </Link>
         </div>
+        <ProjectWorkspaceNavigation projectId={project.id} active="tracking" />
         <header className="mb-8 mt-6">
           <p className="text-sm text-violet-300">
             CINEFLOW / SEGUIMIENTO DE PRODUCCIÓN

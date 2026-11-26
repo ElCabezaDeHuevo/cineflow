@@ -12,6 +12,7 @@ import ProjectForm from "../ProjectForm";
 import UserAvatar from "@/lib/UserAvatar";
 import ProjectVisitTracker from "@/app/ProjectVisitTracker";
 import ProductionNavigation from "@/app/ProductionNavigation";
+import ProjectWorkspaceNavigation from "@/app/proyectos/ProjectWorkspaceNavigation";
 
 export const instant = false;
 
@@ -81,6 +82,7 @@ export default async function ProjectDetailPage({
         <Link href="/proyectos" className="text-sm text-violet-300">
           ← Volver a proyectos
         </Link>
+        <ProjectWorkspaceNavigation projectId={project.id} active="overview" />
         <header className="mb-8 mt-6">
           <p className="text-sm text-violet-300">DETALLE DEL PROYECTO</p>
           <h1 className="mt-2 text-3xl font-bold md:text-4xl">{project.name}</h1>

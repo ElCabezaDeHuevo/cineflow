@@ -109,3 +109,67 @@ export async function unscheduleFilmScene(formData: FormData) {
   }
   revalidateProduction(projectId);
 }
+
+
+export async function updateFilmScene(formData: FormData) {
+  const projectId = textValue(formData, "project_id");
+  const sceneId = textValue(formData, "scene_id");
+  const supabase = await projectAccess(projectId);
+  if (!uuidValue(sceneId)) throw new Error("Escena no válida.");
+  const sceneNumber = textValue(formData, "scene_number").slice(0, 20);
+  const heading = textValue(formData, "heading").slice(0, 180);
+  const intExt = textValue(formData, "int_ext");
+  const dayNight = textValue(formData, "day_night");
+  const location = textValue(formData, "location").slice(0, 180);
+  const pages = Number(textValue(formData, "page_count") || "0");
+  const color = textValue(formData, "color_tag");
+  const notes = textValue(formData, "notes").slice(0, 2000);
+  if (!sceneNumber || !heading || !["INT","EXT","INT/EXT"].includes(intExt) || !["DÍA","NOCHE","AMANECER","ATARDECER"].includes(dayNight) || !Number.isFinite(pages) || pages < 0 || pages > 100 || !["yellow","red","blue","green","white"].includes(color)) throw new Error("Revisa los datos de la escena.");
+  const { error } = await supabase.from("film_scenes").update({ scene_number: sceneNumber, heading, int_ext: intExt, day_night: dayNight, location, page_count: pages, color_tag: color, notes }).eq("id", sceneId).eq("project_id", projectId);
+  if (error) throw new Error(error.message);
+  revalidateProduction(projectId);
+}
+
+export async function deleteFilmScene(formData: FormData) {
+  const projectId = textValue(formData, "project_id");
+  const sceneId = textValue(formData, "scene_id");
+  const supabase = await projectAccess(projectId);
+  if (!uuidValue(sceneId)) throw new Error("Escena no válida.");
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: membership } = await supabase.from("project_members").select("role").eq("project_id", projectId).eq("user_id", user!.id).maybeSingle();
+  if (membership?.role !== "owner") throw new Error("Solo el dueño del proyecto puede eliminar escenas.");
+  const { error } = await supabase.from("film_scenes").delete().eq("id", sceneId).eq("project_id", projectId);
+  if (error) throw new Error(error.message);
+  revalidateProduction(projectId);
+}
+
+export async function updateShootDay(formData: FormData) {
+  const projectId = textValue(formData, "project_id");
+  const shootDayId = textValue(formData, "shoot_day_id");
+  const supabase = await projectAccess(projectId);
+  if (!uuidValue(shootDayId)) throw new Error("Jornada no válida.");
+  const number = Number(textValue(formData, "shoot_day_number"));
+  const shootDate = textValue(formData, "shoot_date");
+  const callTime = textValue(formData, "call_time");
+  const wrapTime = textValue(formData, "wrap_time");
+  if (!Number.isInteger(number) || number < 1 || number > 365) throw new Error("El número de jornada debe estar entre 1 y 365.");
+  if (shootDate && !/^\d{4}-\d{2}-\d{2}$/.test(shootDate)) throw new Error("La fecha de rodaje no es válida.");
+  if (callTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(callTime)) throw new Error("La hora de llamado no es válida.");
+  if (wrapTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(wrapTime)) throw new Error("La hora de cierre no es válida.");
+  const { error } = await supabase.from("shoot_days").update({ shoot_day_number: number, shoot_date: shootDate || null, call_time: callTime || null, wrap_time: wrapTime || null, location: textValue(formData, "location").slice(0,180), notes: textValue(formData, "notes").slice(0,2000) }).eq("id", shootDayId).eq("project_id", projectId);
+  if (error) throw new Error(error.message);
+  revalidateProduction(projectId);
+}
+
+export async function deleteShootDay(formData: FormData) {
+  const projectId = textValue(formData, "project_id");
+  const shootDayId = textValue(formData, "shoot_day_id");
+  const supabase = await projectAccess(projectId);
+  if (!uuidValue(shootDayId)) throw new Error("Jornada no válida.");
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: membership } = await supabase.from("project_members").select("role").eq("project_id", projectId).eq("user_id", user!.id).maybeSingle();
+  if (membership?.role !== "owner") throw new Error("Solo el dueño del proyecto puede eliminar jornadas.");
+  const { error } = await supabase.from("shoot_days").delete().eq("id", shootDayId).eq("project_id", projectId);
+  if (error) throw new Error(error.message);
+  revalidateProduction(projectId);
+}
