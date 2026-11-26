@@ -41,19 +41,20 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const { data: activeSession } = user
-    ? await supabase
-        .from("work_sessions")
-        .select("id")
-        .eq("user_id", user.id)
-        .is("clock_out", null)
-        .maybeSingle()
-    : { data: null };
   const isAdmin = isCineflowAdmin(user);
-  const { data: companyMemberships } = user && !isAdmin ? await supabase.from("organization_members").select("role").eq("user_id", user.id) : { data: [] };
+  const [{ data: activeSession }, { data: companyMemberships }, { data: navProfile }] = await Promise.all([
+    user
+      ? supabase.from("work_sessions").select("id").eq("user_id", user.id).is("clock_out", null).maybeSingle()
+      : Promise.resolve({ data: null }),
+    user && !isAdmin
+      ? supabase.from("organization_members").select("role").eq("user_id", user.id)
+      : Promise.resolve({ data: [] }),
+    user
+      ? supabase.from("profiles").select("full_name,avatar_url").eq("id", user.id).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
   const companyRolePriority: Record<string, number> = { owner: 5, admin: 4, producer: 3, member: 2, viewer: 1 };
   const companyRole = (companyMemberships ?? []).map((membership) => membership.role).sort((a, b) => (companyRolePriority[b] ?? 0) - (companyRolePriority[a] ?? 0))[0] ?? null;
-  const { data: navProfile } = user ? await supabase.from("profiles").select("full_name,avatar_url").eq("id", user.id).maybeSingle() : { data: null };
   const displayName = navProfile?.full_name || user?.email?.split("@")[0] || "Mi cuenta";
 
   return (

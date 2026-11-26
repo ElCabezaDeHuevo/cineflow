@@ -18,25 +18,32 @@ async function TimelineContent() {
 
   const [{ data: projects }, { data: tasks }, { data: activity }] = await Promise.all([
     supabase.from("projects").select("id, name, type, stage, owner_role, start_date, delivery_date, description").order("start_date", { ascending: true }),
-    supabase.from("project_tasks").select("id,project_id,title,status,stage,created_by,updated_at"),
+    supabase.from("project_tasks").select("project_id,status"),
     supabase.from("project_activity").select("id,project_id,actor_id,message,created_at").order("created_at", { ascending: false }).limit(100),
   ]);
   const projectIds = (projects ?? []).map((project) => project.id);
-  const [{ data: shootDays }, { data: dueTasks }] = await Promise.all([
+  const activityUserIds = [...new Set((activity ?? []).map((event) => event.actor_id).filter(Boolean))];
+  const [{ data: shootDays }, { data: dueTasks }, { data: profiles }] = await Promise.all([
     projectIds.length
       ? supabase.from("shoot_days").select("id,project_id,shoot_day_number,shoot_date,call_time").in("project_id", projectIds).not("shoot_date", "is", null).order("shoot_date", { ascending: true })
       : Promise.resolve({ data: [] }),
     projectIds.length
       ? supabase.from("project_tasks").select("id,project_id,title,due_date,status").in("project_id", projectIds).not("due_date", "is", null).neq("status", "completada").order("due_date", { ascending: true })
       : Promise.resolve({ data: [] }),
+    activityUserIds.length
+      ? supabase.from("profiles").select("id,full_name,avatar_url").in("id", activityUserIds)
+      : Promise.resolve({ data: [] }),
   ]);
-  const activityUserIds = [...new Set((activity ?? []).map((event) => event.actor_id).filter(Boolean))];
-  const { data: profiles } = activityUserIds.length
-    ? await supabase.from("profiles").select("id,full_name,avatar_url").in("id", activityUserIds)
-    : { data: [] };
+  const taskProgress = new Map<string, { total: number; complete: number }>();
+  for (const task of tasks ?? []) {
+    const progress = taskProgress.get(task.project_id) ?? { total: 0, complete: 0 };
+    progress.total += 1;
+    if (task.status === "completada") progress.complete += 1;
+    taskProgress.set(task.project_id, progress);
+  }
   const progressFor = (projectId: string) => {
-    const projectTasks = tasks?.filter((task) => task.project_id === projectId) ?? [];
-    return projectTasks.length ? Math.round((projectTasks.filter((task) => task.status === "completada").length / projectTasks.length) * 100) : 0;
+    const progress = taskProgress.get(projectId);
+    return progress?.total ? Math.round((progress.complete / progress.total) * 100) : 0;
   };
   const profileOf = (id: string | null) =>
     profiles?.find((profile) => profile.id === id);

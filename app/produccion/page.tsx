@@ -18,6 +18,12 @@ export default async function ProductionHomePage() {
   const isAdmin = isCineflowAdmin(user);
   const admin = isAdmin ? createSupabaseAdminClient() : null;
   const dataClient = isAdmin && admin ? admin : supabase;
+  const todayParts = new Intl.DateTimeFormat("en", { timeZone: "America/Tijuana", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
+  const todayPart = (type: string) => todayParts.find((item) => item.type === type)?.value ?? "";
+  const today = `${todayPart("year")}-${todayPart("month")}-${todayPart("day")}`;
+  const monthAheadDate = new Date(`${today}T12:00:00.000Z`);
+  monthAheadDate.setUTCDate(monthAheadDate.getUTCDate() + 30);
+  const monthAhead = monthAheadDate.toISOString().slice(0, 10);
   const { data: projects, error: projectsError } = await dataClient
     .from("projects")
     .select("id,name,stage,delivery_date")
@@ -26,18 +32,12 @@ export default async function ProductionHomePage() {
   const projectIds = (projects ?? []).map((project) => project.id);
   const [{ data: tasks }, { data: shootDays }] = await Promise.all([
     projectIds.length
-      ? dataClient.from("project_tasks").select("id,project_id,title,status,due_date").in("project_id", projectIds).neq("status", "completada")
+      ? dataClient.from("project_tasks").select("id,project_id,title,status,due_date").in("project_id", projectIds).gte("due_date", today).neq("status", "completada")
       : Promise.resolve({ data: [] }),
     projectIds.length
-      ? dataClient.from("shoot_days").select("id,project_id,shoot_day_number,shoot_date,location").in("project_id", projectIds).not("shoot_date", "is", null)
+      ? dataClient.from("shoot_days").select("id,project_id,shoot_day_number,shoot_date,location").in("project_id", projectIds).gte("shoot_date", today).not("shoot_date", "is", null)
       : Promise.resolve({ data: [] }),
   ]);
-  const todayParts = new Intl.DateTimeFormat("en", { timeZone: "America/Tijuana", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
-  const todayPart = (type: string) => todayParts.find((item) => item.type === type)?.value ?? "";
-  const today = `${todayPart("year")}-${todayPart("month")}-${todayPart("day")}`;
-  const monthAheadDate = new Date(`${today}T12:00:00.000Z`);
-  monthAheadDate.setUTCDate(monthAheadDate.getUTCDate() + 30);
-  const monthAhead = monthAheadDate.toISOString().slice(0, 10);
   const activeProjects = (projects ?? []).filter((project) => project.stage !== "Distribución").length;
   const upcomingTasks = (tasks ?? []).filter((task) => task.due_date && task.due_date >= today).length;
   const upcomingShootDays = (shootDays ?? []).filter((day) => day.shoot_date && day.shoot_date >= today && day.shoot_date <= monthAhead).length;

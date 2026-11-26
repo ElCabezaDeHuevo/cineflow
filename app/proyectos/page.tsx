@@ -79,50 +79,39 @@ export default async function ProjectsPage({
   const ownedProjectIds = (memberships ?? [])
     .filter((membership) => membership.role === "owner")
     .map((membership) => membership.project_id);
-  let pendingLeaveRequests: {
-    id: string;
-    project_id: string;
-    user_id: string;
-    created_at: string;
-  }[] = [];
-  let leaveRequestsError: string | null = null;
-  if (admin && ownedProjectIds.length) {
-    const result = await admin
-      .from("project_leave_requests")
-      .select("id,project_id,user_id,created_at")
-      .eq("status", "pending")
-      .in("project_id", ownedProjectIds)
-      .order("created_at", { ascending: true });
-    if (result.error) {
-      leaveRequestsError = result.error.message;
-    } else {
-      pendingLeaveRequests = result.data ?? [];
-    }
-  }
-  let ownLeaveRequests: { project_id: string; status: string; created_at: string }[] = [];
-  let ownDeletionRequests: { project_id: string; status: string; created_at: string }[] = [];
-  if (admin && projectIds.length) {
-    const result = await admin
-      .from("project_leave_requests")
-      .select("project_id,status,created_at")
-      .eq("user_id", user.id)
-      .in("project_id", projectIds)
-      .order("created_at", { ascending: false });
-    if (result.error) {
-      leaveRequestsError = leaveRequestsError ?? result.error.message;
-    } else {
-      ownLeaveRequests = result.data ?? [];
-    }
-  }
-  if (admin && projectIds.length) {
-    const result = await admin
-      .from("project_deletion_requests")
-      .select("project_id,status,created_at")
-      .eq("requester_id", user.id)
-      .in("project_id", projectIds)
-      .order("created_at", { ascending: false });
-    if (!result.error) ownDeletionRequests = result.data ?? [];
-  }
+  const visibleProjectIds = visibleProjects.map((project) => project.id);
+  const [
+    pendingLeaveResult,
+    ownLeaveResult,
+    ownDeletionResult,
+    pendingMembershipResult,
+    ownRequestResult,
+  ] = await Promise.all([
+    admin && ownedProjectIds.length
+      ? admin.from("project_leave_requests").select("id,project_id,user_id,created_at").eq("status", "pending").in("project_id", ownedProjectIds).order("created_at", { ascending: true })
+      : Promise.resolve({ data: [], error: null }),
+    admin && projectIds.length
+      ? admin.from("project_leave_requests").select("project_id,status,created_at").eq("user_id", user.id).in("project_id", projectIds).order("created_at", { ascending: false })
+      : Promise.resolve({ data: [], error: null }),
+    admin && projectIds.length
+      ? admin.from("project_deletion_requests").select("project_id,status,created_at").eq("requester_id", user.id).in("project_id", projectIds).order("created_at", { ascending: false })
+      : Promise.resolve({ data: [], error: null }),
+    admin && ownedProjectIds.length
+      ? admin.from("project_membership_requests").select("id,project_id,user_id,created_at").eq("status", "pending").in("project_id", ownedProjectIds).order("created_at", { ascending: true })
+      : Promise.resolve({ data: [], error: null }),
+    admin && projectIds.length
+      ? admin.from("project_membership_requests").select("project_id,status,created_at").eq("user_id", user.id).in("project_id", projectIds).order("created_at", { ascending: false })
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+  const pendingLeaveRequests = pendingLeaveResult.data ?? [];
+  const ownLeaveRequests = ownLeaveResult.data ?? [];
+  const ownDeletionRequests = ownDeletionResult.data ?? [];
+  const pendingMembershipRequests = pendingMembershipResult.data ?? [];
+  const ownRequests = ownRequestResult.data ?? [];
+  const leaveRequestsError = pendingLeaveResult.error?.message ?? ownLeaveResult.error?.message ?? null;
+  const membershipRequestsError = pendingMembershipResult.error?.message ?? null;
+  const requestsError = ownRequestResult.error?.message ?? null;
+
   const latestLeaveRequestByProject = new Map<string, string>();
   for (const request of ownLeaveRequests) {
     if (!latestLeaveRequestByProject.has(request.project_id)) {
@@ -135,38 +124,24 @@ export default async function ProjectsPage({
       latestDeletionRequestByProject.set(request.project_id, request.status);
     }
   }
-  let pendingMembershipRequests: {
-    id: string;
-    project_id: string;
-    user_id: string;
-    created_at: string;
-  }[] = [];
-  let membershipRequestsError: string | null = null;
-  if (admin && ownedProjectIds.length) {
-    const result = await admin
-      .from("project_membership_requests")
-      .select("id,project_id,user_id,created_at")
-      .eq("status", "pending")
-      .in("project_id", ownedProjectIds)
-      .order("created_at", { ascending: true });
-    if (result.error) {
-      membershipRequestsError = result.error.message;
-    } else {
-      pendingMembershipRequests = result.data ?? [];
-    }
-  }
+
   const requesterIds = [...new Set([
     ...pendingMembershipRequests.map((request) => request.user_id),
     ...pendingLeaveRequests.map((request) => request.user_id),
   ])];
-  const { data: requesterProfiles, error: requesterProfilesError } = requesterIds.length
-    ? await (admin ?? supabase)
-        .from("profiles")
-        .select("id,full_name")
-        .in("id", requesterIds)
-    : { data: [], error: null };
+  const [{ data: requesterProfiles, error: requesterProfilesError }, { data: covers, error: coversError }] = await Promise.all([
+    requesterIds.length
+      ? (admin ?? supabase).from("profiles").select("id,full_name").in("id", requesterIds)
+      : Promise.resolve({ data: [], error: null }),
+    admin && visibleProjectIds.length
+      ? admin.from("project_media").select("project_id,storage_path,created_at").eq("media_type", "cover").in("project_id", visibleProjectIds).order("created_at", { ascending: false })
+      : Promise.resolve({ data: [], error: null }),
+  ]);
   if (requesterProfilesError) {
     throw new Error(`No se pudieron cargar los perfiles solicitantes: ${requesterProfilesError.message}`);
+  }
+  if (coversError) {
+    throw new Error(`No se pudieron cargar las portadas: ${coversError.message}`);
   }
   const requesterNameById = new Map(
     (requesterProfiles ?? []).map((profile) => [profile.id, profile.full_name]),
@@ -174,40 +149,20 @@ export default async function ProjectsPage({
   const projectNameById = new Map(
     (projects ?? []).map((project) => [project.id, project.name]),
   );
-  const { data: covers, error: coversError } = projectIds.length
-    ? await (admin ?? supabase)
-        .from("project_media")
-        .select("project_id,storage_path,created_at")
-        .eq("media_type", "cover")
-        .in("project_id", projectIds)
-        .order("created_at", { ascending: false })
-    : { data: [], error: null };
-  if (coversError) {
-    throw new Error(`No se pudieron cargar las portadas: ${coversError.message}`);
-  }
   const coverByProject = new Map<string, string>();
-  if (admin) {
-    for (const cover of covers ?? []) {
-      if (coverByProject.has(cover.project_id)) continue;
-      const { data: signed } = await admin.storage
-        .from("project-media")
-        .createSignedUrl(cover.storage_path, 60 * 60);
-      if (signed?.signedUrl) coverByProject.set(cover.project_id, signed.signedUrl);
+  if (admin && covers?.length) {
+    const latestCoverByProject = new Map<string, (typeof covers)[number]>();
+    for (const cover of covers) {
+      if (!latestCoverByProject.has(cover.project_id)) latestCoverByProject.set(cover.project_id, cover);
     }
-  }
-  let ownRequests: { project_id: string; status: string; created_at: string }[] = [];
-  let requestsError: string | null = null;
-  if (admin && projectIds.length) {
-    const result = await admin
-      .from("project_membership_requests")
-      .select("project_id,status,created_at")
-      .eq("user_id", user.id)
-      .in("project_id", projectIds)
-      .order("created_at", { ascending: false });
-    if (result.error) {
-      requestsError = result.error.message;
-    } else {
-      ownRequests = result.data ?? [];
+    const signedCovers = await Promise.all(
+      [...latestCoverByProject.values()].map(async (cover) => {
+        const { data: signed } = await admin.storage.from("project-media").createSignedUrl(cover.storage_path, 60 * 60);
+        return signed?.signedUrl ? [cover.project_id, signed.signedUrl] as const : null;
+      }),
+    );
+    for (const signed of signedCovers) {
+      if (signed) coverByProject.set(signed[0], signed[1]);
     }
   }
   const latestRequestByProject = new Map<string, string>();
