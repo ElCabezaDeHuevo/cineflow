@@ -11,7 +11,11 @@ type Props = { name: string; email: string; avatarUrl?: string | null; isAdmin: 
 const groups = [
   { label: "Inicio", items: [{ href: "/", label: "Panel principal", icon: "▦" }] },
   { label: "Producción", items: [
-    { href: "/produccion", label: "Espacio de producción", icon: "▣" },
+    { href: "/produccion", label: "Resumen de producción", icon: "⌂" },
+    { href: "/proyectos", label: "Proyectos", icon: "▣" },
+    { href: "/rodaje", label: "Rodaje", icon: "▤" },
+    { href: "/calendario", label: "Agenda", icon: "▦" },
+    { href: "/timeline", label: "Seguimiento", icon: "◷" },
   ] },
   { label: "Equipo y comunicación", items: [
     { href: "/equipo", label: "Directorio del equipo", icon: "♙" },
@@ -37,15 +41,8 @@ function NavItems({ pathname, isAdmin, companyRole, onNavigate }: {
   pathname: string; isAdmin: boolean; companyRole: CompanyRole | null; onNavigate?: () => void;
 }) {
   const canManageCompany = companyRole === "owner" || companyRole === "admin";
-  const isActive = (href: string) => {
-    if (href === "/") return pathname === "/";
-    if (href === "/produccion") {
-      return ["/produccion", "/proyectos", "/rodaje", "/calendario", "/timeline", "/centro"].some(
-        (route) => pathname === route || pathname.startsWith(route + "/"),
-      );
-    }
-    return pathname === href || pathname.startsWith(href + "/");
-  };
+  const isActive = (href: string) =>
+    href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/");
   return <>
     {groups.map((group) => <div key={group.label} className="mb-6">
       <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[.2em] text-zinc-500">{group.label}</p>
