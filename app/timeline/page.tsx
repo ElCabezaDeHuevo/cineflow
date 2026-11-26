@@ -5,7 +5,6 @@ import { connection } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import UserAvatar from "@/lib/UserAvatar";
 import TimelineProjects from "./TimelineProjects";
-import ProductionNavigation from "@/app/ProductionNavigation";
 
 export const instant = false;
 
@@ -45,7 +44,6 @@ async function TimelineContent() {
   return (
     <main className="cf-cinematic-page cf-bg-timeline min-h-screen bg-[#0b0c10] text-white">
       <section className="mx-auto max-w-7xl p-4 sm:p-6 md:p-10">
-        <ProductionNavigation active="/timeline" />
         <Link
           href="/"
           className="text-sm text-violet-300 hover:text-violet-200"

@@ -17,7 +17,6 @@ import {
 } from "./actions";
 import ProjectForm from "./ProjectForm";
 import ConfirmSubmit from "@/app/ConfirmSubmit";
-import ProductionNavigation from "@/app/ProductionNavigation";
 
 export const instant = false;
 
@@ -238,7 +237,6 @@ export default async function ProjectsPage({
   return (
     <main className="cf-cinematic-page cf-bg-projects min-h-screen bg-[#0b0c10] text-white">
       <section className="mx-auto max-w-7xl p-4 sm:p-6 md:p-10">
-        <ProductionNavigation active="/proyectos" />
         <Link href="/" className="text-sm text-violet-300">
           ← Panel principal
         </Link>

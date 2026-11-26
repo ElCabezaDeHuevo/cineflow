@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createFilmScene, createShootDay, scheduleFilmScene, unscheduleFilmScene, updateFilmScene, deleteFilmScene, updateShootDay, deleteShootDay } from "./actions";
 import ConfirmSubmit from "./ConfirmSubmit";
-import ProductionNavigation from "@/app/ProductionNavigation";
 
 export const instant = false;
 
@@ -43,7 +42,6 @@ export default async function ShootingBoard({ searchParams }: { searchParams: Pr
   return (
     <main className="cf-cinematic-page cf-bg-shooting min-h-screen bg-[#0b0c10] px-4 py-7 text-white md:px-8">
       <section className="mx-auto max-w-[1600px]">
-        <ProductionNavigation active="/rodaje" />
         <div className="flex flex-wrap items-center justify-between gap-4"><Link href="/" className="text-sm text-violet-300">← Panel principal</Link><Link href="/calendario" className="text-sm text-violet-300">Calendario general →</Link></div>
         <header className="my-7 flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs uppercase tracking-[.2em] text-violet-300">CineFlow / Producción</p><h1 className="mt-2 text-3xl font-bold">Planificador de rodaje</h1><p className="mt-2 text-sm text-gray-400">Escenas sin programar y jornadas de filmación por proyecto.</p></div>
         <form action="/rodaje" className="flex items-center gap-2"><label className="text-xs text-gray-400" htmlFor="project">Proyecto</label><select id="project" name="project" defaultValue={projectId ?? ""} className="rounded-lg border border-white/10 bg-[#171923] px-3 py-2 text-sm">{(projects ?? []).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select><button className="rounded-lg bg-violet-500 px-3 py-2 text-sm font-semibold">Abrir</button></form></header>

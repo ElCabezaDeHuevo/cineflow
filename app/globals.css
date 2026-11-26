@@ -1533,3 +1533,71 @@ html, body, .cf-sidebar-scroll, .cf-more-nav-scroll {
   ::-webkit-scrollbar-thumb { background: rgb(190 195 205 / 34%); background-clip: padding-box; }
 }
 
+
+
+/* Producción: fotos de fondo tenues y superficies de cristal; sin pestañas horizontales */
+#main-content.cf-app-frame .cf-route-enter > main.cf-production-surface,
+#main-content.cf-app-frame .cf-route-enter > main.cf-cinematic-page.cf-bg-projects,
+#main-content.cf-app-frame .cf-route-enter > main.cf-cinematic-page.cf-bg-shooting,
+#main-content.cf-app-frame .cf-route-enter > main.cf-cinematic-page.cf-bg-calendar,
+#main-content.cf-app-frame .cf-route-enter > main.cf-cinematic-page.cf-bg-timeline {
+  background-color: #14171c !important;
+  background-image:
+    linear-gradient(116deg, rgb(14 16 21 / .91), rgb(20 22 28 / .84) 54%, rgb(13 15 20 / .91)),
+    radial-gradient(ellipse at 16% 4%, rgb(176 178 185 / .07), transparent 38rem),
+    url("https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=2200&q=80") !important;
+  background-position: center, center, center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+#main-content.cf-app-frame .cf-route-enter > main.cf-cinematic-page.cf-bg-projects {
+  background-image:
+    linear-gradient(116deg, rgb(14 16 21 / .91), rgb(20 22 28 / .84) 54%, rgb(13 15 20 / .91)),
+    radial-gradient(ellipse at 16% 4%, rgb(176 178 185 / .07), transparent 38rem),
+    url("https://images.unsplash.com/photo-1492619375914-88005aa9e8fb?auto=format&fit=crop&w=2200&q=80") !important;
+}
+#main-content.cf-app-frame .cf-route-enter > main.cf-cinematic-page.cf-bg-shooting {
+  background-image:
+    linear-gradient(116deg, rgb(14 16 21 / .91), rgb(20 22 28 / .84) 54%, rgb(13 15 20 / .91)),
+    radial-gradient(ellipse at 16% 4%, rgb(176 178 185 / .07), transparent 38rem),
+    url("https://images.unsplash.com/photo-1478720568477-152d9b164e26?auto=format&fit=crop&w=2200&q=80") !important;
+}
+#main-content.cf-app-frame .cf-route-enter > main.cf-cinematic-page.cf-bg-calendar {
+  background-image:
+    linear-gradient(116deg, rgb(14 16 21 / .91), rgb(20 22 28 / .84) 54%, rgb(13 15 20 / .91)),
+    radial-gradient(ellipse at 16% 4%, rgb(176 178 185 / .07), transparent 38rem),
+    url("https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=2200&q=80") !important;
+}
+#main-content.cf-app-frame .cf-route-enter > main.cf-cinematic-page.cf-bg-timeline {
+  background-image:
+    linear-gradient(116deg, rgb(14 16 21 / .91), rgb(20 22 28 / .84) 54%, rgb(13 15 20 / .91)),
+    radial-gradient(ellipse at 16% 4%, rgb(176 178 185 / .07), transparent 38rem),
+    url("https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=2200&q=80") !important;
+}
+#main-content.cf-app-frame .cf-route-enter > main:is(.cf-production-surface, .cf-bg-projects, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-timeline) :is(article, .cf-card, .cf-dashboard-panel, .cf-metric-card, section[class*="rounded-2xl"][class*="border"]) {
+  border-color: rgb(235 237 242 / 14%) !important;
+  background: linear-gradient(145deg, rgb(47 50 58 / .73), rgb(26 29 36 / .69)) !important;
+  box-shadow: 0 14px 34px rgb(0 0 0 / 20%), inset 0 1px 0 rgb(255 255 255 / 5%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(110%) !important;
+  backdrop-filter: blur(16px) saturate(110%) !important;
+}
+#main-content.cf-app-frame .cf-route-enter > main:is(.cf-production-surface, .cf-bg-projects, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-timeline) .cf-production-nav {
+  display: none !important;
+}
+@media (max-width: 767px) {
+  #main-content.cf-app-frame .cf-route-enter > main:is(.cf-production-surface, .cf-bg-projects, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-timeline) {
+    background-attachment: scroll;
+  }
+  #main-content.cf-app-frame .cf-route-enter > main:is(.cf-production-surface, .cf-bg-projects, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-timeline) :is(article, .cf-card, .cf-dashboard-panel, .cf-metric-card, section[class*="rounded-2xl"][class*="border"]) {
+    -webkit-backdrop-filter: blur(12px) saturate(108%) !important;
+    backdrop-filter: blur(12px) saturate(108%) !important;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  #main-content.cf-app-frame .cf-route-enter > main:is(.cf-production-surface, .cf-bg-projects, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-timeline) :is(article, .cf-card, .cf-dashboard-panel, .cf-metric-card, section[class*="rounded-2xl"][class*="border"]) {
+    background: rgb(32 36 42 / .96) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import ProductionNavigation from "@/app/ProductionNavigation";
 
 function dateLabel(value: string | null) {
   if (!value) return "Sin fecha";
@@ -97,7 +96,6 @@ export default async function ProductionCalendarPage({ searchParams }: { searchP
   return (
     <main className="cf-cinematic-page cf-bg-calendar min-h-screen bg-[#0b0c10] px-4 py-8 text-white md:px-8">
       <section className="mx-auto max-w-6xl">
-        <ProductionNavigation active="/calendario" />
         <Link href="/" className="text-sm text-violet-300 hover:text-violet-200">← Panel principal</Link>
         <header className="mb-8 mt-6"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-300">CineFlow / Planificación</p><h1 className="mt-2 text-3xl font-bold">Calendario de producción</h1><p className="mt-2 text-gray-400">Fechas de proyectos, rodajes, eventos programados y tareas por vencer.</p></header>
         {(projectsError || tasksError || shootDaysError || scheduleItemsError) && <p role="alert" className="rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-200">No se pudo cargar toda la planificación. Revisa los permisos de tus proyectos.</p>}
