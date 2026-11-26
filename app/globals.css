@@ -1260,3 +1260,71 @@ body {
     backdrop-filter: none !important;
   }
 }
+
+/* Subtle production motion: a clear entrance, responsive hover, and no sensory overload */
+#main-content.cf-app-frame > main.cf-production-surface > section > * {
+  opacity: 0;
+  animation: cf-production-enter 520ms cubic-bezier(.2, .75, .25, 1) both;
+}
+#main-content.cf-app-frame > main.cf-production-surface > section > :nth-child(1) { animation-delay: 30ms; }
+#main-content.cf-app-frame > main.cf-production-surface > section > :nth-child(2) { animation-delay: 80ms; }
+#main-content.cf-app-frame > main.cf-production-surface > section > :nth-child(3) { animation-delay: 130ms; }
+#main-content.cf-app-frame > main.cf-production-surface > section > :nth-child(4) { animation-delay: 180ms; }
+#main-content.cf-app-frame > main.cf-production-surface > section > :nth-child(5) { animation-delay: 230ms; }
+#main-content.cf-app-frame > main.cf-production-surface > section > :nth-child(6) { animation-delay: 280ms; }
+
+@keyframes cf-production-enter {
+  from { opacity: 0; transform: translateY(9px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes cf-production-sheen {
+  from { transform: scaleX(.12); opacity: 0; }
+  35% { opacity: .8; }
+  to { transform: scaleX(1); opacity: .35; }
+}
+#main-content.cf-app-frame > main.cf-production-surface > section > header {
+  position: relative;
+}
+#main-content.cf-app-frame > main.cf-production-surface > section > header::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 1px;
+  content: "";
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgb(225 227 232 / 30%), transparent);
+  transform-origin: left center;
+  animation: cf-production-sheen 1.5s ease-out 320ms both;
+}
+#main-content.cf-app-frame > main.cf-production-surface .cf-card {
+  transition: transform 220ms ease, border-color 220ms ease, background-color 220ms ease, box-shadow 220ms ease;
+}
+#main-content.cf-app-frame > main.cf-production-surface .cf-production-tab {
+  transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+#main-content.cf-app-frame > main.cf-production-surface a:focus-visible {
+  outline-offset: 3px;
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  #main-content.cf-app-frame > main.cf-production-surface .cf-card:hover {
+    transform: translateY(-2px);
+    border-color: rgb(224 227 232 / 20%) !important;
+    box-shadow: 0 14px 28px rgb(0 0 0 / 18%) !important;
+  }
+  #main-content.cf-app-frame > main.cf-production-surface .cf-production-tab:hover {
+    transform: translateY(-1px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #main-content.cf-app-frame > main.cf-production-surface > section > *,
+  #main-content.cf-app-frame > main.cf-production-surface > section > header::after {
+    opacity: 1;
+    animation: none !important;
+    transform: none !important;
+  }
+  #main-content.cf-app-frame > main.cf-production-surface :is(.cf-card, .cf-production-tab) {
+    transition: none !important;
+  }
+}
+
