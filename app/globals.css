@@ -1442,3 +1442,94 @@ body {
   .cf-route-loading-progress span { animation: none !important; width: 100%; }
 }
 
+/* Unified subtle photo background and liquid-glass panels across authenticated windows */
+#main-content.cf-app-frame .cf-route-enter > main {
+  background-color: #12151b !important;
+  background-image:
+    linear-gradient(116deg, rgb(10 13 19 / .89) 0%, rgb(14 17 23 / .82) 52%, rgb(11 14 19 / .90) 100%),
+    radial-gradient(ellipse at 16% 5%, rgb(150 145 164 / .045), transparent 38rem),
+    url("https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=2200&q=80") !important;
+  background-position: center, center, center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+#main-content.cf-app-frame .cf-route-enter > main.cf-cinematic-page::before {
+  content: none !important;
+}
+#main-content.cf-app-frame .cf-route-enter > main :is(
+  article,
+  aside,
+  .cf-card,
+  .cf-glass,
+  .cf-dashboard-panel,
+  .cf-metric-card,
+  section[class*="rounded-2xl"][class*="border"],
+  section[class*="rounded-xl"][class*="border"],
+  div[class*="rounded-2xl"][class*="border"],
+  form[class*="rounded-2xl"][class*="border"]
+) {
+  border-color: rgb(235 237 242 / 15%) !important;
+  background: linear-gradient(145deg, rgb(48 53 62 / 70%), rgb(27 32 40 / 65%)) !important;
+  box-shadow: 0 14px 34px rgb(0 0 0 / 18%), inset 0 1px 0 rgb(255 255 255 / 6%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(108%) !important;
+  backdrop-filter: blur(16px) saturate(108%) !important;
+}
+#main-content.cf-app-frame .cf-route-enter > main :is(article, div)[class*="border-rose"],
+#main-content.cf-app-frame .cf-route-enter > main :is(article, div)[class*="border-red"] {
+  border-color: rgb(251 113 133 / 25%) !important;
+  background: linear-gradient(145deg, rgb(84 42 50 / 42%), rgb(39 31 37 / 60%)) !important;
+}
+#main-content.cf-app-frame .cf-route-enter > main :is(article, div)[class*="border-amber"] {
+  border-color: rgb(245 190 90 / 23%) !important;
+  background: linear-gradient(145deg, rgb(77 65 42 / 38%), rgb(37 35 31 / 60%)) !important;
+}
+@media (max-width: 767px) {
+  #main-content.cf-app-frame .cf-route-enter > main {
+    background-attachment: scroll;
+  }
+  #main-content.cf-app-frame .cf-route-enter > main :is(
+    article, aside, .cf-card, .cf-glass, .cf-dashboard-panel, .cf-metric-card,
+    section[class*="rounded-2xl"][class*="border"],
+    section[class*="rounded-xl"][class*="border"],
+    div[class*="rounded-2xl"][class*="border"],
+    form[class*="rounded-2xl"][class*="border"]
+  ) {
+    -webkit-backdrop-filter: blur(12px) saturate(105%) !important;
+    backdrop-filter: blur(12px) saturate(105%) !important;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  #main-content.cf-app-frame .cf-route-enter > main :is(
+    article, aside, .cf-card, .cf-glass, .cf-dashboard-panel, .cf-metric-card,
+    section[class*="rounded-2xl"][class*="border"],
+    section[class*="rounded-xl"][class*="border"],
+    div[class*="rounded-2xl"][class*="border"],
+    form[class*="rounded-2xl"][class*="border"]
+  ) {
+    background: rgb(31 35 42 / 96%) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+
+/* Slim, quiet scrollbars in the global page and CineFlow menus */
+html, body, .cf-sidebar-scroll, .cf-more-nav-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(190 195 205 / 25%) transparent;
+}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: rgb(190 195 205 / 23%);
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background: rgb(210 214 222 / 42%); background-clip: padding-box; }
+.cf-sidebar-scroll::-webkit-scrollbar,
+.cf-more-nav-scroll::-webkit-scrollbar { width: 4px; }
+@media (prefers-reduced-transparency: reduce) {
+  ::-webkit-scrollbar-thumb { background: rgb(190 195 205 / 34%); background-clip: padding-box; }
+}
+
