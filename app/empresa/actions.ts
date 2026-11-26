@@ -2,45 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@supabase/supabase-js";
 import { CINE_ROLES } from "@/lib/cine-roles";
 
-async function ownerContext(requestedOrganizationId: string, allowWhenSubscriptionInactive = false) {
-  const supabase = await createSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-  const { data: memberships } = await supabase.from("organization_members")
-    .select("organization_id,role").eq("user_id", user.id);
-  const membership = (memberships ?? []).find((m) => m.organization_id === requestedOrganizationId && ["owner", "admin"].includes(m.role));
-  if (!membership) redirect("/empresa?error=No+tienes+permisos+para+administrar+esa+productora");
-  const admin = createSupabaseAdminClient();
-  if (!admin) redirect("/empresa?error=No+está+configurado+el+servicio+de+invitaciones");
-  const { data: activeSuspension, error: suspensionLookupError } = await admin
-    .from("organization_member_suspensions")
-    .select("id")
-    .eq("organization_id", membership.organization_id)
-    .eq("target_user_id", user.id)
-    .is("reactivated_at", null)
-    .maybeSingle();
-  if (suspensionLookupError) redirect("/empresa?error=No+se+pudo+verificar+el+estado+de+tu+acceso");
-  if (activeSuspension) redirect("/?error=Tu+acceso+a+esta+empresa+está+suspendido");
-  if (!allowWhenSubscriptionInactive) {
-    const { data: subscription, error: subscriptionError } = await admin.from("subscriptions")
-      .select("status,trial_end,current_period_end").eq("organization_id", membership.organization_id).maybeSingle();
-    const now = Date.now();
-    const expiry = subscription?.status === "trialing"
-      ? subscription.trial_end
-      : subscription?.current_period_end ?? subscription?.trial_end;
-    const hasValidPeriod = Boolean(expiry && new Date(expiry).getTime() > now);
-    const statusAllowsAccess = subscription?.status === "trialing" || subscription?.status === "active";
-    if (subscriptionError || !subscription || !statusAllowsAccess || !hasValidPeriod) {
-      redirect("/empresa?error=La+vigencia+de+esta+productora+terminó+o+no+está+activa.+Contacta+al+soporte");
-    }
-  }
-  return { admin, user, organizationId: membership.organization_id, actorRole: membership.role };
-}
+import { ownerContext } from "@/lib/company-management";
+import { CINEFLOW_OWNER_ID } from "@/lib/admin";
 
 async function findAuthUserByEmail(admin: ReturnType<typeof createSupabaseAdminClient>, email: string) {
   if (!admin) throw new Error("Servicio administrativo no disponible");
@@ -68,7 +35,9 @@ export async function inviteCompanyMember(formData: FormData) {
   if (!["producer", "member", "viewer"].includes(role)) redirect("/empresa?error=Permiso+no+válido");
   const { data: org, error: orgError } = await admin.from("organizations").select("name").eq("id", organizationId).single();
   if (orgError || !org) redirect("/empresa?error=No+se+encontró+la+productora");
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  const siteUrl = process.env.VERCEL_ENV === "preview" && process.env.VERCEL_BRANCH_URL
+    ? `https://${process.env.VERCEL_BRANCH_URL}`
+    : process.env.NEXT_PUBLIC_SITE_URL;
   if (!siteUrl) return { ok: false as const, message: "Falta configurar NEXT_PUBLIC_SITE_URL" };
 
   let existingUser;
@@ -79,42 +48,30 @@ export async function inviteCompanyMember(formData: FormData) {
   }
 
   if (existingUser) {
+    if (existingUser.id === CINEFLOW_OWNER_ID || existingUser.app_metadata?.cineflow_role === "admin") {
+      redirect("/empresa?error=La+cuenta+global+no+pertenece+a+productoras");
+    }
+    const { data: elsewhere, error: scopeError } = await admin.from("organization_members")
+      .select("organization_id").eq("user_id", existingUser.id).neq("organization_id", organizationId).limit(1);
+    if (scopeError || elsewhere?.length) {
+      redirect("/empresa?error=No+se+puede+incorporar+esa+cuenta+a+esta+productora");
+    }
     const { data: alreadyMember, error: membershipLookupError } = await admin.from("organization_members")
       .select("user_id").eq("organization_id", organizationId).eq("user_id", existingUser.id).maybeSingle();
     if (membershipLookupError) redirect("/empresa?error=" + encodeURIComponent(membershipLookupError.message));
     if (alreadyMember) redirect("/empresa?error=Esa+persona+ya+pertenece+a+tu+equipo");
-    const { error: memberError } = await admin.from("organization_members").insert({
-      organization_id: organizationId, user_id: existingUser.id, role, invited_by: user.id,
-    });
-    if (memberError) redirect("/empresa?error=" + encodeURIComponent(memberError.message));
 
-    // Keep the account's active organization metadata consistent with its membership.
-    const previousAppMetadata = existingUser.app_metadata ?? {};
-    const { error: metadataError } = await admin.auth.admin.updateUserById(existingUser.id, {
-      app_metadata: { ...previousAppMetadata, organization_id: organizationId },
-    });
-    if (metadataError) {
-      await admin.from("organization_members").delete().eq("organization_id", organizationId).eq("user_id", existingUser.id);
-      redirect("/empresa?error=" + encodeURIComponent(metadataError.message));
-    }
-
-    const { error: auditError } = await admin.from("organization_audit_log").insert({
-      organization_id: organizationId, actor_id: user.id, action: "existing_member_added",
-      target_type: "user", target_id: existingUser.id, metadata: { email, role },
-    });
-    if (auditError) {
-      await admin.from("organization_members").delete().eq("organization_id", organizationId).eq("user_id", existingUser.id);
-      await admin.auth.admin.updateUserById(existingUser.id, { app_metadata: previousAppMetadata });
-      redirect("/empresa?error=" + encodeURIComponent(auditError.message));
-    }
-    revalidatePath("/empresa");
-    return {
-      ok: true as const,
-      kind: "existing" as const,
-      email,
-      organizationName: org.name,
-      loginUrl: new URL("/login", siteUrl).toString(),
-    };
+    const token = crypto.randomUUID() + crypto.randomUUID();
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
+    const hash = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+    const { data: invitation, error } = await admin.from("organization_invitations").insert({
+      organization_id: organizationId, email, role, token_hash: hash,
+      invited_by: user.id, expires_at: new Date(Date.now() + 7 * 86400000).toISOString(),
+    }).select("id").single();
+    if (error || !invitation) return { ok: false as const, message: "No se pudo preparar la invitación." };
+    const link = new URL("/invitacion", siteUrl);
+    link.hash = new URLSearchParams({ id: invitation.id, token }).toString();
+    return { ok: true as const, kind: "invitation" as const, email, organizationName: org.name, inviteUrl: link.toString() };
   }
 
   // A new member remains outside the organization until the invite link is verified.
@@ -322,7 +279,7 @@ export async function removeCompanyMember(formData: FormData) {
   if (verificationError) {
     return { ok: false as const, message: "La contraseña del dueño no es correcta. No se realizó ningún cambio." };
   }
-  await verifier.auth.signOut();
+  await verifier.auth.signOut({ scope: "local" });
 
   const { data: target, error: targetError } = await admin.auth.admin.getUserById(userId);
   if (targetError || !target.user) return { ok: false as const, message: "No se encontró la cuenta del integrante." };
@@ -388,9 +345,11 @@ export async function requestCompanyMemberPasswordReset(formData: FormData) {
   }
 
   const { data: target, error: targetError } = await admin.auth.admin.getUserById(userId);
-  if (targetError || !target.user?.email) redirect("/empresa?error=No+se+encontró+el+correo+de+esa+cuenta");
+  if (targetError || !target.user?.email || userId === CINEFLOW_OWNER_ID || target.user.app_metadata?.cineflow_role === "admin") redirect("/empresa?error=No+se+encontró+el+correo+de+esa+cuenta");
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  const siteUrl = process.env.VERCEL_ENV === "preview" && process.env.VERCEL_BRANCH_URL
+    ? `https://${process.env.VERCEL_BRANCH_URL}`
+    : process.env.NEXT_PUBLIC_SITE_URL;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   if (!siteUrl || !supabaseUrl || !publishableKey) {
@@ -465,7 +424,7 @@ export async function suspendCompanyMember(formData: FormData) {
   });
   const { error: verificationError } = await verifier.auth.signInWithPassword({ email: actor.email, password });
   if (verificationError) return { ok: false as const, message: "La contraseña del dueño no es correcta. No se realizó ningún cambio." };
-  await verifier.auth.signOut();
+  await verifier.auth.signOut({ scope: "local" });
 
   const { data: result, error } = await admin.rpc("suspend_organization_member", {
     p_organization_id: organizationId,
@@ -498,7 +457,7 @@ export async function reactivateCompanyMember(formData: FormData) {
   });
   const { error: verificationError } = await verifier.auth.signInWithPassword({ email: actor.email, password });
   if (verificationError) return { ok: false as const, message: "La contraseña del dueño no es correcta. No se realizó ningún cambio." };
-  await verifier.auth.signOut();
+  await verifier.auth.signOut({ scope: "local" });
 
   const { data: result, error } = await admin.rpc("reactivate_organization_member", {
     p_organization_id: organizationId,

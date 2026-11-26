@@ -26,10 +26,15 @@ export async function createScheduleItem(formData: FormData) {
   const location = String(formData.get("location") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   if (!projectId || !title || !startsAt) throw new Error("Completa el proyecto, título y fecha de inicio.");
+  const start = new Date(startsAt);
+  const end = endsAt ? new Date(endsAt) : null;
+  if (!Number.isFinite(start.getTime()) || (end && (!Number.isFinite(end.getTime()) || end <= start))) {
+    throw new Error("El fin debe ser posterior al inicio del evento.");
+  }
   await requireProjectEditor(supabase, projectId, user.id);
   const { error } = await supabase.from("project_schedule_items").insert({
-    project_id: projectId, title, starts_at: new Date(startsAt).toISOString(),
-    ends_at: endsAt ? new Date(endsAt).toISOString() : null,
+    project_id: projectId, title, starts_at: start.toISOString(),
+    ends_at: end?.toISOString() ?? null,
     location: location || null, description: description || null, created_by: user.id,
   });
   if (error) throw new Error(`No se pudo guardar el evento: ${error.message}`);
@@ -41,10 +46,11 @@ export async function createExpense(formData: FormData) {
   const projectId = String(formData.get("project_id") ?? "");
   const concept = String(formData.get("concept") ?? "").trim();
   const category = String(formData.get("category") ?? "General").trim();
-  const amount = Number(formData.get("amount"));
+  const rawAmount = String(formData.get("amount") ?? "").trim();
+  const amount = Number(rawAmount);
   const spentOn = String(formData.get("spent_on") ?? "");
   const notes = String(formData.get("notes") ?? "").trim();
-  if (!projectId || !concept || !Number.isFinite(amount) || amount < 0) throw new Error("Revisa el concepto y el importe del gasto.");
+  if (!projectId || !concept || !rawAmount || !Number.isFinite(amount) || amount < 0) throw new Error("Revisa el concepto y el importe del gasto.");
   await requireProjectEditor(supabase, projectId, user.id);
   const { error } = await supabase.from("project_expenses").insert({
     project_id: projectId, concept, category, amount, spent_on: spentOn || undefined,

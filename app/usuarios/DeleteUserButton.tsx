@@ -10,12 +10,17 @@ export default function DeleteUserButton({ userId, email }: { userId: string; em
 
   return (
     <>
-      <form action={deleteUser} onSubmit={(event) => {
-        if (!window.confirm(`¿Suspender el acceso de ${email}? La cuenta y sus datos se conservarán.`)) event.preventDefault();
-      }}>
-        <input type="hidden" name="user_id" value={userId} />
-        <button type="submit" className="rounded-lg border border-amber-400/30 px-3 py-2 text-xs font-semibold text-amber-200 transition hover:bg-amber-400/10">Suspender cuenta</button>
-      </form>
+      <details>
+        <summary className="cursor-pointer rounded-lg border border-amber-400/40 px-3 py-2 text-xs font-semibold text-amber-200">Suspender cuenta</summary>
+        <form action={deleteUser} className="mt-3 grid gap-3 rounded-xl border border-amber-400/30 p-4 text-sm">
+          <p>La suspensión bloquea el acceso de {email} y conserva su historial.</p>
+          <input type="hidden" name="user_id" value={userId} />
+          <label>Motivo<textarea required minLength={4} name="reason" className="mt-1 block w-full rounded-lg p-2" /></label>
+          <label>Confirma el correo<input required type="email" name="confirmation_email" autoComplete="off" className="mt-1 block w-full rounded-lg p-2" /></label>
+          <label>Escribe SUSPENDER<input required name="confirmation_phrase" pattern="SUSPENDER" autoComplete="off" className="mt-1 block w-full rounded-lg p-2" /></label>
+          <button className="rounded-lg bg-amber-300 px-4 py-2 font-semibold text-slate-950">Confirmar suspensión</button>
+        </form>
+      </details>
       <details className="group">
       <summary className="cursor-pointer list-none rounded-lg border border-rose-400/30 px-3 py-2 text-xs font-semibold text-rose-200 transition hover:bg-rose-400/10">
         Eliminar permanentemente

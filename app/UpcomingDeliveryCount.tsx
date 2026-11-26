@@ -15,6 +15,7 @@ export default function UpcomingDeliveryCount({
     () => () => {},
     () => {
       const now = new Date();
+      now.setHours(0, 0, 0, 0);
       const nextMonth = new Date(now);
       nextMonth.setDate(nextMonth.getDate() + 30);
       return deliveryDates.filter((date) => {
@@ -37,7 +38,7 @@ export default function UpcomingDeliveryCount({
         <div
           className="h-full rounded-full bg-sky-400 transition-all"
           style={{
-            width: `${total && count !== null ? Math.max(8, (count / total) * 100) : 0}%`,
+            width: `${total && count !== null ? (count / total) * 100 : 0}%`,
           }}
         />
       </div>

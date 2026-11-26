@@ -9,7 +9,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { CINE_ROLES } from "@/lib/cine-roles";
 import { hasOpenWorkSession, attendanceRequiredMessage } from "@/lib/attendance";
-import { isCineflowAdmin } from "@/lib/admin";
+import { CINEFLOW_OWNER_ID, isCineflowAdmin } from "@/lib/admin";
 import { listAllAuthUsers } from "@/lib/supabase/list-all-auth-users";
 
 async function requireAdmin() {
@@ -102,7 +102,7 @@ export async function assignExistingUser(formData: FormData) {
   if (!userId || !organizationId || !["admin", "producer", "member", "viewer"].includes(role)) {
     redirect("/usuarios?error=Selecciona+una+cuenta,+empresa+y+permiso+válidos");
   }
-  if (userId === actor.id) redirect("/usuarios?error=No+puedes+reasignarte+desde+este+formulario");
+  if (userId === CINEFLOW_OWNER_ID || userId === actor.id) redirect("/usuarios?error=No+puedes+reasignarte+desde+este+formulario");
   const [{ data: account, error: accountError }, { data: company, error: companyError }, { data: memberships, error: membershipsError }] = await Promise.all([
     admin.auth.admin.getUserById(userId),
     admin.from("organizations").select("id,name").eq("id", organizationId).maybeSingle(),
@@ -142,13 +142,19 @@ export async function assignExistingUser(formData: FormData) {
 export async function deleteUser(formData: FormData) {
   const { admin, user } = await requireAdmin();
   const userId = String(formData.get("user_id") ?? "");
-  if (!userId || userId === user.id) redirect("/usuarios?error=No%20puedes%20eliminar%20tu%20propia%20cuenta");
+  const confirmedEmail = String(formData.get("confirmation_email") ?? "").trim().toLowerCase();
+  const reason = String(formData.get("reason") ?? "").trim().slice(0, 500);
+  if (formData.get("confirmation_phrase") !== "SUSPENDER" || !confirmedEmail || reason.length < 4) {
+    redirect("/usuarios?error=Confirma+el+correo,+el+motivo+y+la+palabra+SUSPENDER");
+  }
+  if (!userId || userId === CINEFLOW_OWNER_ID || userId === user.id) redirect("/usuarios?error=No%20puedes%20eliminar%20tu%20propia%20cuenta");
   const { data: ownership, error: ownershipError } = await admin.from("organization_members")
     .select("organization_id").eq("user_id", userId).eq("role", "owner").limit(1);
   if (ownershipError) redirect(`/usuarios?error=${message(ownershipError.message)}`);
   if (ownership?.length) redirect("/usuarios?error=No puedes eliminar al dueño de una empresa. Transfiere la propiedad primero.");
   const { data: account, error: lookupError } = await admin.auth.admin.getUserById(userId);
   if (lookupError || !account.user) redirect(`/usuarios?error=${message(lookupError?.message ?? "No se encontró la cuenta.")}`);
+  if (account.user.email?.toLowerCase() !== confirmedEmail || isCineflowAdmin(account.user)) redirect("/usuarios?error=Confirma+una+cuenta+de+colaborador+válida");
   const previousBanUntil = account.user.banned_until ? new Date(account.user.banned_until).getTime() : 0;
   const previousBanDuration = previousBanUntil > Date.now()
     ? `${Math.ceil((previousBanUntil - Date.now()) / 1000)}s`
@@ -166,7 +172,7 @@ export async function deleteUser(formData: FormData) {
     action: "company_user_deactivated",
     target_type: "user",
     target_id: userId,
-    metadata: { email: account.user.email ?? null, reason: "Desactivación desde administración; se conservaron los registros." },
+    metadata: { email: account.user.email ?? null, reason },
   }));
   const { error: auditError } = auditEntries.length
     ? await admin.from("organization_audit_log").insert(auditEntries)
@@ -187,8 +193,8 @@ export async function permanentlyDeleteUser(formData: FormData) {
   const confirmedEmail = String(formData.get("confirmation_email") ?? "").trim().toLowerCase();
   const reason = String(formData.get("reason") ?? "").trim().slice(0, 500);
 
-  if (!userId || userId === actor.id) redirect("/usuarios?error=No%20puedes%20eliminar%20tu%20propia%20cuenta");
-  if (confirmation !== "ELIMINAR" || !confirmedEmail || !reason) {
+  if (!userId || userId === CINEFLOW_OWNER_ID || userId === actor.id) redirect("/usuarios?error=No%20puedes%20eliminar%20tu%20propia%20cuenta");
+  if (confirmation !== "ELIMINAR" || !confirmedEmail || reason.length < 4) {
     redirect("/usuarios?error=La%20doble%20verificaci%C3%B3n%20no%20se%20complet%C3%B3");
   }
 
@@ -287,6 +293,7 @@ export async function updateUserRole(formData: FormData) {
   const cineRole = String(formData.get("cine_role") ?? "");
   const accountRole = String(formData.get("account_role") ?? "user");
   if (!["user", "admin"].includes(accountRole)) redirect("/usuarios?error=Rol%20de%20cuenta%20inv%C3%A1lido");
+  if (userId === CINEFLOW_OWNER_ID && user.id !== CINEFLOW_OWNER_ID) redirect("/usuarios?error=Cuenta+propietaria+protegida");
   if (userId === user.id && accountRole !== "admin") redirect("/usuarios?error=No%20puedes%20quitarte%20tu%20propio%20acceso%20de%20administrador");
   if (!userId || !CINE_ROLES.some((role) => role.value === cineRole)) redirect("/usuarios?error=Rango%20cinematográfico%20no%20válido");
   const { data: account, error: lookupError } = await admin.auth.admin.getUserById(userId);
@@ -407,7 +414,7 @@ export async function generateTemporaryPassword(userId: string, reason: string) 
 
   const targetId = String(userId ?? "").trim();
   const resetReason = String(reason ?? "").trim().slice(0, 300);
-  if (!targetId || targetId === actor.id) return { error: "No puedes restablecer tu propia contraseña desde este panel." };
+  if (!targetId || targetId === CINEFLOW_OWNER_ID || targetId === actor.id) return { error: "No puedes restablecer tu propia contraseña desde este panel." };
   if (resetReason.length < 4) return { error: "Escribe un motivo de al menos 4 caracteres." };
 
   const [{ data: target, error: targetError }, { data: memberships, error: membershipError }] = await Promise.all([
@@ -547,7 +554,7 @@ export async function updateOrganizationMemberRole(formData: FormData) {
   if (!organizationId || !userId || !allowedRoles.includes(nextRole)) {
     redirect("/usuarios?error=Selecciona+una+empresa,+cuenta+y+rol+válidos");
   }
-  if (userId === actor.id) {
+  if (userId === CINEFLOW_OWNER_ID || userId === actor.id) {
     redirect("/usuarios?error=No+puedes+cambiar+tu+propio+rol+desde+este+panel");
   }
 

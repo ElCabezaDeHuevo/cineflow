@@ -1,9 +1,10 @@
+import CinematicRoleOptions from "@/lib/CinematicRoleOptions";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isCineflowAdmin } from "@/lib/admin";
-import { CINE_ROLES, cineRoleLabel } from "@/lib/cine-roles";
+import { cineRoleLabel } from "@/lib/cine-roles";
 import { assignCinematicPosition } from "./actions";
 
 export default async function AdminCinematicPositionsPage({
@@ -92,7 +93,7 @@ export default async function AdminCinematicPositionsPage({
                         <label className="sr-only" htmlFor={"role-" + member.user_id}>Puesto cinematográfico</label>
                         <select id={"role-" + member.user_id} name="cine_role" required defaultValue={currentPosition ?? ""} className="min-w-0 rounded-lg border border-white/15 bg-[#0b0c10] px-3 py-2.5 text-sm text-white">
                           <option value="" disabled>Selecciona un puesto</option>
-                          {CINE_ROLES.filter((role) => role.value !== "viewer").map((role) => <option key={role.value} value={role.value}>{role.department} · {role.label}</option>)}
+                          <CinematicRoleOptions />
                         </select>
                         <button className="rounded-lg bg-violet-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-400">Asignar puesto</button>
                       </form>

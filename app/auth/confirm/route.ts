@@ -1,3 +1,4 @@
+import { CINEFLOW_OWNER_ID, isCineflowAdmin } from "@/lib/admin";
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -42,8 +43,9 @@ export async function GET(request: NextRequest) {
 
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user?.email) return loginError(request, "No se pudo verificar la cuenta.");
+  if (user.id === CINEFLOW_OWNER_ID || isCineflowAdmin(user)) return loginError(request, "La cuenta global no pertenece a productoras.");
   if (invitation.email.toLowerCase() !== user.email.toLowerCase()) {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: "local" });
     return loginError(request, "El correo autenticado no coincide con el correo invitado.");
   }
   if (!["producer", "member", "viewer"].includes(invitation.role)) {
@@ -57,7 +59,7 @@ export async function GET(request: NextRequest) {
     p_email: user.email,
   });
   if (acceptanceError || !organizationId) {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: "local" });
     return loginError(request, acceptanceError?.message ?? "No se pudo aceptar la invitación.");
   }
 

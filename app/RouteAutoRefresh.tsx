@@ -36,7 +36,7 @@ export default function RouteAutoRefresh() {
       router.refresh();
     };
 
-    const interval = window.setInterval(refreshIfIdle, 10_000);
+    const interval = window.setInterval(refreshIfIdle, 60_000);
     document.addEventListener("visibilitychange", refreshIfIdle);
     window.addEventListener("focus", refreshIfIdle);
 

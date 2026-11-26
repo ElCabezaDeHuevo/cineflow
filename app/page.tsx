@@ -3,7 +3,6 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import UpcomingDeliveryCount from "./UpcomingDeliveryCount";
 import RecentProjects from "./RecentProjects";
 import PendingLogbookNotifications from "./PendingLogbookNotifications";
@@ -65,7 +64,6 @@ async function HomeContent({
         .maybeSingle()
     : { data: null };
   const created = (await searchParams).created === "1";
-  const storageAdmin = createSupabaseAdminClient();
   const displayName =
     profile?.full_name || user?.email?.split("@")[0] || "Invitado";
   const isAdmin = isCineflowAdmin(user);
@@ -145,13 +143,17 @@ async function HomeContent({
       projectName: projectNameById.get(task.project_id) ?? "Proyecto",
     }));
   const coverByProject = new Map<string, string>();
-  if (storageAdmin) {
-    for (const cover of projectCovers ?? []) {
-      if (coverByProject.has(cover.project_id)) continue;
-      const { data: signed } = await storageAdmin.storage
-        .from("project-media")
-        .createSignedUrl(cover.storage_path, 60 * 60);
-      if (signed?.signedUrl) coverByProject.set(cover.project_id, signed.signedUrl);
+  if (projectCovers?.length) {
+    const latest = new Map<string, string>();
+    for (const cover of projectCovers) {
+      if (!latest.has(cover.project_id)) latest.set(cover.project_id, cover.storage_path);
+    }
+    const paths = [...new Set(latest.values())];
+    const { data } = await supabase.storage.from("project-media").createSignedUrls(paths, 3600);
+    const urls = new Map(data?.map(file => [file.path, file.signedUrl] as const));
+    for (const [id, path] of latest) {
+      const url = urls.get(path);
+      if (url) coverByProject.set(id, url);
     }
   }
   const tasksByProject = new Map<string, { total: number; completed: number }>();

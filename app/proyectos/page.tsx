@@ -40,7 +40,7 @@ export default async function ProjectsPage({
   }
 
   const admin = createSupabaseAdminClient();
-  const [{ data: memberships, error: membershipsError }, { nombre, error, success, q = "", etapa = "", tipo = "" }] =
+  const [{ data: memberships, error: membershipsError }, { nombre, error, success, q: rawQuery, etapa: rawStage, tipo: rawType }] =
     await Promise.all([
       supabase
         .from("project_members")
@@ -67,9 +67,12 @@ export default async function ProjectsPage({
     throw new Error(`No se pudieron cargar los proyectos: ${projectsError.message}`);
   }
 
+  const q = typeof rawQuery === "string" ? rawQuery : "";
+  const etapa = typeof rawStage === "string" ? rawStage : "";
+  const tipo = typeof rawType === "string" ? rawType : "";
   const normalizedQuery = q.trim().toLocaleLowerCase("es-MX");
   const visibleProjects = (projects ?? []).filter((project) =>
-    (!normalizedQuery || project.name.toLocaleLowerCase("es-MX").includes(normalizedQuery) || project.description.toLocaleLowerCase("es-MX").includes(normalizedQuery)) &&
+    (!normalizedQuery || project.name.toLocaleLowerCase("es-MX").includes(normalizedQuery) || (project.description ?? "").toLocaleLowerCase("es-MX").includes(normalizedQuery)) &&
     (!etapa || project.stage === etapa) &&
     (!tipo || project.type === tipo),
   );

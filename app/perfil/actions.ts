@@ -12,6 +12,10 @@ export async function updateProfile(formData: FormData) {
   const avatarUrl = String(formData.get("avatar_url") ?? "").trim();
   const bio = String(formData.get("bio") ?? "").trim();
   if (!fullName) redirect("/perfil?error=El%20nombre%20es%20obligatorio");
+  if (fullName.length > 160 || bio.length > 4000 || avatarUrl.length > 2048) {
+    redirect("/perfil?error=Revisa+la+longitud+del+nombre,+la+biografía+y+la+URL");
+  }
+  if (avatarUrl && !/^https?:\/\//i.test(avatarUrl)) redirect("/perfil?error=Usa+una+URL+de+foto+HTTP+o+HTTPS");
   const { error } = await supabase.from("profiles")
     .upsert({
       id: user.id,

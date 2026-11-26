@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main, "fix/cineflow-security-invitations-2026-11-22"]
+    branches: [main, "fix/cineflow-security-invitations-2026-11-22", "feature/cineflow-unified-ux-redesign"]
 
 permissions:
   contents: read
@@ -24,5 +24,7 @@ jobs:
         run: npm ci
       - name: Lint
         run: npm run lint
+      - name: TypeScript
+        run: npx --no-install tsc --noEmit
       - name: Build and TypeScript
         run: npm run build

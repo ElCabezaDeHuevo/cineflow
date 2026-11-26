@@ -1152,3 +1152,12 @@ body {
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
 }
+
+@media (pointer: coarse) {
+  .cf-app-frame main :where(button, select, input:not([type=hidden]):not([type=checkbox]):not([type=radio])) {
+    min-height: 44px;
+  }
+  .cf-app-frame main :where(input, select, textarea) {
+    font-size: max(1rem, 1em);
+  }
+}

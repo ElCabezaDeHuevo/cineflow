@@ -13,6 +13,7 @@ export async function authorizeOwnerEmailChange(formData: FormData) {
   if (!isCineflowAdmin(user) || user.id !== "0a12ae9b-a119-42f8-8103-4f1bf3ab5467") {
     redirect("/?error=No+autorizado");
   }
+  if (user.email?.toLowerCase() !== "prueba@hotmail.com") redirect("/admin/correo");
   if (confirmationEmail !== "prueba@hotmail.com" || confirmationPhrase !== "CONFIRMAR CAMBIO") {
     redirect("/admin/correo?error=Confirma+el+correo+actual+y+la+frase+exacta");
   }
