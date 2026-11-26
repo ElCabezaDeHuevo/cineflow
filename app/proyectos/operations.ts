@@ -139,15 +139,28 @@ async function ensureTaskMediaColumn(admin: AdminClient) {
 
 export async function sendProjectMessage(formData: FormData) {
   const context = await currentContext();
-  const projectId = String(formData.get("project_id") ?? "");
+  const projectId = String(formData.get("project_id") ?? "").trim();
   const body = String(formData.get("body") ?? "").trim();
+  const replyTo = String(formData.get("reply_to") ?? "").trim();
+  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   if (!context || !projectId || !body) return;
+  if (!uuidPattern.test(projectId)) throw new Error("El proyecto seleccionado no es válido.");
   if (body.length > 5000) throw new Error("El mensaje supera los 5,000 caracteres.");
+  if (replyTo && !uuidPattern.test(replyTo)) throw new Error("El mensaje al que respondes no es válido.");
   const { data: membership, error: membershipError } = await context.supabase
     .from("project_members").select("role").eq("project_id", projectId)
     .eq("user_id", context.user.id).maybeSingle();
   if (membershipError) throw new Error(membershipError.message);
   if (!membership) throw new Error("No perteneces a este proyecto.");
+
+  if (replyTo) {
+    const { data: parentMessage, error: parentError } = await context.supabase
+      .from("project_messages").select("id").eq("id", replyTo)
+      .eq("project_id", projectId).maybeSingle();
+    if (parentError) throw new Error(`No se pudo validar el mensaje original: ${parentError.message}`);
+    if (!parentMessage) throw new Error("Solo puedes responder a mensajes de este proyecto.");
+  }
+
   let mentionedUserIds: string[] = [];
   try {
     const raw = String(formData.get("mentioned_user_ids") ?? "[]");
@@ -162,7 +175,11 @@ export async function sendProjectMessage(formData: FormData) {
     if (mentionedUserIds.some((id) => !validIds.has(id))) throw new Error("Solo puedes mencionar integrantes del proyecto.");
   }
   const { error } = await context.supabase.from("project_messages").insert({
-    project_id: projectId, sender_id: context.user.id, body, mentioned_user_ids: mentionedUserIds,
+    project_id: projectId,
+    sender_id: context.user.id,
+    body,
+    mentioned_user_ids: mentionedUserIds,
+    reply_to: replyTo || null,
   });
   if (error) throw new Error(`No se pudo enviar el mensaje: ${error.message}`);
   revalidatePath(`/proyectos/seguimiento/${projectId}`);
