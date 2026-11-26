@@ -1328,3 +1328,39 @@ body {
   }
 }
 
+
+
+/* Global interaction plug-in: tactile click and selection feedback */
+.cf-interaction-ripple {
+  position: fixed;
+  z-index: 99999;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  pointer-events: none;
+  border: 1.5px solid rgb(205 199 218 / 72%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(205 199 218 / 10%), transparent 70%);
+  box-shadow: 0 0 12px rgb(205 199 218 / 12%);
+  transform: scale(.2);
+  animation: cf-interaction-ripple 520ms cubic-bezier(.18, .68, .28, 1) both;
+}
+@keyframes cf-interaction-ripple {
+  0% { opacity: 0; transform: scale(.2); }
+  14% { opacity: .74; }
+  100% { opacity: 0; transform: scale(3.4); }
+}
+.cf-selection-feedback {
+  animation: cf-selection-feedback 640ms ease-out both;
+}
+@keyframes cf-selection-feedback {
+  0%, 100% { outline-color: transparent; outline-offset: 0; }
+  34% { outline: 2px solid rgb(199 192 214 / 64%); outline-offset: 2px; }
+}
+:where(button:not(:disabled), a[href], select:not(:disabled), summary, [role="button"]:not([aria-disabled="true"])) {
+  -webkit-tap-highlight-color: transparent;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cf-interaction-ripple { display: none; animation: none !important; }
+  .cf-selection-feedback { animation: none !important; }
+}

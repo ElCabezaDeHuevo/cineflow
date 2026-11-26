@@ -8,6 +8,7 @@ import ErrorReportButton from "./ErrorReportButton";
 import FirstLoginIntroduction from "./onboarding/FirstLoginIntroduction";
 import RouteAutoRefresh from "./RouteAutoRefresh";
 import ServiceWorkerRegister from "./ServiceWorkerRegister";
+import CineFlowInteractionPlugin from "./CineFlowInteractionPlugin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { isCineflowAdmin } from "@/lib/admin";
 
@@ -65,6 +66,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           Saltar al contenido
         </a>
         <ServiceWorkerRegister />
+        <CineFlowInteractionPlugin />
         {user && <AppNavigation name={displayName} email={user.email ?? ""} avatarUrl={navProfile?.avatar_url} isAdmin={isAdmin} companyRole={companyRole} />}
         <div id="main-content" tabIndex={-1} className={user ? "cf-app-enter cf-app-frame outline-none" : "cf-app-enter outline-none"}>{children}</div>
         {user && (
