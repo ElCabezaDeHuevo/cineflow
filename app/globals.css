@@ -1175,68 +1175,88 @@ body {
   .cf-login-form input { min-height: 52px; }
 }
 
-/* Production workspace — calmer slate surfaces and restrained brand accent */
-#main-content.cf-app-frame > main.cf-cinematic-page {
-  background-color: #11141a !important;
+
+/* Production workspace — neutral slate surfaces, low visual noise */
+#main-content.cf-app-frame > main.cf-production-surface,
+#main-content.cf-app-frame > main.cf-cinematic-page:is(.cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) {
+  background-color: #15181d !important;
   background-image: none !important;
 }
-#main-content.cf-app-frame > main.cf-cinematic-page::before {
-  background-image:
-    linear-gradient(115deg, rgb(10 12 17 / .94) 0%, rgb(15 18 24 / .88) 52%, rgb(11 13 18 / .94) 100%),
-    radial-gradient(ellipse at 14% 4%, rgb(139 130 164 / .065), transparent 38rem),
-    radial-gradient(ellipse at 88% 18%, rgb(115 145 150 / .035), transparent 34rem),
-    var(--cf-section-image);
-  opacity: .78;
+#main-content.cf-app-frame > main.cf-production-surface::before,
+#main-content.cf-app-frame > main.cf-cinematic-page:is(.cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects)::before {
+  background-image: linear-gradient(180deg, #191c22 0%, #15181d 48%, #121519 100%) !important;
+  opacity: 1 !important;
 }
-#main-content.cf-app-frame > main.cf-cinematic-page :is(.cf-card, .cf-dashboard-panel, .cf-metric-card) {
-  border-color: rgb(205 210 220 / 14%) !important;
-  background: linear-gradient(145deg, rgb(42 47 57 / .92), rgb(30 34 42 / .90)) !important;
-  box-shadow: 0 10px 28px rgb(0 0 0 / 18%), inset 0 1px 0 rgb(255 255 255 / 4%) !important;
-  -webkit-backdrop-filter: blur(14px) saturate(108%) !important;
-  backdrop-filter: blur(14px) saturate(108%) !important;
+#main-content.cf-app-frame > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) :is(.cf-card, .cf-dashboard-panel, .cf-metric-card) {
+  border-color: rgb(210 214 222 / 11%) !important;
+  background: #20242a !important;
+  box-shadow: 0 8px 20px rgb(0 0 0 / 13%) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
-#main-content.cf-app-frame > main.cf-cinematic-page.cf-bg-timeline > section > header {
-  border-color: rgb(205 210 220 / 14%) !important;
-  background: linear-gradient(145deg, rgb(43 48 58 / 92%), rgb(31 35 43 / 90%)) !important;
-  box-shadow: 0 12px 32px rgb(0 0 0 / 16%), inset 0 1px 0 rgb(255 255 255 / 4%);
+#main-content.cf-app-frame > main.cf-production-surface > section > header {
+  border-color: rgb(210 214 222 / 11%) !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
-#main-content.cf-app-frame > main.cf-cinematic-page :is(.text-violet-300, .text-violet-200) {
-  color: #c1bdce !important;
+#main-content.cf-app-frame > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) .cf-production-nav {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  margin: 0 0 26px;
+  padding: 4px;
+  border: 1px solid rgb(210 214 222 / 10%);
+  border-radius: 11px;
+  background: #1c2026;
+  box-shadow: none;
+  scrollbar-width: thin;
 }
-#main-content.cf-app-frame > main.cf-cinematic-page :is(button, a)[class~="bg-violet-500"],
-#main-content.cf-app-frame > main.cf-cinematic-page :is(button, a)[class~="bg-violet-600"] {
-  background-color: #716c83 !important;
+#main-content.cf-app-frame > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) .cf-production-tab {
+  min-height: 40px;
+  flex: 0 0 auto;
+  justify-content: center;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #b5b9c1;
+  font-size: 13px;
+  font-weight: 550;
 }
-#main-content.cf-app-frame > main.cf-cinematic-page :is(button, a)[class~="bg-violet-500"]:hover,
-#main-content.cf-app-frame > main.cf-cinematic-page :is(button, a)[class~="bg-violet-600"]:hover {
-  background-color: #807a92 !important;
+#main-content.cf-app-frame > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) .cf-production-tab:hover {
+  background: #282d34;
+  color: #f0f1f3;
 }
-#main-content.cf-app-frame > main.cf-cinematic-page .cf-production-nav {
-  border-color: rgb(205 210 220 / 13%);
-  background: rgb(25 29 37 / 92%);
-  box-shadow: 0 8px 22px rgb(0 0 0 / 14%);
+#main-content.cf-app-frame > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) .cf-production-tab.is-active {
+  border-color: rgb(210 214 222 / 12%);
+  background: #30353d;
+  color: #ffffff;
 }
-#main-content.cf-app-frame > main.cf-cinematic-page .cf-production-tab.is-active {
-  border-color: rgb(192 184 214 / 20%);
-  background: rgb(169 157 195 / 9%);
-  color: #f0edf5;
+#main-content.cf-app-frame > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) :is(.text-violet-300, .text-violet-200) {
+  color: #c3c5cb !important;
 }
-#main-content.cf-app-frame > main.cf-cinematic-page .cf-production-tab-icon {
-  background: rgb(255 255 255 / 4%);
-  color: #c5c1cf;
+#main-content.cf-app-frame > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) :is(button, a)[class~="bg-violet-500"],
+#main-content.cf-app-frame > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) :is(button, a)[class~="bg-violet-600"] {
+  background-color: #666a72 !important;
 }
-@media (max-width: 767px) {
-  #main-content.cf-app-frame > main.cf-cinematic-page::before { opacity: .68; }
-  #main-content.cf-app-frame > main.cf-cinematic-page :is(.cf-card, .cf-dashboard-panel, .cf-metric-card) {
-    -webkit-backdrop-filter: blur(11px) saturate(104%) !important;
-    backdrop-filter: blur(11px) saturate(104%) !important;
+#main-content.cf-app-frame > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) :is(button, a)[class~="bg-violet-500"]:hover,
+#main-content.cf-app-frame > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) :is(button, a)[class~="bg-violet-600"]:hover {
+  background-color: #777c85 !important;
+}
+@media (max-width: 760px) {
+  #main-content.cf-app-frame > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) .cf-production-nav {
+    gap: 2px;
+    margin-bottom: 18px;
+  }
+  #main-content.cf-app-frame > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) .cf-production-tab {
+    min-height: 42px;
+    padding: 8px 11px;
+    font-size: 12px;
   }
 }
 @media (prefers-reduced-transparency: reduce) {
-  #main-content.cf-app-frame > main.cf-cinematic-page :is(.cf-card, .cf-dashboard-panel, .cf-metric-card) {
-    background: rgb(35 39 47 / 97%) !important;
+  #main-content.cf-app-frame > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) :is(.cf-card, .cf-dashboard-panel, .cf-metric-card) {
+    background: #20242a !important;
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
 }
-
