@@ -359,8 +359,8 @@ body { background-color: var(--cf-bg); color: var(--cf-text); }
 /* CineFlow login: post-production suite backdrop + glassmorphism form */
 .cf-login-page{position:relative;isolation:isolate;display:grid;min-height:100svh;place-items:center;overflow:hidden;padding:32px 18px 64px;background:#080811;color:#f4f4f5}
 .cf-login-backdrop{position:absolute;inset:0;z-index:-3;background-image:url('https://images.unsplash.com/photo-1744686912094-5a25e7c329b6?auto=format&fit=crop&fm=jpg&ixid=NHwxMjA3fDA%3D&ixlib=rb-4.1.0&q=85&w=2400');background-position:center;background-size:cover;transform:scale(1.02)}
-.cf-login-vignette{position:absolute;inset:0;z-index:-2;background:linear-gradient(90deg,rgba(5,6,14,.52),rgba(5,6,14,.26) 50%,rgba(5,6,14,.55)),linear-gradient(0deg,rgba(5,6,14,.58),transparent 44%,rgba(5,6,14,.3))}
-.cf-login-card{width:min(100%,465px);padding:38px;border:1px solid rgba(255,255,255,.2);border-radius:24px;background:linear-gradient(145deg,rgba(22,18,37,.86),rgba(12,12,24,.76));box-shadow:0 28px 100px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.13),0 0 65px rgba(139,92,246,.14);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);animation:cf-login-enter .6s cubic-bezier(.2,.75,.25,1) both}
+.cf-login-vignette{position:absolute;inset:0;z-index:-2;background:linear-gradient(90deg,rgba(5,6,14,.40),rgba(5,6,14,.18) 50%,rgba(5,6,14,.44)),linear-gradient(0deg,rgba(5,6,14,.46),transparent 44%,rgba(5,6,14,.22))}
+.cf-login-card{width:min(100%,465px);padding:38px;border:1px solid rgba(255,255,255,.25);border-radius:24px;background:linear-gradient(145deg,rgba(34,31,51,.90),rgba(19,22,39,.84));box-shadow:0 28px 100px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.13),0 0 65px rgba(139,92,246,.14);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);animation:cf-login-enter .6s cubic-bezier(.2,.75,.25,1) both}
 .cf-login-brand{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:32px}
 .cf-login-mark{display:grid;width:44px;height:44px;place-items:center;border:1px solid rgba(192,132,252,.5);border-radius:14px;background:linear-gradient(145deg,rgba(168,85,247,.35),rgba(124,58,237,.1));color:#d8b4fe;font-size:24px}
 .cf-login-wordmark{margin:0;font-size:22px;font-weight:850;letter-spacing:.13em;line-height:1}
@@ -372,11 +372,11 @@ body { background-color: var(--cf-bg); color: var(--cf-text); }
 .cf-login-heading>p:last-child{margin:10px 0 0;color:#c4c1d0;font-size:13px}
 .cf-login-error{margin:22px 0 0;border:1px solid rgba(248,113,113,.35);border-radius:12px;background:rgba(127,29,29,.22);padding:12px 14px;color:#fecaca;font-size:13px}
 .cf-login-form{display:grid;gap:18px;margin-top:30px}
-.cf-login-form label{display:grid;gap:8px;color:#e4e0ed;font-size:12px;font-weight:600}
-.cf-login-form input{width:100%;min-height:49px;border:1px solid rgba(255,255,255,.15);border-radius:12px;outline:none;background:rgba(255,255,255,.065);padding:0 15px;color:#fff;font-size:13px;transition:border-color .2s,background .2s,box-shadow .2s}
-.cf-login-form input::placeholder{color:#898397}
+.cf-login-form label{display:grid;gap:8px;color:#eeebf5;font-size:13px;font-weight:600}
+.cf-login-form input{width:100%;min-height:50px;border:1px solid rgba(255,255,255,.22);border-radius:12px;outline:none;background:rgba(255,255,255,.09);padding:0 15px;color:#fff;font-size:15px;transition:border-color .2s,background .2s,box-shadow .2s}
+.cf-login-form input::placeholder{color:#aaa6b8}
 .cf-login-form input:focus{border-color:#a78bfa;background:rgba(255,255,255,.09);box-shadow:0 0 0 3px rgba(139,92,246,.16)}
-.cf-login-form button{display:flex;min-height:50px;align-items:center;justify-content:center;gap:10px;margin-top:4px;border:1px solid rgba(216,180,254,.35);border-radius:12px;background:linear-gradient(100deg,#8b5cf6,#7c3aed 58%,#a855f7);color:white;font-size:13px;font-weight:750;box-shadow:0 9px 28px rgba(124,58,237,.28);cursor:pointer}
+.cf-login-form button{display:flex;min-height:50px;align-items:center;justify-content:center;gap:10px;margin-top:4px;border:1px solid rgba(216,180,254,.35);border-radius:12px;background:linear-gradient(100deg,#8b5cf6,#7c3aed 58%,#a855f7);color:white;font-size:14px;font-weight:750;box-shadow:0 9px 28px rgba(124,58,237,.28);cursor:pointer}
 .cf-login-form button:hover{transform:translateY(-1px);box-shadow:0 13px 34px rgba(124,58,237,.38)}
 .cf-login-footnote{margin:23px 0 0;color:#a8a3b6;font-size:10px;text-align:center}
 .cf-login-copyright{position:absolute;bottom:20px;margin:0;color:rgba(235,230,248,.58);font-size:9px;font-weight:700;letter-spacing:.19em;text-align:center}
@@ -1012,10 +1012,10 @@ body {
 
 /* CineFlow luminous glass refresh — consistent across all authenticated modules */
 :root {
-  --cf-bg: #101827;
-  --cf-surface: #202b40;
-  --cf-surface-raised: #27344b;
-  --cf-surface-hover: #30405a;
+  --cf-bg: #142039;
+  --cf-surface: #25344d;
+  --cf-surface-raised: #2d3d57;
+  --cf-surface-hover: #394b67;
   --cf-border: rgb(205 218 255 / 20%);
   --cf-border-strong: rgb(205 218 255 / 30%);
   --cf-text: #fbfcff;
@@ -1025,7 +1025,7 @@ body {
 .cf-app-frame > main {
   background-color: #101827;
   background-image:
-    linear-gradient(115deg, rgb(10 17 31 / .76), rgb(13 22 39 / .62) 52%, rgb(10 17 31 / .74)),
+    linear-gradient(115deg, rgb(10 17 31 / .68), rgb(13 22 39 / .54) 52%, rgb(10 17 31 / .66)),
     radial-gradient(ellipse at 14% 5%, rgb(139 92 246 / .22), transparent 38rem),
     radial-gradient(ellipse at 88% 18%, rgb(34 211 238 / .15), transparent 34rem),
     url("https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=2200&q=80");
@@ -1035,7 +1035,7 @@ body {
 }
 .cf-app-frame main :is(article, aside, .cf-card, .cf-glass, .cf-dashboard-panel, .cf-metric-card) {
   border-color: rgb(210 222 255 / 22%) !important;
-  background: linear-gradient(145deg, rgb(43 54 77 / 76%), rgb(25 35 54 / 70%)) !important;
+  background: linear-gradient(145deg, rgb(49 62 87 / 80%), rgb(31 43 65 / 76%)) !important;
   box-shadow: 0 14px 38px rgb(0 0 0 / 16%), inset 0 1px 0 rgb(255 255 255 / 9%);
   -webkit-backdrop-filter: blur(18px) saturate(140%);
   backdrop-filter: blur(18px) saturate(140%);
@@ -1055,13 +1055,13 @@ body {
   background-color: rgb(17 27 44 / 78%);
 }
 .cf-sidebar {
-  background: rgb(20 29 46 / 91%);
+  background: rgb(27 39 59 / 92%);
   border-right-color: rgb(205 218 255 / 18%);
   -webkit-backdrop-filter: blur(24px) saturate(135%);
   backdrop-filter: blur(24px) saturate(135%);
 }
 .cf-mobile-header, .cf-mobile-nav {
-  background: rgb(20 29 46 / 92%);
+  background: rgb(27 39 59 / 93%);
   border-color: rgb(205 218 255 / 19%);
   -webkit-backdrop-filter: blur(22px) saturate(135%);
   backdrop-filter: blur(22px) saturate(135%);
@@ -1160,4 +1160,17 @@ body {
   .cf-app-frame main :where(input, select, textarea) {
     font-size: max(1rem, 1em);
   }
+}
+
+/* Readability polish for forms and glass panels */
+.cf-login-card {
+  border-color: rgb(255 255 255 / 26%);
+}
+.cf-login-form input:focus-visible,
+.cf-login-form button:focus-visible {
+  outline: 3px solid rgb(216 180 254 / 70%);
+  outline-offset: 3px;
+}
+@media (max-width: 520px) {
+  .cf-login-form input { min-height: 52px; }
 }
