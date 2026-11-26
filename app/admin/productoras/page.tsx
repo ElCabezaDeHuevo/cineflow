@@ -59,7 +59,7 @@ export default async function CompaniesAdmin({ searchParams }: { searchParams: P
           const latest = latestPaymentByOrg.get(company.id);
           const status = sub?.status ?? "sin_suscripcion";
           const expiry = status === "trialing" ? sub?.trial_end : (sub?.current_period_end ?? sub?.trial_end);
-          const validUntil = Boolean(expiry && new Date(expiry).getTime() > now);
+          const validUntil = subscriptionIsActive(sub);
           const statusLabel = !sub ? "Sin suscripción" : !validUntil && ["active", "trialing"].includes(status) ? "Vencida" : status === "trialing" || (status === "active" && !sub?.current_period_end && Boolean(sub?.trial_end)) ? "Prueba gratuita" : status === "active" ? "Pagada / activa" : status === "paused" ? "Suspendida" : status === "past_due" ? "Pago pendiente" : status;
           return <article key={company.id} className="rounded-2xl border border-white/10 bg-[#14151c] p-6">
             <div className="flex flex-wrap items-start justify-between gap-4"><div><h2 className="text-xl font-semibold">{company.name}</h2><p className="mt-1 text-sm text-gray-400">{owner?.email ?? "Sin dueño asignado"} · {company.slug}</p><p className="mt-1 text-xs text-gray-500">Alta: {dateLabel(company.created_at)}</p></div><span className="rounded-full border border-white/10 px-3 py-1 text-xs">{statusLabel}</span></div>
