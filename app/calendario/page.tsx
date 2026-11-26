@@ -8,6 +8,17 @@ function dateLabel(value: string | null) {
   return new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${value}T12:00:00Z`));
 }
 
+function dateInTijuana(value: string) {
+  const parts = new Intl.DateTimeFormat("en", {
+    timeZone: "America/Tijuana",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date(value));
+  const part = (type: string) => parts.find((item) => item.type === type)?.value ?? "";
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
+
 export default async function ProductionCalendarPage() {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -59,7 +70,7 @@ export default async function ProductionCalendarPage() {
     ...(tasks ?? []).map((task) => ({ id: `task-${task.id}`, date: task.due_date!, label: task.status === "bloqueada" ? "Bloqueada" : "Vence tarea", title: task.title, detail: `${projectName.get(task.project_id) ?? "Proyecto"} · ${task.stage}`, href: `/proyectos/seguimiento/${task.project_id}#task-${task.id}` })),
     ...(scheduleItems ?? []).map((item) => ({
       id: `schedule-${item.id}`,
-      date: item.starts_at.slice(0, 10),
+      date: dateInTijuana(item.starts_at),
       label: "Evento",
       title: item.title,
       detail: `${projectName.get(item.project_id) ?? "Proyecto"} · ${new Intl.DateTimeFormat("es-MX", { hour: "2-digit", minute: "2-digit", timeZone: "America/Tijuana" }).format(new Date(item.starts_at))}${item.location ? ` · ${item.location}` : ""}`,

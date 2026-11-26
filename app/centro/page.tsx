@@ -10,6 +10,11 @@ const money = (n: number) => new Intl.NumberFormat("es-MX", { style: "currency",
 const date = (s: string) => new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeStyle: "short", timeZone: "America/Tijuana" }).format(new Date(s));
 const card = "rounded-2xl border border-white/10 bg-[#14151c] p-5";
 const field = "w-full min-w-0 rounded-xl border border-white/10 bg-[#0b0c10] px-3 py-2.5 text-sm text-white";
+const todayInTijuana = () => {
+  const parts = new Intl.DateTimeFormat("en", { timeZone: "America/Tijuana", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
+  const part = (type: string) => parts.find((item) => item.type === type)?.value ?? "";
+  return `${part("year")}-${part("month")}-${part("day")}`;
+};
 const button = "rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-500";
 
 export default async function ProductionCenter() {
@@ -37,7 +42,7 @@ export default async function ProductionCenter() {
   ]);
   const names = new Map((projects ?? []).map(p => [p.id,p.name]));
   const completed = (tasks ?? []).filter(t => t.status === "completada").length;
-  const overdue = (tasks ?? []).filter(t => t.due_date && t.status !== "completada" && t.due_date < new Date().toISOString().slice(0,10)).length;
+  const overdue = (tasks ?? []).filter(t => t.due_date && t.status !== "completada" && t.due_date < todayInTijuana()).length;
   const total = (expenses ?? []).reduce((sum,e)=>sum+Number(e.amount),0);
   const { count: unread, error: unreadError } = await supabase.from("project_notifications").select("id", { count: "exact", head: true }).eq("user_id", user.id).is("read_at", null);
   if (unreadError) throw new Error("No se pudo consultar el total de notificaciones.");

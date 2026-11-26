@@ -36,8 +36,12 @@ export default async function ProductionHomePage() {
       ? dataClient.from("shoot_days").select("id,shoot_date").in("project_id", projectIds).not("shoot_date", "is", null)
       : Promise.resolve({ data: [] }),
   ]);
-  const today = new Date().toISOString().slice(0, 10);
-  const monthAhead = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const todayParts = new Intl.DateTimeFormat("en", { timeZone: "America/Tijuana", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
+  const todayPart = (type: string) => todayParts.find((item) => item.type === type)?.value ?? "";
+  const today = `${todayPart("year")}-${todayPart("month")}-${todayPart("day")}`;
+  const monthAheadDate = new Date(`${today}T12:00:00.000Z`);
+  monthAheadDate.setUTCDate(monthAheadDate.getUTCDate() + 30);
+  const monthAhead = monthAheadDate.toISOString().slice(0, 10);
   const activeProjects = (projects ?? []).filter((project) => project.stage !== "Distribución").length;
   const upcomingTasks = (tasks ?? []).filter((task) => task.due_date && task.due_date >= today).length;
   const upcomingShootDays = (shootDays ?? []).filter((day) => day.shoot_date && day.shoot_date >= today && day.shoot_date <= monthAhead).length;
@@ -55,7 +59,7 @@ export default async function ProductionHomePage() {
         <section aria-label="Resumen de producción" className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-3">
           {[
             ["Proyectos activos", activeProjects],
-            ["Tareas abiertas con fecha", upcomingTasks],
+            ["Vencimientos futuros", upcomingTasks],
             ["Rodajes próximos 30 días", upcomingShootDays],
           ].map(([label, value]) => <article key={label} className="cf-card rounded-2xl border border-white/10 bg-[#14151c] p-4 sm:p-5">
             <p className="text-xs text-gray-400 sm:text-sm">{label}</p>

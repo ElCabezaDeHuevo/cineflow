@@ -52,6 +52,17 @@ const fmt = (value: string | null) =>
       }).format(new Date(value))
     : "—";
 
+function dateOnlyInTijuana(value: Date = new Date()) {
+  const parts = new Intl.DateTimeFormat("en", {
+    timeZone: "America/Tijuana",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(value);
+  const part = (type: string) => parts.find((item) => item.type === type)?.value ?? "";
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
+
 export default async function ProjectTrackingPage({
   params,
   searchParams,
@@ -82,7 +93,7 @@ export default async function ProjectTrackingPage({
     supabase
       .from("project_tasks")
       .select(
-        "id,title,description,stage,status,assigned_to,created_by,created_at,updated_at,completed_at",
+        "id,title,description,stage,status,assigned_to,created_by,created_at,updated_at,completed_at,due_date",
       )
       .eq("project_id", id)
       .order("updated_at", { ascending: false }),
@@ -232,6 +243,7 @@ export default async function ProjectTrackingPage({
       ...(tasks ?? []).map((task) => task.stage),
     ]),
   ];
+  const todayInTijuana = dateOnlyInTijuana();
   const projectForm = {
     id: project.id,
     name: project.name,
@@ -371,6 +383,14 @@ export default async function ProjectTrackingPage({
                       <option key={stage}>{stage}</option>
                     ))}
                   </select>
+                  <label className="block text-xs text-gray-400">
+                    Fecha límite
+                    <input
+                      name="due_date"
+                      type="date"
+                      className="rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white"
+                    />
+                  </label>
                   <textarea
                     name="description"
                     placeholder="Qué se debe hacer"
@@ -500,6 +520,12 @@ export default async function ProjectTrackingPage({
                           <span className="rounded-full bg-white/10 px-2 py-1 text-gray-300">
                             {task.status}
                           </span>
+                          {task.due_date && (
+                            <span className={task.status !== "completada" && task.due_date < todayInTijuana ? "rounded-full bg-rose-400/10 px-2 py-1 text-rose-200" : "rounded-full bg-amber-400/10 px-2 py-1 text-amber-100"}>
+                              {task.status !== "completada" && task.due_date < todayInTijuana ? "Atrasada · " : "Vence · "}
+                              {new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${task.due_date}T12:00:00Z`))}
+                            </span>
+                          )}
                         </div>
                         <h3 className="mt-2 font-semibold">{task.title}</h3>
                         <p className="mt-1 text-xs text-gray-500">
@@ -710,6 +736,15 @@ export default async function ProjectTrackingPage({
                             );
                           })}
                         </select>
+                        <label className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-xs text-gray-300">
+                          Vence
+                          <input
+                            name="due_date"
+                            type="date"
+                            defaultValue={task.due_date ?? ""}
+                            className="min-w-0 bg-transparent text-white"
+                          />
+                        </label>
                         {task.status !== "completada" &&
                           task.assigned_to !== user.id && (
                             <span className="self-center text-xs text-gray-400">

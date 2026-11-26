@@ -8,6 +8,11 @@ import { hasOpenWorkSession } from "@/lib/attendance";
 import { isCineflowAdmin } from "@/lib/admin";
 
 const MAX_PROJECT_IMAGE_SIZE = 10 * 1024 * 1024;
+function isValidDateOnly(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}
 const MAX_TASK_FILE_SIZE = 20 * 1024 * 1024;
 type UserContext = NonNullable<Awaited<ReturnType<typeof currentContext>>>;
 type AdminClient = NonNullable<ReturnType<typeof createSupabaseAdminClient>>;
@@ -169,6 +174,10 @@ export async function createTask(formData: FormData) {
   if (!context || !context.active || !projectId) return;
   const title = String(formData.get("title") ?? "").trim();
   if (!title) return;
+  const dueDate = String(formData.get("due_date") ?? "").trim();
+  if (dueDate && !isValidDateOnly(dueDate)) {
+    throw new Error("La fecha límite de la tarea no es válida.");
+  }
   const assignedTo = String(formData.get("assigned_to") ?? "");
   if (!assignedTo) {
     throw new Error("Selecciona un responsable antes de crear esta parte.");
@@ -222,7 +231,7 @@ export async function createTask(formData: FormData) {
       title,
       description: String(formData.get("description") ?? "").trim(),
       stage: String(formData.get("stage") ?? "Desarrollo"),
-      due_date: String(formData.get("due_date") ?? "") || null,
+      due_date: dueDate || null,
       assigned_to: assignedTo || null,
       created_by: context.user.id,
     })
@@ -280,6 +289,11 @@ export async function updateTask(formData: FormData) {
   }
 
   const status = String(formData.get("status") ?? "pendiente");
+  const hasDueDate = formData.has("due_date");
+  const dueDate = hasDueDate ? String(formData.get("due_date") ?? "").trim() : "";
+  if (dueDate && !isValidDateOnly(dueDate)) {
+    throw new Error("La fecha límite de la tarea no es válida.");
+  }
   if (
     status === "completada" &&
     task.status !== "completada" &&
@@ -308,6 +322,7 @@ export async function updateTask(formData: FormData) {
     status,
     stage: String(formData.get("stage") ?? "Desarrollo"),
     ...(hasAssignment ? { assigned_to: assignedTo || null } : {}),
+    ...(hasDueDate ? { due_date: dueDate || null } : {}),
   };
   const { error: updateError } = await context.supabase
     .from("project_tasks")
