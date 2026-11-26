@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { connection } from "next/server";
 import "./globals.css";
@@ -28,6 +28,12 @@ export const metadata: Metadata = {
   description: "Gestión de producción cinematográfica",
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   await connection();
   const supabase = await createSupabaseServerClient();
@@ -54,16 +60,13 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       lang="es-MX"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <head>
-        <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1, viewport-fit=cover"
-        />
-      </head>
       <body className="min-h-full flex flex-col">
+        <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded-lg focus:bg-violet-600 focus:px-4 focus:py-3 focus:text-white">
+          Saltar al contenido
+        </a>
         <ServiceWorkerRegister />
         {user && <AppNavigation name={displayName} email={user.email ?? ""} avatarUrl={navProfile?.avatar_url} isAdmin={isAdmin} companyRole={companyRole} />}
-        <div className={user ? "cf-app-enter cf-app-frame" : "cf-app-enter"}>{children}</div>
+        <div id="main-content" tabIndex={-1} className={user ? "cf-app-enter cf-app-frame outline-none" : "cf-app-enter outline-none"}>{children}</div>
         {user && (
           <>
             <RouteAutoRefresh />
