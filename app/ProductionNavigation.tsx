@@ -1,12 +1,11 @@
 import Link from "next/link";
-
 const items = [
+  { href: "/produccion", label: "Resumen", description: "Centro de producción", icon: "⌂" },
   { href: "/proyectos", label: "Proyectos", description: "Cartera y equipos", icon: "▣" },
-  { href: "/rodaje", label: "Planificador de rodaje", description: "Escenas y jornadas", icon: "▤" },
-  { href: "/calendario", label: "Calendario", description: "Fechas e hitos", icon: "▦" },
-  { href: "/timeline", label: "Línea de tiempo", description: "Avance y actividad", icon: "◷" },
+  { href: "/rodaje", label: "Rodaje", description: "Escenas y jornadas", icon: "▤" },
+  { href: "/calendario", label: "Agenda", description: "Fechas y eventos", icon: "▦" },
+  { href: "/timeline", label: "Seguimiento", description: "Avance y actividad", icon: "◷" },
 ];
-
 export default function ProductionNavigation({ active }: { active: string }) {
   return (
     <nav aria-label="Herramientas de producción" className="cf-production-nav">

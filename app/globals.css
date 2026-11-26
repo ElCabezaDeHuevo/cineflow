@@ -833,7 +833,7 @@ body {
 .cf-quick-link small { display: block; margin-top: 2px; color: #8e9ab0; font-size: 10px; }
 .cf-quick-icon { width: 34px; height: 34px; flex: 0 0 auto; font-size: 14px; }
 .cf-production-nav {
-  display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 9px;
+  display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 9px;
   margin: 2px 0 28px; padding: 8px;
   border: 1px solid rgb(180 190 215 / 12%); border-radius: 19px;
   background: rgb(15 20 32 / 82%); box-shadow: 0 10px 28px rgb(0 0 0 / 12%);

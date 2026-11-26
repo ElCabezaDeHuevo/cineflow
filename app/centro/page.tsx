@@ -75,7 +75,7 @@ export default async function ProductionCenter() {
           <div className="mt-4 space-y-2">{myTasks.length ? myTasks.slice(0,15).map(t=><Link key={t.id} href={`/proyectos/seguimiento/${t.project_id}#task-${t.id}`} className="block rounded-xl border border-white/10 p-3 hover:border-violet-400/40"><p className="font-medium">{t.title}</p><p className="mt-1 text-xs text-gray-400">{names.get(t.project_id)} · {t.status}{t.due_date ? ` · Entrega ${t.due_date}` : ""}</p></Link>) : <p className="text-sm text-gray-400">No tienes partes asignadas.</p>}</div>
         </section>
         <section className={card}>
-          <h2 className="text-xl font-bold">Calendario de producción</h2>
+          <h2 id="agenda" className="text-xl font-bold">Calendario de producción</h2>
           <p className="mt-1 text-sm text-gray-400">Próximos eventos y llamados.</p>
           <div className="mt-4 space-y-2">{upcoming.length ? upcoming.map(e=><div key={e.id} className="rounded-xl border border-white/10 p-3"><p className="font-semibold">{e.title}</p><p className="text-sm text-violet-300">{date(e.starts_at)}</p><p className="text-xs text-gray-400">{names.get(e.project_id)}{e.location ? ` · ${e.location}` : ""}</p>{e.description && <p className="mt-1 text-sm text-gray-400">{e.description}</p>}</div>) : <p className="text-sm text-gray-400">Sin eventos próximos.</p>}</div>
           {editors.size>0 && <details className="mt-5 border-t border-white/10 pt-4"><summary className="cursor-pointer font-semibold text-violet-200">+ Programar evento</summary>

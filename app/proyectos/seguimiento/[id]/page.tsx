@@ -401,7 +401,11 @@ export default async function ProjectTrackingPage({
                     <option value="" className="bg-gray-900 text-gray-400">
                       Selecciona responsable
                     </option>
-                    <option value={user.id}>{nameOf(user.id)} (yo)</option>
+                    {(members ?? []).map((member) => (
+                      <option key={member.user_id} value={member.user_id}>
+                        {nameOf(member.user_id)}{member.user_id === user.id ? " (yo)" : ""}
+                      </option>
+                    ))}
                   </select>
                   <button className="rounded-xl bg-violet-500 px-5 py-3 font-semibold">
                     Añadir parte
@@ -712,24 +716,19 @@ export default async function ProjectTrackingPage({
                               Solo la persona asignada puede completarla.
                             </span>
                           )}
-                        {(!task.assigned_to || task.assigned_to === user.id) ? (
-                          <select
-                            name="assigned_to"
-                            aria-label="Responsable"
-                            defaultValue={task.assigned_to ?? ""}
-                            required
-                            className="scheme-dark rounded-lg border border-emerald-400/60 bg-emerald-400/10 px-3 py-2 text-xs text-emerald-100 outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-400/30 invalid:border-red-400 invalid:bg-red-400/10 invalid:text-red-200 invalid:focus:border-red-300 invalid:focus:ring-red-400/30"
-                          >
-                            <option value="" className="bg-gray-900 text-gray-400">
-                              Selecciona responsable
+                        <select
+                          name="assigned_to"
+                          aria-label="Responsable"
+                          defaultValue={task.assigned_to ?? ""}
+                          className="scheme-dark rounded-lg border border-emerald-400/60 bg-emerald-400/10 px-3 py-2 text-xs text-emerald-100 outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-400/30"
+                        >
+                          <option value="">Sin responsable</option>
+                          {(members ?? []).map((member) => (
+                            <option key={member.user_id} value={member.user_id}>
+                              {nameOf(member.user_id)}{member.user_id === user.id ? " (yo)" : ""}
                             </option>
-                            <option value={user.id}>{nameOf(user.id)} (yo)</option>
-                          </select>
-                        ) : (
-                          <span className="rounded-lg border border-emerald-400/40 bg-emerald-400/10 px-3 py-2 text-xs text-emerald-100">
-                            Solo puedes asignarte a ti mismo
-                          </span>
-                        )}
+                          ))}
+                        </select>
                         <button className="rounded-lg border border-violet-400/40 px-3 py-2 text-xs text-violet-200">
                           Actualizar
                         </button>

@@ -173,9 +173,6 @@ export async function createTask(formData: FormData) {
   if (!assignedTo) {
     throw new Error("Selecciona un responsable antes de crear esta parte.");
   }
-  if (assignedTo !== context.user.id) {
-    throw new Error("Solo puedes asignarte esta parte a tu propia cuenta.");
-  }
   const file = formData.get("file");
   const screenshot = file instanceof File && file.size > 0 ? file : null;
   if (screenshot) validateScreenshot(screenshot);
@@ -190,6 +187,14 @@ export async function createTask(formData: FormData) {
   if (!membership || !["owner", "editor"].includes(membership.role)) {
     throw new Error("No tienes permiso para crear tareas en este proyecto.");
   }
+  const { data: assignee, error: assigneeError } = await context.supabase
+    .from("project_members")
+    .select("user_id")
+    .eq("project_id", projectId)
+    .eq("user_id", assignedTo)
+    .maybeSingle();
+  if (assigneeError) throw new Error(`No se pudo validar el responsable: ${assigneeError.message}`);
+  if (!assignee) throw new Error("El responsable debe pertenecer al equipo de este proyecto.");
 
   const mediaAdmin = screenshot ? createSupabaseAdminClient() : null;
   let screenshotSchemaWarning: string | null = null;
@@ -285,18 +290,18 @@ export async function updateTask(formData: FormData) {
 
   const hasAssignment = formData.has("assigned_to");
   const assignedTo = hasAssignment ? String(formData.get("assigned_to") ?? "") : "";
-  if (!task.assigned_to && !assignedTo) {
-    throw new Error("Selecciona un responsable antes de actualizar esta parte.");
+  if (hasAssignment && assignedTo) {
+    const { data: assignee, error: assigneeError } = await context.supabase
+      .from("project_members")
+      .select("user_id")
+      .eq("project_id", projectId)
+      .eq("user_id", assignedTo)
+      .maybeSingle();
+    if (assigneeError) throw new Error(`No se pudo validar el responsable: ${assigneeError.message}`);
+    if (!assignee) throw new Error("El responsable debe pertenecer al equipo de este proyecto.");
   }
-  if (hasAssignment && assignedTo && assignedTo !== context.user.id) {
-    throw new Error("Solo puedes asignarte esta parte a tu propia cuenta.");
-  }
-  if (
-    hasAssignment &&
-    task.assigned_to &&
-    task.assigned_to !== context.user.id
-  ) {
-    throw new Error("No puedes cambiar el responsable asignado a otra persona.");
+  if (!["pendiente", "en curso", "bloqueada", "completada"].includes(status)) {
+    throw new Error("El estado de la tarea no es válido.");
   }
 
   const updates = {
