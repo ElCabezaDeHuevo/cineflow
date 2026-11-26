@@ -1177,29 +1177,29 @@ body {
 
 
 /* Production workspace — neutral slate surfaces, low visual noise */
-#main-content.cf-app-frame > main.cf-production-surface,
-#main-content.cf-app-frame > main.cf-cinematic-page:is(.cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) {
+#main-content.cf-app-frame .cf-route-enter > main.cf-production-surface,
+#main-content.cf-app-frame .cf-route-enter > main.cf-cinematic-page:is(.cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) {
   background-color: #15181d !important;
   background-image: none !important;
 }
-#main-content.cf-app-frame > main.cf-production-surface::before,
-#main-content.cf-app-frame > main.cf-cinematic-page:is(.cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects)::before {
+#main-content.cf-app-frame .cf-route-enter > main.cf-production-surface::before,
+#main-content.cf-app-frame .cf-route-enter > main.cf-cinematic-page:is(.cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects)::before {
   background-image: linear-gradient(180deg, #191c22 0%, #15181d 48%, #121519 100%) !important;
   opacity: 1 !important;
 }
-#main-content.cf-app-frame > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) :is(.cf-card, .cf-dashboard-panel, .cf-metric-card) {
+#main-content.cf-app-frame .cf-route-enter > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) :is(.cf-card, .cf-dashboard-panel, .cf-metric-card) {
   border-color: rgb(210 214 222 / 11%) !important;
   background: #20242a !important;
   box-shadow: 0 8px 20px rgb(0 0 0 / 13%) !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
-#main-content.cf-app-frame > main.cf-production-surface > section > header {
+#main-content.cf-app-frame .cf-route-enter > main.cf-production-surface > section > header {
   border-color: rgb(210 214 222 / 11%) !important;
   background: transparent !important;
   box-shadow: none !important;
 }
-#main-content.cf-app-frame > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) .cf-production-nav {
+#main-content.cf-app-frame .cf-route-enter > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) .cf-production-nav {
   display: flex;
   gap: 4px;
   overflow-x: auto;
@@ -1211,7 +1211,7 @@ body {
   box-shadow: none;
   scrollbar-width: thin;
 }
-#main-content.cf-app-frame > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) .cf-production-tab {
+#main-content.cf-app-frame .cf-route-enter > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) .cf-production-tab {
   min-height: 40px;
   flex: 0 0 auto;
   justify-content: center;
@@ -1222,39 +1222,39 @@ body {
   font-size: 13px;
   font-weight: 550;
 }
-#main-content.cf-app-frame > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) .cf-production-tab:hover {
+#main-content.cf-app-frame .cf-route-enter > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) .cf-production-tab:hover {
   background: #282d34;
   color: #f0f1f3;
 }
-#main-content.cf-app-frame > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) .cf-production-tab.is-active {
+#main-content.cf-app-frame .cf-route-enter > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) .cf-production-tab.is-active {
   border-color: rgb(210 214 222 / 12%);
   background: #30353d;
   color: #ffffff;
 }
-#main-content.cf-app-frame > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) :is(.text-violet-300, .text-violet-200) {
+#main-content.cf-app-frame .cf-route-enter > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) :is(.text-violet-300, .text-violet-200) {
   color: #c3c5cb !important;
 }
-#main-content.cf-app-frame > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) :is(button, a)[class~="bg-violet-500"],
-#main-content.cf-app-frame > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) :is(button, a)[class~="bg-violet-600"] {
+#main-content.cf-app-frame .cf-route-enter > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) :is(button, a)[class~="bg-violet-500"],
+#main-content.cf-app-frame .cf-route-enter > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) :is(button, a)[class~="bg-violet-600"] {
   background-color: #666a72 !important;
 }
-#main-content.cf-app-frame > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) :is(button, a)[class~="bg-violet-500"]:hover,
-#main-content.cf-app-frame > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) :is(button, a)[class~="bg-violet-600"]:hover {
+#main-content.cf-app-frame .cf-route-enter > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) :is(button, a)[class~="bg-violet-500"]:hover,
+#main-content.cf-app-frame .cf-route-enter > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) :is(button, a)[class~="bg-violet-600"]:hover {
   background-color: #777c85 !important;
 }
 @media (max-width: 760px) {
-  #main-content.cf-app-frame > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) .cf-production-nav {
+  #main-content.cf-app-frame .cf-route-enter > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) .cf-production-nav {
     gap: 2px;
     margin-bottom: 18px;
   }
-  #main-content.cf-app-frame > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) .cf-production-tab {
+  #main-content.cf-app-frame .cf-route-enter > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) .cf-production-tab {
     min-height: 42px;
     padding: 8px 11px;
     font-size: 12px;
   }
 }
 @media (prefers-reduced-transparency: reduce) {
-  #main-content.cf-app-frame > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) :is(.cf-card, .cf-dashboard-panel, .cf-metric-card) {
+  #main-content.cf-app-frame .cf-route-enter > main:is(.cf-production-surface, .cf-bg-timeline, .cf-bg-shooting, .cf-bg-calendar, .cf-bg-projects) :is(.cf-card, .cf-dashboard-panel, .cf-metric-card) {
     background: #20242a !important;
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
@@ -1262,16 +1262,16 @@ body {
 }
 
 /* Subtle production motion: a clear entrance, responsive hover, and no sensory overload */
-#main-content.cf-app-frame > main.cf-production-surface > section > * {
+#main-content.cf-app-frame .cf-route-enter > main.cf-production-surface > section > * {
   opacity: 0;
   animation: cf-production-enter 520ms cubic-bezier(.2, .75, .25, 1) both;
 }
-#main-content.cf-app-frame > main.cf-production-surface > section > :nth-child(1) { animation-delay: 30ms; }
-#main-content.cf-app-frame > main.cf-production-surface > section > :nth-child(2) { animation-delay: 80ms; }
-#main-content.cf-app-frame > main.cf-production-surface > section > :nth-child(3) { animation-delay: 130ms; }
-#main-content.cf-app-frame > main.cf-production-surface > section > :nth-child(4) { animation-delay: 180ms; }
-#main-content.cf-app-frame > main.cf-production-surface > section > :nth-child(5) { animation-delay: 230ms; }
-#main-content.cf-app-frame > main.cf-production-surface > section > :nth-child(6) { animation-delay: 280ms; }
+#main-content.cf-app-frame .cf-route-enter > main.cf-production-surface > section > :nth-child(1) { animation-delay: 30ms; }
+#main-content.cf-app-frame .cf-route-enter > main.cf-production-surface > section > :nth-child(2) { animation-delay: 80ms; }
+#main-content.cf-app-frame .cf-route-enter > main.cf-production-surface > section > :nth-child(3) { animation-delay: 130ms; }
+#main-content.cf-app-frame .cf-route-enter > main.cf-production-surface > section > :nth-child(4) { animation-delay: 180ms; }
+#main-content.cf-app-frame .cf-route-enter > main.cf-production-surface > section > :nth-child(5) { animation-delay: 230ms; }
+#main-content.cf-app-frame .cf-route-enter > main.cf-production-surface > section > :nth-child(6) { animation-delay: 280ms; }
 
 @keyframes cf-production-enter {
   from { opacity: 0; transform: translateY(9px); }
@@ -1282,10 +1282,10 @@ body {
   35% { opacity: .8; }
   to { transform: scaleX(1); opacity: .35; }
 }
-#main-content.cf-app-frame > main.cf-production-surface > section > header {
+#main-content.cf-app-frame .cf-route-enter > main.cf-production-surface > section > header {
   position: relative;
 }
-#main-content.cf-app-frame > main.cf-production-surface > section > header::after {
+#main-content.cf-app-frame .cf-route-enter > main.cf-production-surface > section > header::after {
   position: absolute;
   right: 0;
   bottom: -1px;
@@ -1297,33 +1297,33 @@ body {
   transform-origin: left center;
   animation: cf-production-sheen 1.5s ease-out 320ms both;
 }
-#main-content.cf-app-frame > main.cf-production-surface .cf-card {
+#main-content.cf-app-frame .cf-route-enter > main.cf-production-surface .cf-card {
   transition: transform 220ms ease, border-color 220ms ease, background-color 220ms ease, box-shadow 220ms ease;
 }
-#main-content.cf-app-frame > main.cf-production-surface .cf-production-tab {
+#main-content.cf-app-frame .cf-route-enter > main.cf-production-surface .cf-production-tab {
   transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease, transform 180ms ease;
 }
-#main-content.cf-app-frame > main.cf-production-surface a:focus-visible {
+#main-content.cf-app-frame .cf-route-enter > main.cf-production-surface a:focus-visible {
   outline-offset: 3px;
 }
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  #main-content.cf-app-frame > main.cf-production-surface .cf-card:hover {
+  #main-content.cf-app-frame .cf-route-enter > main.cf-production-surface .cf-card:hover {
     transform: translateY(-2px);
     border-color: rgb(224 227 232 / 20%) !important;
     box-shadow: 0 14px 28px rgb(0 0 0 / 18%) !important;
   }
-  #main-content.cf-app-frame > main.cf-production-surface .cf-production-tab:hover {
+  #main-content.cf-app-frame .cf-route-enter > main.cf-production-surface .cf-production-tab:hover {
     transform: translateY(-1px);
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  #main-content.cf-app-frame > main.cf-production-surface > section > *,
-  #main-content.cf-app-frame > main.cf-production-surface > section > header::after {
+  #main-content.cf-app-frame .cf-route-enter > main.cf-production-surface > section > *,
+  #main-content.cf-app-frame .cf-route-enter > main.cf-production-surface > section > header::after {
     opacity: 1;
     animation: none !important;
     transform: none !important;
   }
-  #main-content.cf-app-frame > main.cf-production-surface :is(.cf-card, .cf-production-tab) {
+  #main-content.cf-app-frame .cf-route-enter > main.cf-production-surface :is(.cf-card, .cf-production-tab) {
     transition: none !important;
   }
 }
@@ -1364,3 +1364,81 @@ body {
   .cf-interaction-ripple { display: none; animation: none !important; }
   .cf-selection-feedback { animation: none !important; }
 }
+
+/* Route transitions and loading feedback */
+#main-content.cf-app-frame .cf-route-enter > .cf-route-loading { background: #15181d !important; background-image: none !important; }
+.cf-route-enter {
+  animation: cf-route-arrive 240ms cubic-bezier(.2, .72, .25, 1) both;
+}
+@keyframes cf-route-arrive {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.cf-route-loading {
+  min-height: min(68vh, 720px);
+  padding: clamp(22px, 4vw, 48px);
+  color: #e5e7eb;
+}
+.cf-route-loading-content {
+  width: min(100%, 1180px);
+  margin-inline: auto;
+}
+.cf-route-loading-heading {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 28px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid rgb(210 214 222 / 10%);
+}
+.cf-route-skeleton {
+  border: 1px solid rgb(210 214 222 / 7%);
+  border-radius: 12px;
+  background: linear-gradient(105deg, #20242a 28%, #2a2f37 42%, #20242a 56%);
+  background-size: 220% 100%;
+  animation: cf-route-skeleton-shine 1.5s ease-in-out infinite;
+}
+.cf-route-skeleton-kicker { width: 150px; height: 10px; border: 0; }
+.cf-route-skeleton-title { width: min(340px, 70%); height: 32px; border: 0; border-radius: 8px; }
+.cf-route-skeleton-copy { width: min(520px, 88%); height: 12px; border: 0; border-radius: 6px; }
+.cf-route-loading-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.cf-route-skeleton-panel { min-height: 150px; border-radius: 16px; }
+.cf-route-skeleton-wide { grid-column: 1 / -1; min-height: 250px; }
+.cf-route-loading-progress {
+  overflow: hidden;
+  height: 2px;
+  margin-top: 22px;
+  border-radius: 999px;
+  background: rgb(210 214 222 / 8%);
+}
+.cf-route-loading-progress span {
+  display: block;
+  width: 32%;
+  height: 100%;
+  border-radius: inherit;
+  background: rgb(190 190 200 / 74%);
+  animation: cf-route-progress 1.4s ease-in-out infinite;
+}
+@keyframes cf-route-skeleton-shine {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+@keyframes cf-route-progress {
+  0% { transform: translateX(-110%); }
+  100% { transform: translateX(420%); }
+}
+@media (max-width: 640px) {
+  .cf-route-loading { min-height: 65vh; padding: 20px 14px; }
+  .cf-route-loading-grid { gap: 10px; }
+  .cf-route-skeleton-panel { min-height: 125px; }
+  .cf-route-skeleton-wide { min-height: 210px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cf-route-enter { animation: none !important; }
+  .cf-route-skeleton { animation: none !important; }
+  .cf-route-loading-progress span { animation: none !important; width: 100%; }
+}
+
