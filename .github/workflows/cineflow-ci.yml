@@ -24,6 +24,8 @@ jobs:
         run: npm ci
       - name: Lint
         run: npm run lint
+      - name: Generate Next.js types
+        run: npx --no-install next typegen
       - name: TypeScript
         run: npx --no-install tsc --noEmit
       - name: Build and TypeScript
