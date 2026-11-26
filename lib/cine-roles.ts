@@ -30,10 +30,6 @@ export const CINE_ROLES = [
   { value: "composer", label: "Composición musical", department: "Música" },
   { value: "vfx-artist", label: "Efectos visuales / VFX", department: "VFX" },
   { value: "motion-designer", label: "Motion graphics", department: "Postproducción" },
-  { value: "actor", label: "Actuación", department: "Reparto" },
-  { value: "colorist", label: "Corrección de color", department: "Postproducción" },
-  { value: "sound-mixer", label: "Mezcla de sonido", department: "Sonido" },
-  { value: "boom-operator", label: "Microfonista", department: "Sonido" },
   { value: "marketing", label: "Marketing y distribución", department: "Distribución" },
   { value: "viewer", label: "Colaborador / Consulta", department: "Acceso" },
 ] as const;
