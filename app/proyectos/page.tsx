@@ -51,6 +51,10 @@ export default async function ProjectsPage({
     throw new Error(`No se pudo consultar tu acceso a los proyectos: ${membershipsError.message}`);
   }
   const isAdmin = isCineflowAdmin(user);
+  const { data: organizations, error: organizationsError } =
+    isAdmin && admin
+      ? await admin.from("organizations").select("id,name").order("name")
+      : { data: [], error: null };
 
   const projectsQuery = isAdmin && admin
     ? admin
@@ -214,12 +218,14 @@ export default async function ProjectsPage({
           requestsError ||
           membershipRequestsError ||
           leaveRequestsError ||
-          (!admin && !projectsError)) && (
+          (!admin && !projectsError) ||
+          organizationsError) && (
           <p className="mb-5 rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-200">
             {error ||
               requestsError ||
               membershipRequestsError ||
               leaveRequestsError ||
+              organizationsError?.message ||
               "Falta configurar SUPABASE_SERVICE_ROLE_KEY o SUPABASE_SECRET_KEY para mostrar todos los proyectos y gestionar solicitudes."}
           </p>
         )}
@@ -476,9 +482,15 @@ export default async function ProjectsPage({
             <p className="mb-5 text-sm text-gray-400">
               Las solicitudes para unirse deben ser aprobadas por el propietario.
             </p>
+            {isAdmin && !selectedProject && !(organizations?.length) && (
+              <p className="mb-4 rounded-xl border border-amber-400/30 bg-amber-400/10 p-3 text-sm text-amber-200">
+                No hay productoras disponibles para asignar este proyecto.
+              </p>
+            )}
             <ProjectForm
               action={selectedProject ? updateProject : createProject}
               project={selectedProject ?? initial}
+              organizations={isAdmin && !selectedProject ? organizations ?? [] : undefined}
             />
           </section>
         </div>

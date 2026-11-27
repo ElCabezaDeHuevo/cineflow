@@ -83,37 +83,72 @@ export async function createProject(
   const values = valuesFromForm(formData);
   const fieldErrors = validate(values);
   if (fieldErrors) return { fieldErrors };
-  const context = await authenticatedClient();
-  if (!context)
-    return { error: "Debes iniciar sesión para crear un proyecto." };
-  if (!context.active) return { error: attendanceRequiredMessage };
-  const { data: memberships, error: membershipsError } = await context.supabase
-    .from("organization_members")
-    .select("organization_id,role")
-    .eq("user_id", context.user.id);
 
-  if (membershipsError) return { error: membershipsError.message };
-  if (!memberships?.length) {
-    return { error: "Tu cuenta todavía no está vinculada a una productora. Solicita al administrador que te asigne una empresa." };
-  }
-  if (memberships.length > 1) {
-    return { error: "Tu cuenta pertenece a varias productoras. Selecciona la empresa desde el espacio de trabajo antes de crear proyectos." };
-  }
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Inicia sesión para crear un proyecto." };
 
-  const organizationId = memberships[0].organization_id;
+  const isAdmin = isCineflowAdmin(user);
   const projectId = crypto.randomUUID();
-  const { error } = await context.supabase
-    .from("projects")
-    .insert({
+  let organizationId = "";
+  let insertError: { message: string } | null = null;
+
+  if (isAdmin) {
+    organizationId = String(formData.get("organization_id") ?? "");
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(organizationId)) {
+      return { error: "Selecciona una productora para el proyecto." };
+    }
+    const admin = createSupabaseAdminClient();
+    if (!admin) return { error: "No está configurado el acceso administrativo de Supabase." };
+    const { data: organization, error: organizationError } = await admin
+      .from("organizations")
+      .select("id")
+      .eq("id", organizationId)
+      .maybeSingle();
+    if (organizationError) return { error: organizationError.message };
+    if (!organization) return { error: "La productora seleccionada ya no está disponible." };
+
+    const result = await admin.from("projects").insert({
       id: projectId,
       ...values,
       organization_id: organizationId,
-      created_by: context.user.id,
+      created_by: user.id,
     });
-  if (error) return { error: error.message };
+    insertError = result.error;
+  } else {
+    const context = await authenticatedClient();
+    if (!context) {
+      return { error: "Tu cuenta no está vinculada a una productora. Pide al administrador que revise tu acceso." };
+    }
+    const { data: memberships, error: membershipsError } = await context.supabase
+      .from("organization_members")
+      .select("organization_id")
+      .eq("user_id", user.id);
+
+    if (membershipsError) return { error: membershipsError.message };
+    if (!memberships?.length) {
+      return { error: "Tu cuenta todavía no está vinculada a una productora. Solicita al administrador que te asigne una empresa." };
+    }
+    if (memberships.length > 1) {
+      return { error: "Tu cuenta pertenece a varias productoras. Elige la productora desde tu espacio de trabajo." };
+    }
+
+    organizationId = memberships[0].organization_id;
+    const result = await context.supabase.from("projects").insert({
+      id: projectId,
+      ...values,
+      organization_id: organizationId,
+      created_by: user.id,
+    });
+    insertError = result.error;
+  }
+
+  if (insertError) return { error: insertError.message };
   const cover = formData.get("cover");
   if (cover instanceof File && cover.size) {
-    const mediaError = await saveProjectMedia(projectId, context.user.id, cover, "cover", "Portada del proyecto");
+    const mediaError = await saveProjectMedia(projectId, user.id, cover, "cover", "Portada del proyecto");
     if (mediaError) return { error: `El proyecto se creó, pero no se pudo guardar la portada: ${mediaError}` };
   }
   revalidatePath("/");
@@ -129,18 +164,29 @@ export async function updateProject(
   const fieldErrors = validate(values);
   if (fieldErrors) return { fieldErrors };
   if (!projectId) return { error: "No se encontró el proyecto." };
-  const context = await authenticatedClient();
-  if (!context)
-    return { error: "Debes iniciar sesión para editar un proyecto." };
-  if (!context.active) return { error: attendanceRequiredMessage };
-  const { error } = await context.supabase
-    .from("projects")
-    .update(values)
-    .eq("id", projectId);
-  if (error) return { error: error.message };
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Inicia sesión para editar un proyecto." };
+
+  let updateError: { message: string } | null = null;
+  if (isCineflowAdmin(user)) {
+    const admin = createSupabaseAdminClient();
+    if (!admin) return { error: "No está configurado el acceso administrativo de Supabase." };
+    const result = await admin.from("projects").update(values).eq("id", projectId);
+    updateError = result.error;
+  } else {
+    const context = await authenticatedClient();
+    if (!context) return { error: "Tu cuenta no tiene acceso a esta productora." };
+    if (!context.active) return { error: attendanceRequiredMessage };
+    const result = await context.supabase.from("projects").update(values).eq("id", projectId);
+    updateError = result.error;
+  }
+  if (updateError) return { error: updateError.message };
   const cover = formData.get("cover");
   if (cover instanceof File && cover.size) {
-    const mediaError = await saveProjectMedia(projectId, context.user.id, cover, "cover", "Portada del proyecto");
+    const mediaError = await saveProjectMedia(projectId, user.id, cover, "cover", "Portada del proyecto");
     if (mediaError) return { error: `Los datos se guardaron, pero no se pudo guardar la portada: ${mediaError}` };
   }
   revalidatePath("/proyectos");

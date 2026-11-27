@@ -18,9 +18,11 @@ type Action = (
 export default function ProjectForm({
   project,
   action,
+  organizations,
 }: {
   project?: Project;
   action: Action;
+  organizations?: Array<{ id: string; name: string }>;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   const value = (key: keyof Project) => project?.[key] ?? "";
@@ -38,6 +40,23 @@ export default function ProjectForm({
         <p className="rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-3 text-sm text-emerald-200">
           {state.success}
         </p>
+      )}
+      {organizations !== undefined && !project?.id && (
+        <label className="block text-sm text-gray-300">
+          Productora del proyecto
+          <select
+            name="organization_id"
+            defaultValue=""
+            required
+            disabled={!organizations.length}
+            className="mt-2 w-full rounded-xl border border-white/10 bg-[#171b29] px-4 py-3 text-white outline-none focus:border-violet-400 disabled:opacity-50"
+          >
+            <option value="" disabled>Selecciona una productora</option>
+            {organizations.map((organization) => (
+              <option key={organization.id} value={organization.id}>{organization.name}</option>
+            ))}
+          </select>
+        </label>
       )}
       <div className="grid gap-5 md:grid-cols-2">
         <Field
