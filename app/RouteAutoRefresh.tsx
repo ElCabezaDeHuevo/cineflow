@@ -36,7 +36,8 @@ export default function RouteAutoRefresh() {
       router.refresh();
     };
 
-    const interval = window.setInterval(refreshIfIdle, 60_000);
+    const refreshDelay = pathname === "/proyectos" ? 8_000 : 60_000;
+    const interval = window.setInterval(refreshIfIdle, refreshDelay);
     document.addEventListener("visibilitychange", refreshIfIdle);
     window.addEventListener("focus", refreshIfIdle);
 
