@@ -32,6 +32,11 @@ class CineFlowModel : ViewModel() {
         private set
     var inbox by mutableStateOf(emptyList<Review>())
         private set
+    var openProjectId by mutableStateOf<String?>(null)
+        private set
+    var tracking by mutableStateOf<JSONObject?>(null)
+        private set
+
     private var token: String? = null
     private var operation: Job? = null
 
@@ -50,9 +55,47 @@ class CineFlowModel : ViewModel() {
         error = null
         projects = emptyList()
         inbox = emptyList()
+        closeProject()
     }
 
-    fun refresh() = runOperation { loadProjects() }
+    fun refresh() = runOperation {
+        val id = openProjectId
+        if (id == null) loadProjects() else loadTracking(id)
+    }
+
+    fun openProject(id: String) {
+        openProjectId = id
+        tracking = null
+        runOperation(showProgress = true, replaceRefresh = true) { loadTracking(id) }
+    }
+
+    fun closeProject() {
+        openProjectId = null
+        tracking = null
+    }
+
+    fun sendMessage(message: String, onSent: () -> Unit) =
+        runOperation(showProgress = true, replaceRefresh = true) {
+            val id = openProjectId ?: return@runOperation
+            val credential = token ?: return@runOperation
+            call("project", credential, JSONObject().put("id", id).put("message", message))
+            onSent()
+            loadTracking(id)
+        }
+
+    private suspend fun loadTracking(id: String) {
+        val credential = token ?: return
+        val response = try {
+            call("project?id=$id", credential)
+        } catch (exception: ApiException) {
+            if (exception.status == 403 && openProjectId == id) {
+                closeProject()
+                loadProjects()
+            }
+            throw exception
+        }
+        if (openProjectId == id) tracking = response
+    }
 
     fun act(id: String, kind: String, action: String) = runOperation(showProgress = true, replaceRefresh = true) {
         val credential = token ?: return@runOperation
@@ -92,6 +135,7 @@ class CineFlowModel : ViewModel() {
                     loaded = false
                     projects = emptyList()
                     inbox = emptyList()
+                    closeProject()
                 }
                 error = exception.message
             } catch (_: Exception) {

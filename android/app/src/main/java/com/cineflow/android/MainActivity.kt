@@ -56,6 +56,11 @@ private fun CineFlow(model: CineFlowModel) {
         Login(model.busy, model.error, model::signIn)
         return
     }
+    model.openProjectId?.let { id ->
+        key(id) { ProjectTracking(model) }
+        return
+    }
+
     var confirmation by remember { mutableStateOf<(() -> Unit)?>(null) }
     var confirmationText by remember { mutableStateOf("") }
     Column(Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = 20.dp)) {
@@ -98,10 +103,25 @@ private fun CineFlow(model: CineFlowModel) {
                         Text(project.name, style = MaterialTheme.typography.titleLarge)
                         when {
                             project.pending == "join" -> Text("Ingreso pendiente de aprobación")
-                            project.pending == "leave" -> Text("Salida pendiente de aprobación")
-                            project.role == "owner" -> Text("Eres propietario del proyecto")
+                            project.pending == "leave" -> {
+                                Text("Salida pendiente de aprobación")
+                                if (project.role != null) {
+                                    Button(enabled = !model.busy, onClick = { model.openProject(project.id) }) {
+                                        Text("Abrir seguimiento")
+                                    }
+                                }
+                            }
+                            project.role == "owner" -> {
+                                Text("Eres propietario del proyecto")
+                                Button(enabled = !model.busy, onClick = { model.openProject(project.id) }) {
+                                    Text("Abrir seguimiento")
+                                }
+                            }
                             project.role != null -> {
                                 Text("Ya eres parte del proyecto")
+                                Button(enabled = !model.busy, onClick = { model.openProject(project.id) }) {
+                                    Text("Abrir seguimiento")
+                                }
                                 OutlinedButton(enabled = !model.busy, onClick = {
                                     confirmationText = "¿Quieres solicitar salir de ${project.name}?"
                                     confirmation = { model.act(project.id, "leave", "request") }

@@ -17,6 +17,7 @@ La app requiere Android 7 o posterior y conexión a Internet.
 - Inicio de sesión por correo y contraseña de CineFlow.
 - Proyectos de las productoras activas de la cuenta.
 - Solicitudes de ingreso y salida, con aprobación o rechazo del dueño.
+- Seguimiento con tareas y actividad, y chat básico del proyecto.
 - Actualización automática cada ocho segundos con la app en primer plano.
 
 La sesión se conserva en memoria y vuelve a pedirse al cerrar el proceso o
