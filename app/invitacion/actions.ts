@@ -13,12 +13,18 @@ export async function acceptExistingInvitation(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   const token = String(formData.get("token") ?? "");
   const admin = createSupabaseAdminClient();
-  if (!admin || token.length !== 72) redirect("/?error=Invitación+inválida");
+  const isShortCode = /^[0-9a-f]{32}$/i.test(token);
+  const isLegacyToken = token.length === 72;
+  if (!admin || (!isShortCode && !isLegacyToken)) redirect("/?error=Invitación+inválida");
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
   const hash = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
   const { data: invitation } = await admin.from("organization_invitations")
-    .select("organization_id").eq("id", id).eq("token_hash", hash).maybeSingle();
-  if (!invitation) redirect("/?error=Invitación+inválida");
+    .select("organization_id,short_code_hash,invite_kind")
+    .eq("id", id).eq("token_hash", hash).maybeSingle();
+  if (!invitation ||
+      (isShortCode && (invitation.short_code_hash !== hash || invitation.invite_kind !== "existing"))) {
+    redirect("/?error=Invitación+inválida");
+  }
   const { data: other, error } = await admin.from("organization_members")
     .select("organization_id").eq("user_id", user.id).neq("organization_id", invitation.organization_id).limit(1);
   if (error || other?.length) redirect("/?error=Contacta+a+la+administración+de+tu+productora");

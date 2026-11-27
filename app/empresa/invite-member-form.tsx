@@ -52,10 +52,10 @@ export default function InviteMemberForm({
 
 Te invito a unirte a ${organizationName} en CineFlow.
 
-Abre este enlace para registrarte y aceptar la invitación:
+Abre este enlace para aceptar la invitación y unirte a la productora:
 ${invitationResult.inviteUrl}
 
-Este enlace es personal y caduca en 7 días.
+Este enlace es personal, caduca en 7 días y solo puede usarse una vez.
 
 ¡Te esperamos!`)}`
     : null;
@@ -95,8 +95,8 @@ Si no recuerdas tu contraseña, contacta al administrador de tu productora.
         <div className="mt-5 rounded-xl border border-emerald-400/25 bg-emerald-400/5 p-4">
           <p className="font-semibold text-emerald-200">Invitación lista para enviar</p>
           <p className="mt-1 text-sm text-gray-300">El enlace es válido durante 7 días. Envíalo únicamente a {invitationResult.email}.</p>
-          <label className="mt-3 block text-xs text-gray-400">Enlace personal de registro
-            <textarea readOnly value={invitationResult.inviteUrl} rows={3} className="mt-2 w-full break-all rounded-lg border border-white/10 bg-black/30 p-3 text-xs text-white" />
+          <label className="mt-3 block text-xs text-gray-400">Enlace corto de invitación
+            <textarea readOnly value={invitationResult.inviteUrl} rows={2} className="mt-2 w-full break-all rounded-lg border border-white/10 bg-black/30 p-3 text-xs text-white" />
           </label>
           <div className="mt-3 flex flex-wrap gap-2">
             <button type="button" onClick={() => navigator.clipboard.writeText(invitationResult.inviteUrl)} className="rounded-lg border border-white/15 px-4 py-2 text-sm hover:bg-white/5">Copiar enlace</button>

@@ -9,19 +9,49 @@ function loginError(request: NextRequest, message: string) {
   return NextResponse.redirect(url);
 }
 
+async function sha256Hex(value: string) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
-  const code = url.searchParams.get("code");
-  const tokenHash = url.searchParams.get("token_hash");
-  const type = url.searchParams.get("type");
-  const invitationId = url.searchParams.get("invitation_id");
+  const authCode = url.searchParams.get("code");
+  const shortCode = url.searchParams.get("short_code");
+  let tokenHash = url.searchParams.get("token_hash");
+  let type = url.searchParams.get("type");
+  let invitationId = url.searchParams.get("invitation_id");
 
-  if (!invitationId || !tokenHash || type !== "invite" || code) {
-    return loginError(request, "El enlace de invitación no es válido o ha caducado.");
-  }
+  if (authCode) return loginError(request, "El enlace de invitación no es válido o ha caducado.");
 
   const admin = createSupabaseAdminClient();
   if (!admin) return loginError(request, "El servicio de invitaciones no está configurado.");
+
+  if (shortCode) {
+    if (!/^[0-9a-f]{32}$/i.test(shortCode) || tokenHash || invitationId) {
+      return loginError(request, "El enlace corto de invitación no es válido.");
+    }
+    const codeHash = await sha256Hex(shortCode);
+    const { data: shortInvitation, error: shortInvitationError } = await admin
+      .from("organization_invitations")
+      .select("id,token_hash,invite_kind,expires_at,accepted_at,short_code_hash")
+      .eq("short_code_hash", codeHash)
+      .maybeSingle();
+
+    if (shortInvitationError || !shortInvitation || shortInvitation.invite_kind !== "signup" ||
+        shortInvitation.short_code_hash !== codeHash || shortInvitation.accepted_at ||
+        new Date(shortInvitation.expires_at).getTime() <= Date.now()) {
+      return loginError(request, "La invitación no existe, ya se utilizó o caducó.");
+    }
+
+    invitationId = shortInvitation.id;
+    tokenHash = shortInvitation.token_hash;
+    type = "invite";
+  }
+
+  if (!invitationId || !tokenHash || type !== "invite") {
+    return loginError(request, "El enlace de invitación no es válido o ha caducado.");
+  }
 
   const { data: invitation, error: invitationError } = await admin
     .from("organization_invitations")

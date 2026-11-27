@@ -61,24 +61,28 @@ export async function inviteCompanyMember(formData: FormData) {
     if (membershipLookupError) redirect("/empresa?error=" + encodeURIComponent(membershipLookupError.message));
     if (alreadyMember) redirect("/empresa?error=Esa+persona+ya+pertenece+a+tu+equipo");
 
-    const token = crypto.randomUUID() + crypto.randomUUID();
+    const token = Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, "0")).join("");
     const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
     const hash = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
     const { data: invitation, error } = await admin.from("organization_invitations").insert({
-      organization_id: organizationId, email, role, token_hash: hash,
+      organization_id: organizationId, email, role, token_hash: hash, short_code_hash: hash,
+      invite_kind: "existing",
       invited_by: user.id, expires_at: new Date(Date.now() + 7 * 86400000).toISOString(),
     }).select("id").single();
     if (error || !invitation) return { ok: false as const, message: "No se pudo preparar la invitación." };
-    const link = new URL("/invitacion", siteUrl);
-    link.hash = new URLSearchParams({ id: invitation.id, token }).toString();
-    return { ok: true as const, kind: "invitation" as const, email, organizationName: org.name, inviteUrl: link.toString() };
+    const inviteUrl = new URL(`/i/${token}`, siteUrl).toString();
+    return { ok: true as const, kind: "invitation" as const, email, organizationName: org.name, inviteUrl };
   }
 
-  // A new member remains outside the organization until the invite link is verified.
-  const tokenBytes = crypto.getRandomValues(new Uint8Array(32));
-  const tokenHash = Array.from(tokenBytes).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  // A new member stays outside the company until Supabase verifies this invitation.
+  const code = Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, "0")).join("");
+  const codeDigest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(code));
+  const codeHash = Array.from(new Uint8Array(codeDigest), byte => byte.toString(16).padStart(2, "0")).join("");
+  const placeholderBytes = crypto.getRandomValues(new Uint8Array(32));
+  const tokenHash = Array.from(placeholderBytes).map((byte) => byte.toString(16).padStart(2, "0")).join("");
   const { data: invitation, error: invitationError } = await admin.from("organization_invitations").insert({
     organization_id: organizationId, email, role, token_hash: tokenHash,
+    short_code_hash: codeHash, invite_kind: "signup",
     invited_by: user.id, expires_at: new Date(Date.now() + 7 * 86400000).toISOString(),
   }).select("id").single();
   if (invitationError || !invitation) redirect("/empresa?error=" + encodeURIComponent(invitationError?.message ?? "No se pudo preparar la invitación"));
@@ -109,15 +113,15 @@ export async function inviteCompanyMember(formData: FormData) {
     return { ok: false as const, message: "No se pudo asegurar el enlace de invitación. Intenta de nuevo." };
   }
 
-  // Send the recipient directly to our server-side confirmation route.
-  // It verifies the one-time token with verifyOtp(), stores the session cookie,
-  // and only then grants the invited organization membership.
-  const inviteUrl = new URL("/auth/confirm", siteUrl);
-  inviteUrl.searchParams.set("token_hash", supabaseTokenHash);
-  inviteUrl.searchParams.set("type", "invite");
-  inviteUrl.searchParams.set("invitation_id", invitation.id);
+  // The short route resolves the hashed code and then uses the same one-time Supabase OTP.
   revalidatePath("/empresa");
-  return { ok: true as const, kind: "invitation" as const, email, organizationName: org.name, inviteUrl: inviteUrl.toString() };
+  return {
+    ok: true as const,
+    kind: "invitation" as const,
+    email,
+    organizationName: org.name,
+    inviteUrl: new URL(`/i/${code}`, siteUrl).toString(),
+  };
 }
 
 
