@@ -1,9 +1,8 @@
 import Link from "next/link";
+import { connection } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { acceptExistingInvitation } from "@/app/invitacion/actions";
-
-export const dynamic = "force-dynamic";
 
 async function sha256Hex(value: string) {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
@@ -27,6 +26,7 @@ export default async function ShortInvitationPage({
 }: {
   params: Promise<{ code: string }>;
 }) {
+  await connection();
   const { code } = await params;
   if (!/^[0-9a-f]{32}$/i.test(code)) {
     return <InvitationMessage title="Enlace no válido" message="Solicita una invitación nueva a la productora." />;
