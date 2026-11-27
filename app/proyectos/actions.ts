@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { hasOpenWorkSession, attendanceRequiredMessage } from "@/lib/attendance";
-import { isCineflowAdmin } from "@/lib/admin";
+import { CINEFLOW_OWNER_ID, isCineflowAdmin } from "@/lib/admin";
 
 export type ProjectFormState = {
   error?: string;
@@ -100,23 +100,29 @@ export async function createProject(
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(organizationId)) {
       return { error: "Selecciona una productora para el proyecto." };
     }
-    const admin = createSupabaseAdminClient();
-    if (!admin) return { error: "No está configurado el acceso administrativo de Supabase." };
-    const { data: organization, error: organizationError } = await admin
-      .from("organizations")
-      .select("id")
-      .eq("id", organizationId)
-      .maybeSingle();
-    if (organizationError) return { error: organizationError.message };
-    if (!organization) return { error: "La productora seleccionada ya no está disponible." };
-
-    const result = await admin.from("projects").insert({
+    const payload = {
       id: projectId,
       ...values,
       organization_id: organizationId,
       created_by: user.id,
-    });
-    insertError = result.error;
+    };
+    if (user.id === CINEFLOW_OWNER_ID) {
+      // The owner's dedicated RLS policy validates the exact UID and company vigency.
+      const result = await supabase.from("projects").insert(payload);
+      insertError = result.error;
+    } else {
+      const admin = createSupabaseAdminClient();
+      if (!admin) return { error: "No está configurado el acceso administrativo de Supabase." };
+      const { data: organization, error: organizationError } = await admin
+        .from("organizations")
+        .select("id")
+        .eq("id", organizationId)
+        .maybeSingle();
+      if (organizationError) return { error: organizationError.message };
+      if (!organization) return { error: "La productora seleccionada ya no está disponible." };
+      const result = await admin.from("projects").insert(payload);
+      insertError = result.error;
+    }
   } else {
     const context = await authenticatedClient();
     if (!context) {
@@ -171,7 +177,11 @@ export async function updateProject(
   if (!user) return { error: "Inicia sesión para editar un proyecto." };
 
   let updateError: { message: string } | null = null;
-  if (isCineflowAdmin(user)) {
+  if (user.id === CINEFLOW_OWNER_ID) {
+    // The project owner membership created by the database trigger authorizes edits.
+    const result = await supabase.from("projects").update(values).eq("id", projectId);
+    updateError = result.error;
+  } else if (isCineflowAdmin(user)) {
     const admin = createSupabaseAdminClient();
     if (!admin) return { error: "No está configurado el acceso administrativo de Supabase." };
     const result = await admin.from("projects").update(values).eq("id", projectId);
