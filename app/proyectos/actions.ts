@@ -499,7 +499,18 @@ async function reviewProjectMembershipRequest(
   if (requestError || !request) {
     redirect(`/proyectos?error=${encodeURIComponent(requestError?.message ?? "La solicitud ya no está pendiente.")}`);
   }
-  const { error } = await context.supabase.rpc("review_project_membership_request", {
+  const { data: ownership, error: ownershipError } = await context.supabase
+    .from("project_members")
+    .select("project_id")
+    .eq("project_id", request.project_id)
+    .eq("user_id", context.user.id)
+    .eq("role", "owner")
+    .maybeSingle();
+  if (ownershipError || !ownership) {
+    redirect("/proyectos?error=" + encodeURIComponent("Solo el propietario puede revisar solicitudes para este proyecto."));
+  }
+
+  const { error } = await admin.rpc("review_project_membership_request", {
     request_uuid: request.id,
     reviewer_uuid: context.user.id,
     approve,
