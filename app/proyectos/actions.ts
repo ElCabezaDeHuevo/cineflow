@@ -218,11 +218,23 @@ export async function requestProjectMembership(formData: FormData) {
   }
   const { data: project, error: projectError } = await admin
     .from("projects")
-    .select("id")
+    .select("id,organization_id")
     .eq("id", projectId)
     .maybeSingle();
   if (projectError || !project) {
     redirect(`/proyectos?error=${encodeURIComponent(projectError?.message ?? "No se encontró el proyecto.")}`);
+  }
+
+  if (!isCineflowAdmin(context.user)) {
+    const { data: companyMembership, error: companyError } = await context.supabase
+      .from("organization_members")
+      .select("organization_id")
+      .eq("organization_id", project.organization_id)
+      .eq("user_id", context.user.id)
+      .maybeSingle();
+    if (companyError || !companyMembership) {
+      redirect("/proyectos?error=" + encodeURIComponent("El proyecto no está disponible en tu productora."));
+    }
   }
 
   const { data: membership, error: membershipError } = await context.supabase

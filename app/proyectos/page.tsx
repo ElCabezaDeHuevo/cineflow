@@ -70,6 +70,28 @@ export default async function ProjectsPage({
     throw new Error(`No se pudieron cargar los proyectos: ${projectsError.message}`);
   }
 
+  let joinableProjects: { id: string; name: string; type: string; stage: string }[] = [];
+  if (!isAdmin && admin) {
+    const { data: companyMemberships, error: companyMembershipsError } = await supabase
+      .from("organization_members")
+      .select("organization_id")
+      .eq("user_id", user.id);
+    if (companyMembershipsError) throw companyMembershipsError;
+
+    const companyIds = (companyMemberships ?? []).map(({ organization_id }) => organization_id);
+    if (companyIds.length) {
+      // Membership is checked through the session's RLS before using the admin client.
+      const { data: catalog, error: catalogError } = await admin
+        .from("projects")
+        .select("id,name,type,stage")
+        .in("organization_id", companyIds)
+        .order("created_at", { ascending: false });
+      if (catalogError) throw catalogError;
+      const accessibleIds = new Set((projects ?? []).map(({ id }) => id));
+      joinableProjects = (catalog ?? []).filter(({ id }) => !accessibleIds.has(id));
+    }
+  }
+
   const q = typeof rawQuery === "string" ? rawQuery : "";
   const etapa = typeof rawStage === "string" ? rawStage : "";
   const tipo = typeof rawType === "string" ? rawType : "";
@@ -79,7 +101,13 @@ export default async function ProjectsPage({
     (!etapa || project.stage === etapa) &&
     (!tipo || project.type === tipo),
   );
-  const projectIds = (projects ?? []).map((project) => project.id);
+  const visibleJoinableProjects = joinableProjects.filter((project) =>
+    (!normalizedQuery || project.name.toLocaleLowerCase("es-MX").includes(normalizedQuery)) &&
+    (!etapa || project.stage === etapa) &&
+    (!tipo || project.type === tipo),
+  );
+  const catalog = [...(projects ?? []), ...joinableProjects];
+  const projectIds = catalog.map((project) => project.id);
   const ownedProjectIds = (memberships ?? [])
     .filter((membership) => membership.role === "owner")
     .map((membership) => membership.project_id);
@@ -210,7 +238,7 @@ export default async function ProjectsPage({
             </p>
           </div>
           <span className="rounded-full border border-white/10 px-4 py-2 text-sm text-gray-400">
-            {visibleProjects.length} de {projects?.length ?? 0} proyectos
+            {visibleProjects.length + visibleJoinableProjects.length} de {catalog.length} proyectos
           </span>
         </header>
 
@@ -360,11 +388,29 @@ export default async function ProjectsPage({
             <h2 className="mb-5 text-xl font-semibold">Proyectos disponibles</h2>
             <form action="/proyectos" className="mb-5 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
               <input name="q" defaultValue={q} placeholder="Buscar por nombre o descripción" className="min-h-11 min-w-0 rounded-lg border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-violet-400 sm:col-span-2" />
-              <select name="etapa" defaultValue={etapa} className="min-h-11 min-w-0 w-full rounded-lg border border-white/10 bg-black/20 px-3 text-sm text-white"><option value="">Todas las etapas</option>{[...new Set((projects ?? []).map((p) => p.stage))].map((stage) => <option key={stage} value={stage}>{stage}</option>)}</select>
-              <select name="tipo" defaultValue={tipo} className="min-h-11 min-w-0 w-full rounded-lg border border-white/10 bg-black/20 px-3 text-sm text-white"><option value="">Todos los tipos</option>{[...new Set((projects ?? []).map((p) => p.type))].map((type) => <option key={type} value={type}>{type}</option>)}</select>
+              <select name="etapa" defaultValue={etapa} className="min-h-11 min-w-0 w-full rounded-lg border border-white/10 bg-black/20 px-3 text-sm text-white"><option value="">Todas las etapas</option>{[...new Set(catalog.map((p) => p.stage))].map((stage) => <option key={stage} value={stage}>{stage}</option>)}</select>
+              <select name="tipo" defaultValue={tipo} className="min-h-11 min-w-0 w-full rounded-lg border border-white/10 bg-black/20 px-3 text-sm text-white"><option value="">Todos los tipos</option>{[...new Set(catalog.map((p) => p.type))].map((type) => <option key={type} value={type}>{type}</option>)}</select>
               <button className="min-h-11 w-full rounded-lg bg-violet-500 px-4 py-2 text-sm font-semibold transition hover:bg-violet-400 sm:col-span-2">Filtrar</button>
             </form>
             <div className="space-y-3">
+              {visibleJoinableProjects.map((project) => (
+                <article key={project.id} className="cf-card flex flex-wrap items-center justify-between gap-4 rounded-xl border border-white/10 p-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-wider text-violet-300">{project.type} · {project.stage}</p>
+                    <h3 className="mt-1 font-semibold">{project.name}</h3>
+                  </div>
+                  {latestRequestByProject.get(project.id) === "pending" ? (
+                    <span className="text-sm text-amber-200">Solicitud pendiente</span>
+                  ) : (
+                    <form action={requestProjectMembership}>
+                      <input type="hidden" name="project_id" value={project.id} />
+                      <button className="rounded-lg bg-violet-500 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-400">
+                        {latestRequestByProject.get(project.id) === "rejected" ? "Volver a solicitar" : "Solicitar unirme"}
+                      </button>
+                    </form>
+                  )}
+                </article>
+              ))}
               {visibleProjects.length ? (
                 visibleProjects.map((project) => {
                   const role = roleByProject.get(project.id);
@@ -467,7 +513,7 @@ export default async function ProjectsPage({
                     </article>
                   );
                 })
-              ) : (
+              ) : !visibleJoinableProjects.length && (
                 <p className="rounded-xl border border-dashed border-white/10 p-6 text-sm text-gray-400">
                   Aún no hay proyectos visibles para tu usuario.
                 </p>
