@@ -18,6 +18,8 @@ import java.net.URL
 
 data class Project(val id: String, val name: String, val type: String, val stage: String, val role: String?, val pending: String?)
 data class Review(val id: String, val kind: String, val project: String, val person: String)
+data class Organization(val id: String, val name: String)
+data class WorkSession(val id: String, val clockIn: String, val clockOut: String?, val note: String, val deleted: Boolean)
 
 class CineFlowModel : ViewModel() {
     var signedIn by mutableStateOf(false)
@@ -31,6 +33,10 @@ class CineFlowModel : ViewModel() {
     var projects by mutableStateOf(emptyList<Project>())
         private set
     var inbox by mutableStateOf(emptyList<Review>())
+        private set
+    var organizations by mutableStateOf(emptyList<Organization>())
+        private set
+    var workSessions by mutableStateOf(emptyList<WorkSession>())
         private set
     var openProjectId by mutableStateOf<String?>(null)
         private set
@@ -55,12 +61,29 @@ class CineFlowModel : ViewModel() {
         error = null
         projects = emptyList()
         inbox = emptyList()
+        organizations = emptyList()
+        workSessions = emptyList()
         closeProject()
     }
 
     fun refresh() = runOperation {
         val id = openProjectId
-        if (id == null) loadProjects() else loadTracking(id)
+        if (id == null) {
+            loadProjects()
+            loadAttendance()
+        } else loadTracking(id)
+    }
+
+    fun clockIn() = runOperation(showProgress = true, replaceRefresh = true) {
+        val credential = token ?: return@runOperation
+        call("attendance", credential, JSONObject().put("action", "clock-in"))
+        loadAttendance()
+    }
+
+    fun clockOut(id: String, note: String) = runOperation(showProgress = true, replaceRefresh = true) {
+        val credential = token ?: return@runOperation
+        call("attendance", credential, JSONObject().put("action", "clock-out").put("id", id).put("note", note))
+        loadAttendance()
     }
 
     fun openProject(id: String) {
@@ -82,6 +105,45 @@ class CineFlowModel : ViewModel() {
             onSent()
             loadTracking(id)
         }
+
+    fun saveProject(id: String, name: String, description: String, saved: () -> Unit) =
+        runOperation(showProgress = true, replaceRefresh = true) {
+            val credential = token ?: return@runOperation
+            if (openProjectId != id || name.isBlank()) return@runOperation
+            val current = tracking ?: return@runOperation
+            call("projects", credential, JSONObject()
+                .put("action", "update").put("id", id)
+                .put("name", name.trim()).put("description", description.trim())
+                .put("type", current.optString("type"))
+                .put("stage", current.optString("stage"))
+                .put("owner_role", current.optString("owner_role", "Producci�n"))
+                .put("start_date", current.optString("start_date"))
+                .put("delivery_date", current.optString("delivery_date")))
+            saved()
+            loadProjects()
+            loadTracking(id)
+        }
+
+    fun createProject(
+        organizationId: String,
+        name: String,
+        type: String,
+        stage: String,
+        ownerRole: String,
+        startDate: String,
+        deliveryDate: String,
+        description: String,
+        created: () -> Unit,
+    ) = runOperation(showProgress = true, replaceRefresh = true) {
+        val credential = token ?: return@runOperation
+        call("projects", credential, JSONObject()
+            .put("action", "create").put("organization_id", organizationId)
+            .put("name", name.trim()).put("type", type.trim()).put("stage", stage.trim())
+            .put("owner_role", ownerRole.trim()).put("start_date", startDate.trim())
+            .put("delivery_date", deliveryDate.trim()).put("description", description.trim()))
+        created()
+        loadProjects()
+    }
 
     private suspend fun loadTracking(id: String) {
         val credential = token ?: return
@@ -113,7 +175,23 @@ class CineFlowModel : ViewModel() {
         inbox = response.getJSONArray("inbox").objects { row ->
             Review(row.getString("id"), row.getString("kind"), row.getString("project"), row.getString("person"))
         }
+        val companyRows = response.optJSONArray("organizations") ?: JSONArray()
+        organizations = companyRows.objects { row -> Organization(row.getString("id"), row.getString("name")) }
         loaded = true
+    }
+
+    private suspend fun loadAttendance() {
+        val credential = token ?: return
+        val response = call("attendance", credential)
+        workSessions = response.getJSONArray("sessions").objects { row ->
+            WorkSession(
+                id = row.getString("id"),
+                clockIn = row.getString("clock_in"),
+                clockOut = row.nullableString("clock_out"),
+                note = row.optString("note").takeUnless { it == "null" }.orEmpty(),
+                deleted = !row.isNull("deleted_at"),
+            )
+        }
     }
 
     private fun runOperation(showProgress: Boolean = false, replaceRefresh: Boolean = false, block: suspend () -> Unit) {
@@ -139,7 +217,7 @@ class CineFlowModel : ViewModel() {
                 }
                 error = exception.message
             } catch (_: Exception) {
-                error = "No se pudo conectar con CineFlow. Revisa tu conexión e inténtalo de nuevo."
+                error = "No se pudo conectar con CineFlow. Revisa tu conexi�n e int�ntalo de nuevo."
             } finally {
                 if (showProgress) busy = false
             }
@@ -182,3 +260,6 @@ private suspend fun call(path: String, token: String? = null, body: JSONObject? 
             connection.disconnect()
         }
     }
+
+
+
