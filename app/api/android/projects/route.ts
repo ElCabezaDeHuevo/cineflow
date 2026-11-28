@@ -106,8 +106,13 @@ export async function POST(request: Request) {
         organizationId = body.organization_id;
       } else {
         if (!companyIds.length) return json({ error: "Tu cuenta no est� vinculada a una productora." }, 403);
-        if (companyIds.length !== 1) return json({ error: "Tu cuenta pertenece a varias productoras. Selecciona una en el espacio de empresa." }, 409);
-        organizationId = companyIds[0];
+        if (companyIds.length === 1) {
+          organizationId = companyIds[0];
+        } else if (isUuid(body.organization_id) && companyIds.includes(body.organization_id)) {
+          organizationId = body.organization_id;
+        } else {
+          return json({ error: "Selecciona una de las productoras a las que perteneces." }, 409);
+        }
         if (!await activeSession()) return json({ error: "Registra tu entrada antes de crear un proyecto." }, 403);
       }
       const organization = await admin.from("organizations").select("id").eq("id", organizationId).maybeSingle();
