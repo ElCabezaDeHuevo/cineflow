@@ -34,11 +34,11 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private val Ink = Color(0xFF10131A)
-private val Panel = Color(0xFF191E28)
-private val PanelRaised = Color(0xFF202735)
-private val Lime = Color(0xFFC4F36B)
-private val Muted = Color(0xFFA2ACBC)
+private val Ink = Color(0xFF100D19)
+private val Panel = Color(0xFF211B2D)
+private val PanelRaised = Color(0xFF30263F)
+private val Accent = Color(0xFF9B55F5)
+private val Muted = Color(0xFFC1B9CC)
 
 open class CineFlowActivity : ComponentActivity() {
     private val model by viewModels<CineFlowModel>()
@@ -48,16 +48,16 @@ open class CineFlowActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val colors = darkColorScheme(
-                primary = Lime,
+                primary = Accent,
                 onPrimary = Ink,
-                secondary = Color(0xFF86D8D0),
+                secondary = Color(0xFFC5A4FF),
                 background = Ink,
                 surface = Panel,
                 surfaceVariant = PanelRaised,
-                onSurface = Color(0xFFF4F6FA),
+                onSurface = Color(0xFFF7F3FF),
                 onSurfaceVariant = Muted,
-                outline = Color(0xFF394253),
-                error = Color(0xFFFF8D91),
+                outline = Color(0xFF51435F),
+                error = Color(0xFFFF8B9A),
             )
             MaterialTheme(colorScheme = colors, typography = Typography()) {
                 Surface(Modifier.fillMaxSize(), color = Ink) { CineFlow(model) }
@@ -93,11 +93,11 @@ private fun CineFlow(model: CineFlowModel) {
                 val badge = item == Destination.More && model.inbox.isNotEmpty()
                 val isCurrent = destination == item || (item == Destination.More && destination in listOf(Destination.Requests, Destination.Profile, Destination.Calendar))
                 NavigationBarItem(selected = isCurrent, onClick = { selected = item.name }, icon = {
-                    BadgedBox(badge = { if (badge) Badge(containerColor = Lime, contentColor = Ink) { Text(model.inbox.size.toString()) } }) {
+                    BadgedBox(badge = { if (badge) Badge(containerColor = Accent, contentColor = Ink) { Text(model.inbox.size.toString()) } }) {
                         Text(item.glyph, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                     }
                 }, label = { Text(item.title) }, colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = Lime, selectedTextColor = Lime, unselectedIconColor = Muted,
+                    selectedIconColor = Accent, selectedTextColor = Accent, unselectedIconColor = Muted,
                     unselectedTextColor = Muted, indicatorColor = PanelRaised,
                 ))
             }
@@ -109,8 +109,8 @@ private fun CineFlow(model: CineFlowModel) {
                 Destination.Projects -> ProjectsScreen(model)
                 Destination.Requests -> RequestsScreen(model) { request, action ->
                     confirmationText = if (action == "approve") {
-                        if (request.kind == "join") "Aprobar el ingreso de ${request.person} a ${request.project}?" else "Autorizar la salida de ${request.person} de ${request.project}?"
-                    } else "Rechazar esta solicitud?"
+                        if (request.kind == "join") "¿Aprobar el ingreso de ${request.person} a ${request.project}?" else "¿Autorizar la salida de ${request.person} de ${request.project}?"
+                    } else "¿Rechazar esta solicitud?"
                     confirmation = { model.act(request.id, request.kind, action) }
                 }
                 Destination.WorkHours -> AttendanceScreen(model)
@@ -121,7 +121,7 @@ private fun CineFlow(model: CineFlowModel) {
             }
         }
     }
-    confirmation?.let { action -> AlertDialog(onDismissRequest = { confirmation = null }, title = { Text("Confirmar accion") },
+    confirmation?.let { action -> AlertDialog(onDismissRequest = { confirmation = null }, title = { Text("Confirmar acción") },
         text = { Text(confirmationText) }, confirmButton = { Button(onClick = { confirmation = null; action() }) { Text("Confirmar") } },
         dismissButton = { TextButton(onClick = { confirmation = null }) { Text("Cancelar") } }) }
 }
@@ -129,13 +129,13 @@ private fun CineFlow(model: CineFlowModel) {
 @Composable
 private fun MoreScreen(model: CineFlowModel, onOpenCalendar: () -> Unit, onOpenRequests: () -> Unit, onOpenProfile: () -> Unit) {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { Text("Mas opciones", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold); Text("Agenda, solicitudes y cuenta", color = Muted) }
-        item { MoreCard("Calendario de produccion", "Rodajes, entregas y tareas pendientes", "\u25A6", onOpenCalendar) }
-        item { MoreCard("Solicitudes", "${model.inbox.size} pendientes de revision", "\u2713", onOpenRequests, highlight = model.inbox.isNotEmpty()) }
+        item { Text("Más opciones", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold); Text("Agenda, solicitudes y cuenta", color = Muted) }
+        item { MoreCard("Calendario de producción", "Rodajes, entregas y tareas pendientes", "\u25A6", onOpenCalendar) }
+        item { MoreCard("Solicitudes", "${model.inbox.size} pendientes de revisión", "\u2713", onOpenRequests, highlight = model.inbox.isNotEmpty()) }
         item { MoreCard("Mi perfil", "Cuenta y opciones de sesion", "\u25CF", onOpenProfile) }
         item { Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(18.dp)) {
             Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("Sincronizacion automatica", fontWeight = FontWeight.SemiBold)
+                Text("Sincronización automática", fontWeight = FontWeight.SemiBold)
                 Text("Proyectos, solicitudes y jornadas se actualizan mientras CineFlow esta abierto.", color = Muted, style = MaterialTheme.typography.bodySmall)
                 TextButton(onClick = model::refresh, enabled = !model.busy) { Text("Actualizar ahora") }
             }
@@ -144,14 +144,14 @@ private fun MoreScreen(model: CineFlowModel, onOpenCalendar: () -> Unit, onOpenR
 }
 @Composable
 private fun MoreCard(title: String, detail: String, glyph: String, onClick: () -> Unit, highlight: Boolean = false) {
-    Card(onClick = onClick, colors = CardDefaults.cardColors(containerColor = if (highlight) Color(0xFF27331D) else Panel), shape = RoundedCornerShape(18.dp)) {
+    Card(onClick = onClick, colors = CardDefaults.cardColors(containerColor = if (highlight) Color(0xFF362445) else Panel), shape = RoundedCornerShape(18.dp)) {
         Row(Modifier.fillMaxWidth().padding(18.dp), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(42.dp).background(PanelRaised, CircleShape), contentAlignment = Alignment.Center) { Text(glyph, color = Lime) }
+            Box(Modifier.size(42.dp).background(PanelRaised, CircleShape), contentAlignment = Alignment.Center) { Text(glyph, color = Accent) }
             Column(Modifier.weight(1f)) {
                 Text(title, fontWeight = FontWeight.SemiBold)
                 Text(detail, color = Muted, style = MaterialTheme.typography.bodySmall)
             }
-            Text(">", color = Lime, style = MaterialTheme.typography.headlineMedium)
+            Text(">", color = Accent, style = MaterialTheme.typography.headlineMedium)
         }
     }
 }
@@ -171,7 +171,7 @@ private fun CalendarScreen(model: CineFlowModel, onOpenProject: (String) -> Unit
                         colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(18.dp)) {
                         Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.Top) {
                             Column(Modifier.width(62.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(event.date.take(10).takeLast(2), style = MaterialTheme.typography.headlineMedium, color = Lime, fontWeight = FontWeight.Bold)
+                                Text(event.date.take(10).takeLast(2), style = MaterialTheme.typography.headlineMedium, color = Accent, fontWeight = FontWeight.Bold)
                                 Text(event.date.take(10).drop(5).take(2), color = Muted, style = MaterialTheme.typography.labelSmall)
                             }
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -194,7 +194,7 @@ private fun TeamScreen(model: CineFlowModel) {
         ScreenHeader("Equipo", "Personas y responsabilidades en tus productoras", model.busy, model::refresh)
         if (model.error != null) ErrorCard(model.error!!, Modifier.padding(horizontal = 20.dp))
         if (model.teamMembers.isEmpty() && model.loaded) {
-            EmptyState("No hay equipo disponible", "El directorio muestra integrantes de las productoras vinculadas a tu cuenta.", "?", Modifier.fillMaxSize().padding(24.dp))
+            EmptyState("No hay equipo disponible", "El directorio muestra integrantes de las productoras vinculadas a tu cuenta.", "◉", Modifier.fillMaxSize().padding(24.dp))
         } else {
             LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(model.teamMembers, key = { "${it.organizationName}-${it.id}" }) { member ->
@@ -202,7 +202,7 @@ private fun TeamScreen(model: CineFlowModel) {
                         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                 Box(Modifier.size(42.dp).background(PanelRaised, CircleShape), contentAlignment = Alignment.Center) {
-                                    Text(member.name.firstOrNull()?.uppercase() ?: "C", color = Lime, fontWeight = FontWeight.Bold)
+                                    Text(member.name.firstOrNull()?.uppercase() ?: "C", color = Accent, fontWeight = FontWeight.Bold)
                                 }
                                 Column {
                                     Text(member.name, fontWeight = FontWeight.SemiBold)
@@ -211,7 +211,7 @@ private fun TeamScreen(model: CineFlowModel) {
                             }
                             Text("Acceso: ${companyRoleLabel(member.companyRole)}", color = Muted, style = MaterialTheme.typography.bodySmall)
                             member.cinematicRole?.let { role ->
-                                Text(if (member.cinematicRoleStatus == "pending") "Puesto pendiente: ${cineRoleLabel(role)}" else "Puesto: ${cineRoleLabel(role)}", color = Lime, style = MaterialTheme.typography.bodySmall)
+                                Text(if (member.cinematicRoleStatus == "pending") "Puesto pendiente: ${cineRoleLabel(role)}" else "Puesto: ${cineRoleLabel(role)}", color = Accent, style = MaterialTheme.typography.bodySmall)
                             }
                             if (member.bio.isNotBlank()) Text(member.bio, color = Muted, style = MaterialTheme.typography.bodySmall, maxLines = 3)
                             member.projects.takeIf { it.isNotEmpty() }?.let { projects ->
@@ -226,7 +226,7 @@ private fun TeamScreen(model: CineFlowModel) {
 }
 
 private fun companyRoleLabel(role: String) = when (role) {
-    "owner" -> "Due�o de productora"
+    "owner" -> "Dueño de productora"
     "admin" -> "Administrador"
     "producer" -> "Productor"
     "viewer" -> "Solo lectura"
@@ -234,12 +234,12 @@ private fun companyRoleLabel(role: String) = when (role) {
 }
 
 private fun cineRoleLabel(role: String) = when (role) {
-    "director" -> "Direcci�n"
-    "producer" -> "Producci�n"
+    "director" -> "Dirección"
+    "producer" -> "Producción"
     "screenwriter" -> "Guion"
-    "director-of-photography" -> "Direcci�n de fotograf�a"
-    "camera-operator" -> "Operaci�n de c�mara"
-    "editor" -> "Montaje / Edici�n"
+    "director-of-photography" -> "Dirección de fotografía"
+    "camera-operator" -> "Operación de cámara"
+    "editor" -> "Montaje / Edición"
     "vfx-artist" -> "Efectos visuales / VFX"
     else -> role.replace('-', ' ').replaceFirstChar { it.uppercase() }
 }
@@ -263,8 +263,8 @@ private fun AttendanceScreen(model: CineFlowModel) {
         item {
             Card(colors = CardDefaults.cardColors(containerColor = PanelRaised), shape = RoundedCornerShape(22.dp)) {
                 Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(if (active != null) "JORNADA ACTIVA" else "SIN JORNADA ACTIVA", color = if (active != null) Lime else Muted, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
-                    Text(if (active != null) "Est�s en jornada" else "�Vas a empezar?", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text(if (active != null) "JORNADA ACTIVA" else "SIN JORNADA ACTIVA", color = if (active != null) Accent else Muted, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                    Text(if (active != null) "Estás en jornada" else "�Vas a empezar?", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                     Text(if (active != null) "Entrada: ${formatSessionTime(active.clockIn)}" else "Registra tu entrada para comenzar a contar tus horas.", color = Muted)
                     if (active == null) {
                         Button(onClick = model::clockIn, enabled = !model.busy, modifier = Modifier.fillMaxWidth()) { Text(if (model.busy) "Registrando." else "Checar entrada") }
@@ -282,13 +282,13 @@ private fun AttendanceScreen(model: CineFlowModel) {
             }
         }
         item { Text("Historial personal", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
-        if (model.workSessions.none { !it.deleted }) item { EmptyState("Sin jornadas registradas", "Cuando cheques entrada, ver�s aqu� tu historial.", "?") }
+        if (model.workSessions.none { !it.deleted }) item { EmptyState("Sin jornadas registradas", "Cuando cheques entrada, verás aqu� tu historial.", "?") }
         items(model.workSessions.filterNot { it.deleted }, key = { "session-${it.id}" }) { session ->
             Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(16.dp)) {
                 Column(Modifier.fillMaxWidth().padding(15.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                     Text(formatSessionTime(session.clockIn), fontWeight = FontWeight.SemiBold)
-                    Text(if (session.clockOut == null) "En curso" else "Salida: ${formatSessionTime(session.clockOut)}", color = if (session.clockOut == null) Lime else Muted, style = MaterialTheme.typography.bodySmall)
-                    if (session.clockOut != null) Text("Duraci�n: ${formatDuration(runCatching { Duration.between(Instant.parse(session.clockIn), Instant.parse(session.clockOut)).toMillis() }.getOrDefault(0L))}", color = Muted, style = MaterialTheme.typography.bodySmall)
+                    Text(if (session.clockOut == null) "En curso" else "Salida: ${formatSessionTime(session.clockOut)}", color = if (session.clockOut == null) Accent else Muted, style = MaterialTheme.typography.bodySmall)
+                    if (session.clockOut != null) Text("Duración: ${formatDuration(runCatching { Duration.between(Instant.parse(session.clockIn), Instant.parse(session.clockOut)).toMillis() }.getOrDefault(0L))}", color = Muted, style = MaterialTheme.typography.bodySmall)
                     if (session.note.isNotBlank()) Text("Nota: ${session.note}", color = Muted, style = MaterialTheme.typography.bodySmall)
                 }
             }
@@ -297,7 +297,7 @@ private fun AttendanceScreen(model: CineFlowModel) {
 }
 
 private fun formatSessionTime(value: String): String = runCatching {
-    Instant.parse(value).atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("d MMM yyyy � HH:mm", Locale.forLanguageTag("es-MX")))
+    Instant.parse(value).atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("d MMM yyyy · HH:mm", Locale.forLanguageTag("es-MX")))
 }.getOrDefault(value)
 
 private fun formatDuration(milliseconds: Long): String {
@@ -315,25 +315,25 @@ private fun HomeScreen(model: CineFlowModel, onOpenProjects: () -> Unit, onOpenR
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column {
-                    Text("CINEFLOW", style = MaterialTheme.typography.labelLarge, color = Lime, fontWeight = FontWeight.Bold)
-                    Text("Tu producci�n, en marcha", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text("CINEFLOW", style = MaterialTheme.typography.labelLarge, color = Accent, fontWeight = FontWeight.Bold)
+                    Text("Tu producción, en marcha", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 }
-                TextButton(onClick = model::refresh, enabled = !model.busy) { Text("?  Actualizar") }
+                TextButton(onClick = model::refresh, enabled = !model.busy) { Text("↻  Actualizar") }
             }
         }
         item {
             Card(colors = CardDefaults.cardColors(containerColor = PanelRaised), shape = RoundedCornerShape(24.dp)) {
                 Column(Modifier.fillMaxWidth().padding(22.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("ESPACIO DE TRABAJO", style = MaterialTheme.typography.labelMedium, color = Lime, fontWeight = FontWeight.Bold)
+                    Text("ESPACIO DE TRABAJO", style = MaterialTheme.typography.labelMedium, color = Accent, fontWeight = FontWeight.Bold)
                     Text("Todo lo que mueve tus proyectos.", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                     Text("Consulta avances, abre el seguimiento y coordina con tu equipo.", color = Muted)
-                    FilledTonalButton(onClick = onOpenProjects, colors = ButtonDefaults.filledTonalButtonColors(containerColor = Lime, contentColor = Ink)) {
+                    FilledTonalButton(onClick = onOpenProjects, colors = ButtonDefaults.filledTonalButtonColors(containerColor = Accent, contentColor = Ink)) {
                         Text("Ver mis proyectos")
                     }
                 }
             }
         }
-        if (model.busy) item { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Lime) }
+        if (model.busy) item { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Accent) }
         model.error?.let { message -> item { ErrorCard(message) } }
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -344,14 +344,14 @@ private fun HomeScreen(model: CineFlowModel, onOpenProjects: () -> Unit, onOpenR
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text("Actividad reciente", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                TextButton(onClick = onOpenRequests) { Text("Solicitudes ${if (model.inbox.isEmpty()) "" else "� ${model.inbox.size}"}") }
+                TextButton(onClick = onOpenRequests) { Text("Solicitudes ${if (model.inbox.isEmpty()) "" else "• ${model.inbox.size}"}") }
             }
         }
         if (model.inbox.isNotEmpty()) {
             items(model.inbox.take(3), key = { "home-${it.id}" }) { request ->
                 Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(18.dp)) {
                     Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.size(38.dp).background(PanelRaised, CircleShape), contentAlignment = Alignment.Center) { Text("V", color = Lime) }
+                        Box(Modifier.size(38.dp).background(PanelRaised, CircleShape), contentAlignment = Alignment.Center) { Text("V", color = Accent) }
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f)) {
                             Text(request.project, fontWeight = FontWeight.SemiBold)
@@ -361,13 +361,13 @@ private fun HomeScreen(model: CineFlowModel, onOpenProjects: () -> Unit, onOpenR
                 }
             }
         } else if (model.loaded) {
-            item { EmptyState("Todo al d�a", "No tienes solicitudes pendientes de revisi�n.", "V") }
+            item { EmptyState("Todo al día", "No tienes solicitudes pendientes de revisi�n.", "V") }
         }
         item {
             Text("Tus producciones", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         }
         if (model.projects.isEmpty() && model.loaded) {
-            item { EmptyState("A�n no hay proyectos", "Cuando tengas acceso a una producci�n, aparecer� aqu�.", "?") }
+            item { EmptyState("Aún no hay proyectos", "Cuando tengas acceso a una producción, aparecerá aquí.", "▣") }
         } else {
             items(model.projects.take(3), key = { "home-project-${it.id}" }) { project ->
                 ProjectCard(model, project)
@@ -389,7 +389,7 @@ private fun ProjectsScreen(model: CineFlowModel) {
                 Text("Proyectos", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                 Text("Producciones vinculadas a tu cuenta", style = MaterialTheme.typography.bodySmall, color = Muted)
             }
-            TextButton(onClick = model::refresh, enabled = !model.busy) { Text("?") }
+            TextButton(onClick = model::refresh, enabled = !model.busy) { Text("↻") }
         }
         Button(
             onClick = { creating = true },
@@ -412,7 +412,7 @@ private fun ProjectsScreen(model: CineFlowModel) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             if (model.loaded && projects.isEmpty()) item {
-                EmptyState(if (query.isBlank()) "Sin proyectos todav�a" else "No encontramos coincidencias", if (query.isBlank()) "Los proyectos compartidos contigo aparecer�n aqu�." else "Prueba con otro nombre, tipo o etapa.", "?")
+                EmptyState(if (query.isBlank()) "Sin proyectos todav�a" else "No encontramos coincidencias", if (query.isBlank()) "Los proyectos compartidos contigo aparecer�n aqu�." else "Prueba con otro nombre, tipo o etapa.", "⌕")
             }
             items(projects, key = { it.id }) { project -> ProjectCard(model, project) }
         }
@@ -447,12 +447,12 @@ private fun CreateProjectDialog(model: CineFlowModel, dismiss: () -> Unit) {
                     }
                 }
                 OutlinedTextField(name, { name = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Nombre del proyecto") }, singleLine = true)
-                OutlinedTextField(type, { type = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Tipo de producci�n") }, singleLine = true, placeholder = { Text("Cortometraje, serie, documental.") })
-                OutlinedTextField(stage, { stage = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Etapa actual") }, singleLine = true, placeholder = { Text("Desarrollo, preproducci�n.") })
+                OutlinedTextField(type, { type = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Tipo de producción") }, singleLine = true, placeholder = { Text("Cortometraje, serie, documental.") })
+                OutlinedTextField(stage, { stage = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Etapa actual") }, singleLine = true, placeholder = { Text("Desarrollo, preproducción.") })
                 OutlinedTextField(ownerRole, { ownerRole = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Responsable") }, singleLine = true)
                 OutlinedTextField(startDate, { startDate = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Inicio (AAAA-MM-DD)") }, singleLine = true)
                 OutlinedTextField(deliveryDate, { deliveryDate = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Entrega (AAAA-MM-DD)") }, singleLine = true)
-                OutlinedTextField(description, { description = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Descripci�n") }, minLines = 2, maxLines = 4)
+                OutlinedTextField(description, { description = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Descripción") }, minLines = 2, maxLines = 4)
             }
         },
         confirmButton = {
@@ -472,14 +472,14 @@ private fun ProjectCard(model: CineFlowModel, project: Project) {
     Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(20.dp)) {
         Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text(project.type.uppercase(), style = MaterialTheme.typography.labelMedium, color = Lime, fontWeight = FontWeight.Bold)
+                Text(project.type.uppercase(), style = MaterialTheme.typography.labelMedium, color = Accent, fontWeight = FontWeight.Bold)
                 StatusPill(project.pending?.let { if (it == "join") "Acceso pendiente" else "Salida pendiente" } ?: project.stage)
             }
             Text(project.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             when {
-                project.pending == "join" -> Text("Tu solicitud est� esperando aprobaci�n.", color = Muted)
+                project.pending == "join" -> Text("Tu solicitud está esperando aprobación.", color = Muted)
                 project.pending == "leave" -> {
-                    Text("Tu salida est� esperando aprobaci�n.", color = Muted)
+                    Text("Tu salida está esperando aprobación.", color = Muted)
                     if (project.role != null) Button(onClick = { model.openProject(project.id) }, enabled = !model.busy) { Text("Abrir seguimiento") }
                 }
                 project.role != null -> {
@@ -492,7 +492,7 @@ private fun ProjectCard(model: CineFlowModel, project: Project) {
                     }
                 }
                 else -> {
-                    Text("Solicita acceso para colaborar en esta producci�n.", color = Muted)
+                    Text("Solicita acceso para colaborar en esta producción.", color = Muted)
                     OutlinedButton(onClick = { model.act(project.id, "join", "request") }, enabled = !model.busy) { Text("Solicitar acceso") }
                 }
             }
@@ -532,12 +532,12 @@ private fun ProfileScreen(model: CineFlowModel) {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item {
             Text("Perfil", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-            Text("Tu sesi�n de CineFlow", color = Muted)
+            Text("Tu sesión de CineFlow", color = Muted)
         }
         item {
             Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(22.dp)) {
                 Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("SESI�N ACTIVA", color = Lime, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                    Text("SESIÓN ACTIVA", color = Accent, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                     Text("Cuenta conectada", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     Text("Los proyectos y solicitudes se sincronizan con CineFlow.", color = Muted)
                 }
@@ -548,13 +548,13 @@ private fun ProfileScreen(model: CineFlowModel) {
                 Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("Acerca de", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     Text("CineFlow para Android", color = Muted)
-                    Text("La informaci�n se carga desde tu cuenta. Puedes actualizarla manualmente desde Inicio o Proyectos.", color = Muted)
+                    Text("La información se carga desde tu cuenta. Puedes actualizarla manualmente desde Inicio o Proyectos.", color = Muted)
                 }
             }
         }
         item {
             OutlinedButton(onClick = model::signOut, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp)) {
-                Text("Cerrar sesi�n")
+                Text("Cerrar sesión")
             }
         }
         model.error?.let { message -> item { ErrorCard(message) } }
@@ -571,15 +571,15 @@ private fun ScreenHeader(title: String, subtitle: String, busy: Boolean, refresh
             Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
             Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Muted)
         }
-        TextButton(onClick = refresh, enabled = !busy) { Text("?") }
+        TextButton(onClick = refresh, enabled = !busy) { Text("↻") }
     }
 }
 
 @Composable
 private fun StatCard(label: String, value: String, modifier: Modifier = Modifier, highlight: Boolean = false) {
-    Card(modifier, colors = CardDefaults.cardColors(containerColor = if (highlight) Color(0xFF27331D) else Panel), shape = RoundedCornerShape(20.dp)) {
+    Card(modifier, colors = CardDefaults.cardColors(containerColor = if (highlight) Color(0xFF362445) else Panel), shape = RoundedCornerShape(20.dp)) {
         Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(value, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = if (highlight) Lime else Color.White)
+            Text(value, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = if (highlight) Accent else Color.White)
             Text(label, color = Muted)
         }
     }
@@ -596,7 +596,7 @@ private fun StatusPill(label: String) {
 internal fun EmptyState(title: String, description: String, glyph: String, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth().padding(vertical = 28.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Box(Modifier.size(58.dp).background(PanelRaised, CircleShape), contentAlignment = Alignment.Center) {
-            Text(glyph, style = MaterialTheme.typography.headlineMedium, color = Lime)
+            Text(glyph, style = MaterialTheme.typography.headlineMedium, color = Accent)
         }
         Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Text(description, color = Muted)
@@ -621,7 +621,7 @@ private fun Login(busy: Boolean, error: String?, submit: (String, String) -> Uni
     ) {
         item {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Box(Modifier.size(58.dp).background(Lime, RoundedCornerShape(18.dp)), contentAlignment = Alignment.Center) {
+                Box(Modifier.size(58.dp).background(Accent, RoundedCornerShape(18.dp)), contentAlignment = Alignment.Center) {
                     Text("CF", color = Ink, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
                 }
                 Text("CineFlow", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
@@ -629,7 +629,7 @@ private fun Login(busy: Boolean, error: String?, submit: (String, String) -> Uni
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(email, { email = it }, Modifier.fillMaxWidth(), label = { Text("Correo") },
                     singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email), shape = RoundedCornerShape(14.dp))
-                OutlinedTextField(password, { password = it }, Modifier.fillMaxWidth(), label = { Text("Contrase�a") },
+                OutlinedTextField(password, { password = it }, Modifier.fillMaxWidth(), label = { Text("Contraseña") },
                     singleLine = true, visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password), shape = RoundedCornerShape(14.dp))
                 error?.let { ErrorCard(it) }
@@ -637,8 +637,8 @@ private fun Login(busy: Boolean, error: String?, submit: (String, String) -> Uni
                     onClick = { submit(email.trim(), password); password = "" },
                     enabled = !busy && email.isNotBlank() && password.isNotEmpty(),
                     modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(14.dp),
-                ) { Text(if (busy) "Conectando." else "Iniciar sesi�n") }
-                Text("Inicia sesi�n con la misma cuenta que usas en CineFlow.", color = Muted, style = MaterialTheme.typography.bodySmall)
+                ) { Text(if (busy) "Conectando." else "Iniciar sesión") }
+                Text("Inicia sesión con la misma cuenta que usas en CineFlow.", color = Muted, style = MaterialTheme.typography.bodySmall)
             }
         }
     }
