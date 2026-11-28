@@ -137,7 +137,7 @@ class CineFlowModel : ViewModel() {
                 .put("name", name.trim()).put("description", description.trim())
                 .put("type", current.optString("type"))
                 .put("stage", current.optString("stage"))
-                .put("owner_role", current.optString("owner_role", "Producci�n"))
+                .put("owner_role", current.optString("owner_role", "Producción"))
                 .put("start_date", current.optString("start_date"))
                 .put("delivery_date", current.optString("delivery_date")))
             saved()
@@ -264,7 +264,7 @@ class CineFlowModel : ViewModel() {
                 }
                 error = exception.message
             } catch (_: Exception) {
-                error = "No se pudo conectar con CineFlow. Revisa tu conexi�n e int�ntalo de nuevo."
+                error = "No se pudo conectar con CineFlow. Revisa tu conexión e inténtalo de nuevo."
             } finally {
                 if (showProgress) busy = false
             }

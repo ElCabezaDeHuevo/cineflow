@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   const context = await getContext(request);
   if (context instanceof Response) return context;
   const body = await request.json().catch(() => null);
-  if (!body || typeof body.action !== "string") return json({ error: "Acci�n inv�lida." }, 400);
+  if (!body || typeof body.action !== "string") return json({ error: "Acción inválida." }, 400);
 
   if (body.action === "clock-in") {
     const active = await context.client.from("work_sessions").select("id,clock_in")
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
   }
 
   if (body.action === "clock-out") {
-    if (!isUuid(body.id)) return json({ error: "Jornada inv�lida." }, 400);
+    if (!isUuid(body.id)) return json({ error: "Jornada inválida." }, 400);
     const note = typeof body.note === "string" ? body.note.trim().slice(0, 1000) : "";
     const updated = await context.client.from("work_sessions").update({
       clock_out: new Date().toISOString(), note,
@@ -46,6 +46,6 @@ export async function POST(request: Request) {
     return json({ ok: true, session: updated.data });
   }
 
-  return json({ error: "Acci�n no disponible." }, 400);
+  return json({ error: "Acción no disponible." }, 400);
 }
 

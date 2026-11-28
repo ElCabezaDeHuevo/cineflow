@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   if (context instanceof Response) return context;
 
   const id = new URL(request.url).searchParams.get("id");
-  if (!isProjectId(id)) return json({ error: "Proyecto inv�lido." }, 400);
+  if (!isProjectId(id)) return json({ error: "Proyecto inválido." }, 400);
   if (!context.roles.has(id) && !context.isAdmin) return json({ error: "Ya no tienes acceso a este proyecto." }, 403);
 
   const dataClient = context.isAdmin ? context.admin : context.client;
@@ -37,7 +37,7 @@ export async function GET(request: Request) {
     tasks: tasks.data,
     activity: activity.data,
     messages: (messages.data ?? []).map(({ sender_id, ...message }) => ({
-      ...message, author: sender_id === context.user.id ? "T�" : names.get(sender_id) || "Integrante",
+      ...message, author: sender_id === context.user.id ? "Tú" : names.get(sender_id) || "Integrante",
     })),
   });
 }

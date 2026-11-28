@@ -87,7 +87,7 @@ export async function POST(request: Request) {
   if (context instanceof Response) return context;
   const { admin, client, user, roles, companyIds, isAdmin } = context;
   const body = await request.json().catch(() => null);
-  if (!body || typeof body !== "object" || Array.isArray(body)) return json({ error: "Solicitud inv�lida." }, 400);
+  if (!body || typeof body !== "object" || Array.isArray(body)) return json({ error: "Solicitud inválida." }, 400);
 
   if (body.action === "create" || body.action === "update") {
     const values = projectValues(body);
@@ -102,10 +102,10 @@ export async function POST(request: Request) {
     if (body.action === "create") {
       let organizationId: string;
       if (isAdmin) {
-        if (!isUuid(body.organization_id)) return json({ error: "Selecciona una productora v�lida." }, 400);
+        if (!isUuid(body.organization_id)) return json({ error: "Selecciona una productora válida." }, 400);
         organizationId = body.organization_id;
       } else {
-        if (!companyIds.length) return json({ error: "Tu cuenta no est� vinculada a una productora." }, 403);
+        if (!companyIds.length) return json({ error: "Tu cuenta no está vinculada a una productora." }, 403);
         if (companyIds.length === 1) {
           organizationId = companyIds[0];
         } else if (isUuid(body.organization_id) && companyIds.includes(body.organization_id)) {
@@ -117,14 +117,14 @@ export async function POST(request: Request) {
       }
       const organization = await admin.from("organizations").select("id").eq("id", organizationId).maybeSingle();
       if (organization.error) return json({ error: "No se pudo comprobar la productora." }, 503);
-      if (!organization.data) return json({ error: "La productora seleccionada ya no est� disponible." }, 404);
+      if (!organization.data) return json({ error: "La productora seleccionada ya no está disponible." }, 404);
       const id = crypto.randomUUID();
       const result = await admin.from("projects").insert({ id, ...values, organization_id: organizationId, created_by: user.id });
       if (result.error) return json({ error: "No se pudo crear el proyecto. Revisa los permisos de la productora." }, 409);
       return json({ ok: true, id });
     }
 
-    if (!isUuid(body.id)) return json({ error: "Proyecto inv�lido." }, 400);
+    if (!isUuid(body.id)) return json({ error: "Proyecto inválido." }, 400);
     const project = await admin.from("projects").select("id,organization_id").eq("id", body.id).maybeSingle();
     if (project.error) return json({ error: "No se pudo comprobar el proyecto." }, 503);
     if (!project.data || (!isAdmin && (!companyIds.includes(project.data.organization_id) || !["owner", "editor"].includes(roles.get(body.id) ?? "")))) {
@@ -137,7 +137,7 @@ export async function POST(request: Request) {
   }
 
   if ((body.kind !== "join" && body.kind !== "leave") || !isUuid(body.id)) {
-    return json({ error: "Solicitud inv�lida." }, 400);
+    return json({ error: "Solicitud inválida." }, 400);
   }
   const kind: keyof typeof tables = body.kind;
   const table = tables[kind];
@@ -148,7 +148,7 @@ export async function POST(request: Request) {
     if (project.error) return json({ error: "No se pudo comprobar el proyecto." }, 503);
     const role = roles.get(body.id);
     if (!project.data || (kind === "join" ? role : !role || role === "owner")) {
-      return json({ error: "Esta solicitud no est� disponible para tu cuenta." }, 403);
+      return json({ error: "Esta solicitud no está disponible para tu cuenta." }, 403);
     }
     const result = await admin.from(table).insert({ project_id: body.id, user_id: user.id });
     if (result.error && result.error.code !== "23505") return json({ error: "No se pudo enviar la solicitud." }, 503);
@@ -156,18 +156,18 @@ export async function POST(request: Request) {
   }
 
   if (body.action !== "approve" && body.action !== "reject") {
-    return json({ error: "Acci�n inv�lida." }, 400);
+    return json({ error: "Acción inválida." }, 400);
   }
   const pending = await admin.from(table).select("project_id").eq("id", body.id).eq("status", "pending").maybeSingle();
   if (pending.error) return json({ error: "No se pudo comprobar la solicitud." }, 503);
   if (!pending.data || roles.get(pending.data.project_id) !== "owner") {
-    return json({ error: "La solicitud no est� disponible para tu cuenta." }, 403);
+    return json({ error: "La solicitud no está disponible para tu cuenta." }, 403);
   }
   const arguments_ = { request_uuid: body.id, reviewer_uuid: user.id, approve: body.action === "approve" };
   const result = kind === "join"
     ? await admin.rpc("review_project_membership_request", arguments_)
     : await client.rpc("review_project_leave_request", arguments_);
-  if (result.error) return json({ error: "No se pudo resolver la solicitud. Actualiza e int�ntalo otra vez." }, 409);
+  if (result.error) return json({ error: "No se pudo resolver la solicitud. Actualiza e inténtalo otra vez." }, 409);
   return json({ ok: true });
 }
 

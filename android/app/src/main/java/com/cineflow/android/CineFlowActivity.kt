@@ -282,7 +282,7 @@ private fun AttendanceScreen(model: CineFlowModel) {
             }
         }
         item { Text("Historial personal", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
-        if (model.workSessions.none { !it.deleted }) item { EmptyState("Sin jornadas registradas", "Cuando registres tu entrada, verás aquí tu historial.", "?") }
+        if (model.workSessions.none { !it.deleted }) item { EmptyState("Sin jornadas registradas", "Cuando registres tu entrada, verás aquí tu historial.", "◷") }
         items(model.workSessions.filterNot { it.deleted }, key = { "session-${it.id}" }) { session ->
             Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(16.dp)) {
                 Column(Modifier.fillMaxWidth().padding(15.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -431,6 +431,7 @@ private fun CreateProjectDialog(model: CineFlowModel, dismiss: () -> Unit) {
     var startDate by rememberSaveable { mutableStateOf("") }
     var deliveryDate by rememberSaveable { mutableStateOf("") }
     var description by rememberSaveable { mutableStateOf("") }
+    val datesAreValid = startDate.isNotBlank() && deliveryDate.isNotBlank() && deliveryDate >= startDate
     AlertDialog(
         onDismissRequest = { if (!model.busy) dismiss() },
         title = { Text("Nuevo proyecto") },
@@ -450,9 +451,13 @@ private fun CreateProjectDialog(model: CineFlowModel, dismiss: () -> Unit) {
                 OutlinedTextField(type, { type = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Tipo de producción") }, singleLine = true, placeholder = { Text("Cortometraje, serie, documental.") })
                 OutlinedTextField(stage, { stage = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Etapa actual") }, singleLine = true, placeholder = { Text("Desarrollo, preproducción.") })
                 OutlinedTextField(ownerRole, { ownerRole = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Responsable") }, singleLine = true)
-                OutlinedTextField(startDate, { startDate = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Inicio (AAAA-MM-DD)") }, singleLine = true)
-                OutlinedTextField(deliveryDate, { deliveryDate = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Entrega (AAAA-MM-DD)") }, singleLine = true)
+                ProjectDateField("Fecha de inicio", startDate) { startDate = it }
+                ProjectDateField("Fecha de entrega", deliveryDate) { deliveryDate = it }
+                if (startDate.isNotBlank() && deliveryDate.isNotBlank() && deliveryDate < startDate) {
+                    Text("La entrega debe ser el mismo día o después del inicio.", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
                 OutlinedTextField(description, { description = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Descripción") }, minLines = 2, maxLines = 4)
+                model.error?.let { ErrorCard(it) }
             }
         },
         confirmButton = {
@@ -460,11 +465,68 @@ private fun CreateProjectDialog(model: CineFlowModel, dismiss: () -> Unit) {
                 onClick = {
                     model.createProject(organizationId, name, type, stage, ownerRole, startDate, deliveryDate, description) { dismiss() }
                 },
-                enabled = !model.busy && organizationId.isNotBlank() && name.isNotBlank() && type.isNotBlank() && stage.isNotBlank() && ownerRole.isNotBlank() && startDate.isNotBlank() && deliveryDate.isNotBlank(),
+                enabled = !model.busy && organizationId.isNotBlank() && name.isNotBlank() && type.isNotBlank() && stage.isNotBlank() && ownerRole.isNotBlank() && datesAreValid,
             ) { Text(if (model.busy) "Guardando." else "Crear") }
         },
         dismissButton = { TextButton(enabled = !model.busy, onClick = dismiss) { Text("Cancelar") } },
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ProjectDateField(label: String, value: String, onDateSelected: (String) -> Unit) {
+    var showPicker by rememberSaveable { mutableStateOf(false) }
+    val initialMillis = remember(value) {
+        runCatching {
+            java.time.LocalDate.parse(value)
+                .atStartOfDay(java.time.ZoneOffset.UTC)
+                .toInstant()
+                .toEpochMilli()
+        }.getOrNull()
+    }
+    val pickerState = rememberDatePickerState(initialSelectedDateMillis = initialMillis)
+
+    OutlinedTextField(
+        value = value,
+        onValueChange = {},
+        modifier = Modifier.fillMaxWidth(),
+        label = { Text(label) },
+        placeholder = { Text("Seleccionar fecha") },
+        readOnly = true,
+        singleLine = true,
+        trailingIcon = {
+            TextButton(onClick = { showPicker = true }) {
+                Text(if (value.isBlank()) "Elegir" else "Cambiar")
+            }
+        },
+    )
+
+    if (showPicker) {
+        DatePickerDialog(
+            onDismissRequest = { showPicker = false },
+            confirmButton = {
+                TextButton(
+                    enabled = pickerState.selectedDateMillis != null,
+                    onClick = {
+                        pickerState.selectedDateMillis?.let { millis ->
+                            onDateSelected(
+                                java.time.Instant.ofEpochMilli(millis)
+                                    .atOffset(java.time.ZoneOffset.UTC)
+                                    .toLocalDate()
+                                    .toString(),
+                            )
+                        }
+                        showPicker = false
+                    },
+                ) { Text("Usar fecha") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPicker = false }) { Text("Cancelar") }
+            },
+        ) {
+            DatePicker(state = pickerState, showModeToggle = false)
+        }
+    }
 }
 
 @Composable

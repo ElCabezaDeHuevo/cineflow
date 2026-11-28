@@ -25,7 +25,7 @@ internal fun ProjectTracking(model: CineFlowModel) {
     Column(Modifier.fillMaxSize().safeDrawingPadding().imePadding()) {
         Row(Modifier.fillMaxWidth().padding(start = 8.dp, end = 16.dp, top = 12.dp, bottom = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
             TextButton(onClick = model::closeProject) { Text("<  Proyectos") }
-            TextButton(onClick = model::refresh, enabled = !model.busy) { Text("? Actualizar") }
+            TextButton(onClick = model::refresh, enabled = !model.busy) { Text("↻ Actualizar") }
         }
         if (model.busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.primary)
         if (model.error != null) ErrorCard(model.error!!, Modifier.padding(horizontal = 20.dp, vertical = 8.dp))
@@ -39,10 +39,10 @@ internal fun ProjectTracking(model: CineFlowModel) {
             item {
                 Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant), shape = RoundedCornerShape(22.dp)) {
                     Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("SEGUIMIENTO DE PRODUCCI�N", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                        Text("SEGUIMIENTO DE PRODUCCIÓN", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                         Text(project.getString("name"), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                        Text("${project.getString("type")} � ${project.getString("stage")}", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        TextButton(onClick = { editing = true }) { Text("Editar informaci�n del proyecto") }
+                        Text("${project.getString("type")} · ${project.getString("stage")}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        TextButton(onClick = { editing = true }) { Text("Editar información del proyecto") }
                     }
                 }
             }
@@ -54,30 +54,30 @@ internal fun ProjectTracking(model: CineFlowModel) {
             }
             if (tab == 0) {
                 val description = project.optString("description").takeUnless { it.isBlank() || it == "null" }
-                description?.let { item { DetailCard("Descripci�n", it) } }
+                description?.let { item { DetailCard("Descripción", it) } }
                 item { DetailCard("Fecha de entrega", project.optString("delivery_date").takeUnless { it.isBlank() || it == "null" } ?: "Sin fecha registrada") }
                 item { Text("Tareas", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
                 val tasks = project.rows("tasks")
-                if (tasks.isEmpty()) item { EmptyState("Sin tareas registradas", "Cuando se agreguen tareas a este proyecto, podr�s consultarlas aqu�.", "V") }
+                if (tasks.isEmpty()) item { EmptyState("Sin tareas registradas", "Cuando se agreguen tareas a este proyecto, podrás consultarlas aquí.", "V") }
                 items(tasks, key = { "task-${it.getString("id")}" }) { task ->
                     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), shape = RoundedCornerShape(16.dp)) {
                         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(task.getString("title"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                            Text("${task.optString("stage")} � ${task.optString("status")}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("${task.optString("stage")} · ${task.optString("status")}", color = MaterialTheme.colorScheme.onSurfaceVariant)
                             if (!task.isNull("due_date")) Text("Vence: ${task.getString("due_date")}", style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }
                 item { Text("Actividad", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
                 val activity = project.rows("activity")
-                if (activity.isEmpty()) item { Text("Todav�a no hay actividad.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                if (activity.isEmpty()) item { Text("Todavía no hay actividad.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 items(activity, key = { "activity-${it.getString("id")}" }) { event ->
                     Text("  ${event.optString("message")}", modifier = Modifier.padding(vertical = 4.dp))
                 }
             } else {
                 val messages = project.rows("messages")
-                item { Text("Conversaci�n del proyecto", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
-                if (messages.isEmpty()) item { EmptyState("Sin mensajes todav�a", "Escribe el primer mensaje para coordinarte con el equipo.", "?") }
+                item { Text("Conversación del proyecto", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
+                if (messages.isEmpty()) item { EmptyState("Sin mensajes todav·a", "Escribe el primer mensaje para coordinarte con el equipo.", "✉") }
                 items(messages, key = { it.getString("id") }) { row ->
                     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), shape = RoundedCornerShape(16.dp)) {
                         Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -119,7 +119,7 @@ internal fun ProjectTracking(model: CineFlowModel) {
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(name, { name = it }, label = { Text("Nombre") }, singleLine = true)
-                    OutlinedTextField(description, { description = it }, label = { Text("Descripci�n") }, maxLines = 4)
+                    OutlinedTextField(description, { description = it }, label = { Text("Descripción") }, maxLines = 4)
                     model.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 }
             },

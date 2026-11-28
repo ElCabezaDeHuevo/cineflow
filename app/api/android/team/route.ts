@@ -33,7 +33,7 @@ export async function GET(request: Request) {
       : Promise.resolve({ data: [], error: null }),
   ]);
   if (profileResult.error || projectRoleResult.error || cineRoleResult.error) {
-    return json({ error: "No se pudo completar la informacion del equipo." }, 503);
+    return json({ error: "No se pudo completar la información del equipo." }, 503);
   }
 
   const organizations = new Map((organizationResult.data ?? []).map((row) => [row.id, row.name]));

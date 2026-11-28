@@ -8,7 +8,7 @@ export function json(data: unknown, status = 200) {
 
 export async function getContext(request: Request) {
   const token = request.headers.get("authorization")?.match(/^Bearer (\S+)$/i)?.[1];
-  if (!token) return json({ error: "Inicia sesi�n." }, 401);
+  if (!token) return json({ error: "Inicia sesión." }, 401);
 
   const client = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -21,12 +21,12 @@ export async function getContext(request: Request) {
     { auth: { persistSession: false, autoRefreshToken: false } },
   );
   const { data: { user }, error } = await authClient.auth.getUser(token);
-  if (error || !user) return json({ error: "Tu sesi�n termin�. Inicia sesi�n de nuevo." }, 401);
+  if (error || !user) return json({ error: "Tu sesión terminó. Inicia sesión de nuevo." }, 401);
   if (user.app_metadata.cineflow_force_password_change === true) {
-    return json({ error: "Primero cambia tu contrase�a en la p�gina de CineFlow." }, 403);
+    return json({ error: "Primero cambia tu contraseña en la página de CineFlow." }, 403);
   }
   const admin = createSupabaseAdminClient();
-  if (!admin) return json({ error: "El servicio de proyectos no est� disponible." }, 503);
+  if (!admin) return json({ error: "El servicio de proyectos no está disponible." }, 503);
 
   const isAdmin = isCineflowAdmin(user);
   const [memberships, projectMemberships] = await Promise.all([

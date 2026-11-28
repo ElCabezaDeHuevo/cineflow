@@ -22,6 +22,10 @@ La app usa rutas `/api/android/*` y no incluye una clave de servicio de Supabase
 
 Aun falta implementar en Android la administracion de productoras, invitaciones, asignacion y aprobacion de puestos, control de horarios del equipo, gestion de rodaje y escenas, reportes, suscripciones y panel de administracion global. El calendario muestra fechas de proyecto y vencimientos de tareas disponibles en la API actual.
 
+## Referencias de código abierto
+
+Se revisaron patrones de interfaz y arquitectura de [Now in Android](https://github.com/android/nowinandroid) y las [muestras oficiales de Jetpack Compose](https://github.com/android/compose-samples), ambas bajo Apache 2.0, además de [Unitask](https://github.com/CondaLabs/unitask), bajo MIT. Se tomaron como referencia; no se copió su código ni sus recursos.
+
 ## Abrir y compilar
 
 Abre esta carpeta en Android Studio. Gradle requiere el JDK incluido con Android Studio y un SDK Android configurado. El identificador de aplicacion se mantiene como `com.cineflow.app`.
