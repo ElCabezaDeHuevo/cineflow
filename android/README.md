@@ -12,9 +12,8 @@ El APK de prueba queda en `app/build/outputs/apk/debug/app-debug.apk`. La app re
 
 - Inicio de sesión de CineFlow.
 - Inicio con conteo de proyectos y solicitudes pendientes.
-- Consulta de productoras disponibles para la cuenta.
-- Creación de proyectos con validación de permisos, empresa y jornada activa.
-- Edición protegida del proyecto por medio de la API.
+- Directorio del equipo por productora, con puestos cinematográficos disponibles.
+- Creación y edición de proyectos con permisos comprobados por el servidor.
 - Solicitudes de acceso y salida, con revisión del propietario.
 - Seguimiento del proyecto con tareas, actividad y chat.
 - Registro personal de entrada y salida, notas e historial de jornadas.
@@ -22,4 +21,4 @@ El APK de prueba queda en `app/build/outputs/apk/debug/app-debug.apk`. La app re
 
 ## Módulos por integrar
 
-El código web también contiene directorio de equipo, agenda, rodaje, centro de trabajo, reportes y administración de productoras/usuarios. Esos módulos todavía requieren endpoints móviles dedicados antes de habilitarlos en Android. Los cambios están aislados en esta rama y no alteran la rama principal.
+El código web también contiene agenda, rodaje, centro de trabajo, reportes, invitaciones, ajustes de productora y administración global de usuarios. Esos módulos todavía requieren endpoints móviles dedicados antes de habilitarlos en Android. Los cambios están aislados en `feature/native-android-complete` y no alteran la rama principal.
