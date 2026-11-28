@@ -1,24 +1,28 @@
 # CineFlow para Android
 
-App nativa en Kotlin y Jetpack Compose. Usa la misma cuenta de CineFlow y solicita cambios al backend autenticado de Vercel; la app no contiene una clave administrativa de Supabase.
+Aplicacion Android nativa en Kotlin y Jetpack Compose, conectada a las mismas cuentas de CineFlow.
 
-## Compilar
+## Funciones disponibles en esta iteracion
 
-Abre `android/` en Android Studio, selecciona un JDK 17 o 21 e instala Android SDK 35. Ejecuta `./gradlew assembleDebug` en Linux/macOS o `gradlew.bat assembleDebug` en Windows.
+- Inicio de sesion y sincronizacion de datos desde CineFlow.
+- Panel de inicio con resumen de proyectos y solicitudes.
+- Lista, busqueda, creacion y edicion de proyectos con acceso por productora.
+- Solicitudes de acceso o salida, con aprobacion y rechazo.
+- Seguimiento de proyecto, tareas, actividad y chat.
+- Registro personal de entrada y salida, historial y horas.
+- Directorio del equipo por productora, puestos cinematograficos y proyectos asociados.
+- Calendario de entregas, tareas pendientes e inicios de proyecto, con acceso al seguimiento.
+- Perfil y cierre de sesion.
 
-El APK de prueba queda en `app/build/outputs/apk/debug/app-debug.apk`. La app requiere Android 7 o posterior y conexión a Internet.
+## Servidor y acceso a datos
 
-## Funciones nativas conectadas
+La app usa rutas `/api/android/*` y no incluye una clave de servicio de Supabase. Los permisos y el alcance de productora se validan en el servidor. Para mantener el despliegue actual sin cambios, el trabajo esta en la rama `feature/native-android-complete`.
 
-- Inicio de sesión de CineFlow.
-- Inicio con conteo de proyectos y solicitudes pendientes.
-- Directorio del equipo por productora, con puestos cinematográficos disponibles.
-- Creación y edición de proyectos con permisos comprobados por el servidor.
-- Solicitudes de acceso y salida, con revisión del propietario.
-- Seguimiento del proyecto con tareas, actividad y chat.
-- Registro personal de entrada y salida, notas e historial de jornadas.
-- Actualización periódica cuando la app está en primer plano.
+## Funciones pendientes para paridad completa
 
-## Módulos por integrar
+Aun falta implementar en Android la administracion de productoras, invitaciones, asignacion y aprobacion de puestos, control de horarios del equipo, gestion de rodaje y escenas, reportes, suscripciones y panel de administracion global. El calendario muestra fechas de proyecto y vencimientos de tareas disponibles en la API actual.
 
-El código web también contiene agenda, rodaje, centro de trabajo, reportes, invitaciones, ajustes de productora y administración global de usuarios. Esos módulos todavía requieren endpoints móviles dedicados antes de habilitarlos en Android. Los cambios están aislados en `feature/native-android-complete` y no alteran la rama principal.
+## Abrir y compilar
+
+Abre esta carpeta en Android Studio. Gradle requiere el JDK incluido con Android Studio y un SDK Android configurado. El identificador de aplicacion se mantiene como `com.cineflow.app`.
+

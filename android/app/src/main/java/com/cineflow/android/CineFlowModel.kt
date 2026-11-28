@@ -31,6 +31,7 @@ data class TeamMember(
     val cinematicRoleStatus: String?,
     val projects: List<TeamProject>,
 )
+data class CalendarEvent(val id: String, val date: String, val type: String, val title: String, val detail: String, val projectId: String?)
 
 class CineFlowModel : ViewModel() {
     var signedIn by mutableStateOf(false)
@@ -50,6 +51,8 @@ class CineFlowModel : ViewModel() {
     var workSessions by mutableStateOf(emptyList<WorkSession>())
         private set
     var teamMembers by mutableStateOf(emptyList<TeamMember>())
+        private set
+    var calendarEvents by mutableStateOf(emptyList<CalendarEvent>())
         private set
     var openProjectId by mutableStateOf<String?>(null)
         private set
@@ -77,6 +80,7 @@ class CineFlowModel : ViewModel() {
         organizations = emptyList()
         workSessions = emptyList()
         teamMembers = emptyList()
+        calendarEvents = emptyList()
         closeProject()
     }
 
@@ -100,6 +104,8 @@ class CineFlowModel : ViewModel() {
         call("attendance", credential, JSONObject().put("action", "clock-out").put("id", id).put("note", note))
         loadAttendance()
     }
+
+    fun refreshCalendar() = runOperation(showProgress = true, replaceRefresh = true) { loadCalendar() }
 
     fun openProject(id: String) {
         openProjectId = id
@@ -227,6 +233,14 @@ class CineFlowModel : ViewModel() {
         }
     }
 
+    private suspend fun loadCalendar() {
+        val credential = token ?: return
+        val response = call("calendar", credential)
+        calendarEvents = response.getJSONArray("events").objects { row ->
+            CalendarEvent(row.getString("id"), row.getString("date"), row.getString("type"), row.getString("title"), row.optString("detail"), row.nullableString("projectId"))
+        }
+    }
+
     private fun runOperation(showProgress: Boolean = false, replaceRefresh: Boolean = false, block: suspend () -> Unit) {
         if (operation?.isActive == true) {
             if (!replaceRefresh || busy) return
@@ -267,7 +281,7 @@ private fun <T> JSONArray.objects(transform: (JSONObject) -> T): List<T> =
 
 private suspend fun call(path: String, token: String? = null, body: JSONObject? = null): JSONObject =
     withContext(Dispatchers.IO) {
-        val url = URL("https://cineflow-5w7b.vercel.app/api/android/$path")
+        val url = URL("https://cineflow-git-feature-native-android-complete-cineflow3.vercel.app/api/android/$path")
         val connection = url.openConnection() as HttpURLConnection
         try {
             connection.connectTimeout = 12_000

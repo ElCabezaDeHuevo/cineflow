@@ -67,7 +67,7 @@ open class CineFlowActivity : ComponentActivity() {
 }
 
 private enum class Destination(val title: String, val glyph: String) {
-    Home("Inicio", ""), Projects("Proyectos", "?"), WorkHours("Jornada", "?"), Team("Equipo", "?"), More("M�s", ""), Requests("Solicitudes", "V"), Profile("Perfil", "?")
+    Home("Inicio", "\u2302"), Projects("Proyectos", "\u25A3"), WorkHours("Jornada", "\u25F7"), Team("Equipo", "\u2659"), More("M\u00E1s", "\u2022\u2022\u2022"), Calendar("Calendario", "\u25A6"), Requests("Solicitudes", "\u2713"), Profile("Perfil", "\u25CF")
 }
 
 private val bottomDestinations = listOf(Destination.Home, Destination.Projects, Destination.WorkHours, Destination.Team, Destination.More)
@@ -77,101 +77,71 @@ private fun CineFlow(model: CineFlowModel) {
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(model.signedIn, lifecycle) {
         if (model.signedIn) lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            while (true) {
-                model.refresh()
-                delay(12_000)
-            }
+            while (true) { model.refresh(); delay(12_000) }
         }
     }
-
-    if (!model.signedIn) {
-        Login(model.busy, model.error, model::signIn)
-        return
-    }
-    model.openProjectId?.let { id ->
-        key(id) { ProjectTracking(model) }
-        return
-    }
+    if (!model.signedIn) { Login(model.busy, model.error, model::signIn); return }
+    model.openProjectId?.let { id -> key(id) { ProjectTracking(model) }; return }
 
     var selected by rememberSaveable { mutableStateOf(Destination.Home.name) }
     var confirmation by remember { mutableStateOf<(() -> Unit)?>(null) }
     var confirmationText by remember { mutableStateOf("") }
     val destination = Destination.valueOf(selected)
-    Scaffold(
-        containerColor = Ink,
-        bottomBar = {
-            NavigationBar(containerColor = Panel, tonalElevation = 0.dp) {
-                bottomDestinations.forEach { item ->
-                    val badge = item == Destination.More && model.inbox.isNotEmpty()
-                    val isCurrent = destination == item || (item == Destination.More && destination in listOf(Destination.Requests, Destination.Profile))
-                    NavigationBarItem(
-                        selected = isCurrent,
-                        onClick = { selected = item.name },
-                        icon = {
-                            BadgedBox(badge = { if (badge) Badge(containerColor = Lime, contentColor = Ink) { Text(model.inbox.size.toString()) } }) {
-                                Text(item.glyph, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-                            }
-                        },
-                        label = { Text(item.title) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = Lime, selectedTextColor = Lime,
-                            unselectedIconColor = Muted, unselectedTextColor = Muted,
-                            indicatorColor = PanelRaised,
-                        ),
-                    )
-                }
+    Scaffold(containerColor = Ink, bottomBar = {
+        NavigationBar(containerColor = Panel, tonalElevation = 0.dp) {
+            bottomDestinations.forEach { item ->
+                val badge = item == Destination.More && model.inbox.isNotEmpty()
+                val isCurrent = destination == item || (item == Destination.More && destination in listOf(Destination.Requests, Destination.Profile, Destination.Calendar))
+                NavigationBarItem(selected = isCurrent, onClick = { selected = item.name }, icon = {
+                    BadgedBox(badge = { if (badge) Badge(containerColor = Lime, contentColor = Ink) { Text(model.inbox.size.toString()) } }) {
+                        Text(item.glyph, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                    }
+                }, label = { Text(item.title) }, colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = Lime, selectedTextColor = Lime, unselectedIconColor = Muted,
+                    unselectedTextColor = Muted, indicatorColor = PanelRaised,
+                ))
             }
-        },
-    ) { padding ->
+        }
+    }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).safeDrawingPadding()) {
             when (destination) {
                 Destination.Home -> HomeScreen(model, onOpenProjects = { selected = Destination.Projects.name }, onOpenRequests = { selected = Destination.Requests.name })
                 Destination.Projects -> ProjectsScreen(model)
                 Destination.Requests -> RequestsScreen(model) { request, action ->
                     confirmationText = if (action == "approve") {
-                        if (request.kind == "join") "�Aprobar el ingreso de ${request.person} a ${request.project}?" else "�Autorizar la salida de ${request.person} de ${request.project}?"
-                    } else "�Rechazar esta solicitud?"
+                        if (request.kind == "join") "Aprobar el ingreso de ${request.person} a ${request.project}?" else "Autorizar la salida de ${request.person} de ${request.project}?"
+                    } else "Rechazar esta solicitud?"
                     confirmation = { model.act(request.id, request.kind, action) }
                 }
                 Destination.WorkHours -> AttendanceScreen(model)
                 Destination.Team -> TeamScreen(model)
-                Destination.More -> MoreScreen(model, onOpenRequests = { selected = Destination.Requests.name }, onOpenProfile = { selected = Destination.Profile.name })
+                Destination.More -> MoreScreen(model, onOpenCalendar = { selected = Destination.Calendar.name }, onOpenRequests = { selected = Destination.Requests.name }, onOpenProfile = { selected = Destination.Profile.name })
+                Destination.Calendar -> CalendarScreen(model, onOpenProject = { model.openProject(it) })
                 Destination.Profile -> ProfileScreen(model)
             }
         }
     }
-    confirmation?.let { action ->
-        AlertDialog(
-            onDismissRequest = { confirmation = null },
-            title = { Text("Confirmar acci�n") },
-            text = { Text(confirmationText) },
-            confirmButton = { Button(onClick = { confirmation = null; action() }) { Text("Confirmar") } },
-            dismissButton = { TextButton(onClick = { confirmation = null }) { Text("Cancelar") } },
-        )
-    }
+    confirmation?.let { action -> AlertDialog(onDismissRequest = { confirmation = null }, title = { Text("Confirmar accion") },
+        text = { Text(confirmationText) }, confirmButton = { Button(onClick = { confirmation = null; action() }) { Text("Confirmar") } },
+        dismissButton = { TextButton(onClick = { confirmation = null }) { Text("Cancelar") } }) }
 }
 
 @Composable
-private fun MoreScreen(model: CineFlowModel, onOpenRequests: () -> Unit, onOpenProfile: () -> Unit) {
+private fun MoreScreen(model: CineFlowModel, onOpenCalendar: () -> Unit, onOpenRequests: () -> Unit, onOpenProfile: () -> Unit) {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item {
-            Text("M�s opciones", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-            Text("Solicitudes del proyecto y tu cuenta", color = Muted)
-        }
-        item { MoreCard("Solicitudes", "${model.inbox.size} pendientes de revisi�n", "V", onOpenRequests, highlight = model.inbox.isNotEmpty()) }
-        item { MoreCard("Mi perfil", "Cuenta y opciones de sesi�n", "?", onOpenProfile) }
-        item {
-            Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(18.dp)) {
-                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("Sincronizaci�n autom�tica", fontWeight = FontWeight.SemiBold)
-                    Text("Proyectos, solicitudes y jornadas se actualizan mientras CineFlow est� abierto.", color = Muted, style = MaterialTheme.typography.bodySmall)
-                    TextButton(onClick = model::refresh, enabled = !model.busy) { Text("Actualizar ahora") }
-                }
+        item { Text("Mas opciones", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold); Text("Agenda, solicitudes y cuenta", color = Muted) }
+        item { MoreCard("Calendario de produccion", "Rodajes, entregas y tareas pendientes", "\u25A6", onOpenCalendar) }
+        item { MoreCard("Solicitudes", "${model.inbox.size} pendientes de revision", "\u2713", onOpenRequests, highlight = model.inbox.isNotEmpty()) }
+        item { MoreCard("Mi perfil", "Cuenta y opciones de sesion", "\u25CF", onOpenProfile) }
+        item { Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(18.dp)) {
+            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("Sincronizacion automatica", fontWeight = FontWeight.SemiBold)
+                Text("Proyectos, solicitudes y jornadas se actualizan mientras CineFlow esta abierto.", color = Muted, style = MaterialTheme.typography.bodySmall)
+                TextButton(onClick = model::refresh, enabled = !model.busy) { Text("Actualizar ahora") }
             }
-        }
+        } }
     }
 }
-
 @Composable
 private fun MoreCard(title: String, detail: String, glyph: String, onClick: () -> Unit, highlight: Boolean = false) {
     Card(onClick = onClick, colors = CardDefaults.cardColors(containerColor = if (highlight) Color(0xFF27331D) else Panel), shape = RoundedCornerShape(18.dp)) {
@@ -182,6 +152,38 @@ private fun MoreCard(title: String, detail: String, glyph: String, onClick: () -
                 Text(detail, color = Muted, style = MaterialTheme.typography.bodySmall)
             }
             Text(">", color = Lime, style = MaterialTheme.typography.headlineMedium)
+        }
+    }
+}
+
+@Composable
+private fun CalendarScreen(model: CineFlowModel, onOpenProject: (String) -> Unit) {
+    LaunchedEffect(Unit) { model.refreshCalendar() }
+    Column(Modifier.fillMaxSize()) {
+        ScreenHeader("Calendario", "Entregas, tareas y jornadas de rodaje", model.busy, model::refreshCalendar)
+        if (model.error != null) ErrorCard(model.error!!, Modifier.padding(horizontal = 20.dp))
+        if (model.calendarEvents.isEmpty() && !model.busy) {
+            EmptyState("Agenda despejada", "Cuando un proyecto tenga una fecha, tarea o rodaje, aparecera aqui.", "\u25A6", Modifier.fillMaxSize().padding(24.dp))
+        } else {
+            LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                items(model.calendarEvents, key = { it.id }) { event ->
+                    Card(onClick = { event.projectId?.let(onOpenProject) }, enabled = event.projectId != null,
+                        colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(18.dp)) {
+                        Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.Top) {
+                            Column(Modifier.width(62.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(event.date.take(10).takeLast(2), style = MaterialTheme.typography.headlineMedium, color = Lime, fontWeight = FontWeight.Bold)
+                                Text(event.date.take(10).drop(5).take(2), color = Muted, style = MaterialTheme.typography.labelSmall)
+                            }
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                StatusPill(event.type)
+                                Text(event.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                                if (event.detail.isNotBlank()) Text(event.detail, color = Muted, style = MaterialTheme.typography.bodySmall)
+                                Text(event.date.take(10), color = Muted, style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
