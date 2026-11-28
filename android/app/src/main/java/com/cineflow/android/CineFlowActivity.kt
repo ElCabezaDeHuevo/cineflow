@@ -264,7 +264,7 @@ private fun AttendanceScreen(model: CineFlowModel) {
             Card(colors = CardDefaults.cardColors(containerColor = PanelRaised), shape = RoundedCornerShape(22.dp)) {
                 Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(if (active != null) "JORNADA ACTIVA" else "SIN JORNADA ACTIVA", color = if (active != null) Accent else Muted, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
-                    Text(if (active != null) "Estás en jornada" else "�Vas a empezar?", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text(if (active != null) "Estás en jornada" else "¿Vas a empezar?", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                     Text(if (active != null) "Entrada: ${formatSessionTime(active.clockIn)}" else "Registra tu entrada para comenzar a contar tus horas.", color = Muted)
                     if (active == null) {
                         Button(onClick = model::clockIn, enabled = !model.busy, modifier = Modifier.fillMaxWidth()) { Text(if (model.busy) "Registrando." else "Checar entrada") }
@@ -282,7 +282,7 @@ private fun AttendanceScreen(model: CineFlowModel) {
             }
         }
         item { Text("Historial personal", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
-        if (model.workSessions.none { !it.deleted }) item { EmptyState("Sin jornadas registradas", "Cuando cheques entrada, verás aqu� tu historial.", "?") }
+        if (model.workSessions.none { !it.deleted }) item { EmptyState("Sin jornadas registradas", "Cuando registres tu entrada, verás aquí tu historial.", "?") }
         items(model.workSessions.filterNot { it.deleted }, key = { "session-${it.id}" }) { session ->
             Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(16.dp)) {
                 Column(Modifier.fillMaxWidth().padding(15.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -361,7 +361,7 @@ private fun HomeScreen(model: CineFlowModel, onOpenProjects: () -> Unit, onOpenR
                 }
             }
         } else if (model.loaded) {
-            item { EmptyState("Todo al día", "No tienes solicitudes pendientes de revisi�n.", "V") }
+            item { EmptyState("Todo al día", "No tienes solicitudes pendientes de revisión.", "V") }
         }
         item {
             Text("Tus producciones", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
@@ -412,7 +412,7 @@ private fun ProjectsScreen(model: CineFlowModel) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             if (model.loaded && projects.isEmpty()) item {
-                EmptyState(if (query.isBlank()) "Sin proyectos todav�a" else "No encontramos coincidencias", if (query.isBlank()) "Los proyectos compartidos contigo aparecer�n aqu�." else "Prueba con otro nombre, tipo o etapa.", "⌕")
+                EmptyState(if (query.isBlank()) "Sin proyectos todavía" else "No encontramos coincidencias", if (query.isBlank()) "Los proyectos compartidos contigo aparecerán aquí." else "Prueba con otro nombre, tipo o etapa.", "⌕")
             }
             items(projects, key = { it.id }) { project -> ProjectCard(model, project) }
         }
@@ -506,7 +506,7 @@ private fun RequestsScreen(model: CineFlowModel, decide: (Review, String) -> Uni
         ScreenHeader("Solicitudes", "Accesos y salidas por autorizar", model.busy, model::refresh)
         if (model.error != null) ErrorCard(model.error!!, Modifier.padding(horizontal = 20.dp))
         if (model.inbox.isEmpty() && model.loaded) {
-            EmptyState("Bandeja despejada", "Las nuevas solicitudes aparecer�n aqu� autom�ticamente.", "V", Modifier.fillMaxSize().padding(24.dp))
+            EmptyState("Bandeja despejada", "Las nuevas solicitudes aparecerán aquí automáticamente.", "V", Modifier.fillMaxSize().padding(24.dp))
         } else {
             LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(model.inbox, key = { it.id }) { request ->
