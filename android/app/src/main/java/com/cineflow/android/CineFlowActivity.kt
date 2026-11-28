@@ -1,5 +1,28 @@
 package com.cineflow.android
 
+import android.app.DownloadManager
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Environment
+import android.view.View
+import android.webkit.CookieManager
+import android.webkit.DownloadListener
+import android.webkit.URLUtil
+import android.webkit.ValueCallback
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
+import android.webkit.WebSettings
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.viewinterop.AndroidView
+
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -34,6 +57,9 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+private const val CINEFLOW_WEB_URL = "https://cineflow-5w7b.vercel.app/"
+private const val CINEFLOW_WEB_HOST = "cineflow-5w7b.vercel.app"
+
 private val Ink = Color(0xFF100D19)
 private val Panel = Color(0xFF211B2D)
 private val PanelRaised = Color(0xFF30263F)
@@ -67,7 +93,7 @@ open class CineFlowActivity : ComponentActivity() {
 }
 
 private enum class Destination(val title: String, val glyph: String) {
-    Home("Inicio", "\u2302"), Projects("Proyectos", "\u25A3"), WorkHours("Jornada", "\u25F7"), Team("Equipo", "\u2659"), More("M\u00E1s", "\u2022\u2022\u2022"), Calendar("Calendario", "\u25A6"), Requests("Solicitudes", "\u2713"), Profile("Perfil", "\u25CF")
+    Home("Inicio", "\u2302"), Projects("Proyectos", "\u25A3"), WorkHours("Jornada", "\u25F7"), Team("Equipo", "\u2659"), More("M\u00E1s", "\u2022\u2022\u2022"), Calendar("Calendario", "\u25A6"), Requests("Solicitudes", "\u2713"), Profile("Perfil", "\u25CF"), FullApp("CineFlow", "↗")
 }
 
 private val bottomDestinations = listOf(Destination.Home, Destination.Projects, Destination.WorkHours, Destination.Team, Destination.More)
@@ -88,10 +114,10 @@ private fun CineFlow(model: CineFlowModel) {
     var confirmationText by remember { mutableStateOf("") }
     val destination = Destination.valueOf(selected)
     Scaffold(containerColor = Ink, bottomBar = {
-        NavigationBar(containerColor = Panel, tonalElevation = 0.dp) {
+        if (destination != Destination.FullApp) NavigationBar(containerColor = Panel, tonalElevation = 0.dp) {
             bottomDestinations.forEach { item ->
                 val badge = item == Destination.More && model.inbox.isNotEmpty()
-                val isCurrent = destination == item || (item == Destination.More && destination in listOf(Destination.Requests, Destination.Profile, Destination.Calendar))
+                val isCurrent = destination == item || (item == Destination.More && destination in listOf(Destination.Requests, Destination.Profile, Destination.Calendar, Destination.FullApp))
                 NavigationBarItem(selected = isCurrent, onClick = { selected = item.name }, icon = {
                     BadgedBox(badge = { if (badge) Badge(containerColor = Accent, contentColor = Ink) { Text(model.inbox.size.toString()) } }) {
                         Text(item.glyph, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
@@ -115,9 +141,10 @@ private fun CineFlow(model: CineFlowModel) {
                 }
                 Destination.WorkHours -> AttendanceScreen(model)
                 Destination.Team -> TeamScreen(model)
-                Destination.More -> MoreScreen(model, onOpenCalendar = { selected = Destination.Calendar.name }, onOpenRequests = { selected = Destination.Requests.name }, onOpenProfile = { selected = Destination.Profile.name })
+                Destination.More -> MoreScreen(model, onOpenCalendar = { selected = Destination.Calendar.name }, onOpenRequests = { selected = Destination.Requests.name }, onOpenProfile = { selected = Destination.Profile.name }, onOpenFullApp = { selected = Destination.FullApp.name })
                 Destination.Calendar -> CalendarScreen(model, onOpenProject = { model.openProject(it) })
                 Destination.Profile -> ProfileScreen(model)
+                Destination.FullApp -> FullCineFlowScreen(onBack = { selected = Destination.More.name })
             }
         }
     }
@@ -127,16 +154,17 @@ private fun CineFlow(model: CineFlowModel) {
 }
 
 @Composable
-private fun MoreScreen(model: CineFlowModel, onOpenCalendar: () -> Unit, onOpenRequests: () -> Unit, onOpenProfile: () -> Unit) {
+private fun MoreScreen(model: CineFlowModel, onOpenCalendar: () -> Unit, onOpenRequests: () -> Unit, onOpenProfile: () -> Unit, onOpenFullApp: () -> Unit) {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { Text("Más opciones", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold); Text("Agenda, solicitudes y cuenta", color = Muted) }
         item { MoreCard("Calendario de producción", "Rodajes, entregas y tareas pendientes", "\u25A6", onOpenCalendar) }
         item { MoreCard("Solicitudes", "${model.inbox.size} pendientes de revisión", "\u2713", onOpenRequests, highlight = model.inbox.isNotEmpty()) }
-        item { MoreCard("Mi perfil", "Cuenta y opciones de sesion", "\u25CF", onOpenProfile) }
+        item { MoreCard("Mi perfil", "Cuenta y opciones de sesión", "\u25CF", onOpenProfile) }
+        item { MoreCard("CineFlow completo", "Administración, invitaciones, reportes y más herramientas", "↗", onOpenFullApp) }
         item { Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(18.dp)) {
             Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("Sincronización automática", fontWeight = FontWeight.SemiBold)
-                Text("Proyectos, solicitudes y jornadas se actualizan mientras CineFlow esta abierto.", color = Muted, style = MaterialTheme.typography.bodySmall)
+                Text("Proyectos, solicitudes y jornadas se actualizan mientras CineFlow está abierto.", color = Muted, style = MaterialTheme.typography.bodySmall)
                 TextButton(onClick = model::refresh, enabled = !model.busy) { Text("Actualizar ahora") }
             }
         } }
@@ -153,6 +181,143 @@ private fun MoreCard(title: String, detail: String, glyph: String, onClick: () -
             }
             Text(">", color = Accent, style = MaterialTheme.typography.headlineMedium)
         }
+    }
+}
+
+@Composable
+private fun FullCineFlowScreen(onBack: () -> Unit) {
+    val context = LocalContext.current
+    var webView by remember { mutableStateOf<WebView?>(null) }
+    var hasLoaded by remember { mutableStateOf(false) }
+    var pageError by remember { mutableStateOf<String?>(null) }
+    var uploadCallback by remember { mutableStateOf<ValueCallback<Array<Uri>>?>(null) }
+
+    val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val data = result.data
+        val selected = if (result.resultCode == android.app.Activity.RESULT_OK && data != null) {
+            val clip = data.clipData
+            when {
+                clip != null -> Array(clip.itemCount) { clip.getItemAt(it).uri }
+                data.data != null -> arrayOf(data.data!!)
+                else -> null
+            }
+        } else null
+        uploadCallback?.onReceiveValue(selected)
+        uploadCallback = null
+    }
+
+    BackHandler { if (webView?.canGoBack() == true) webView?.goBack() else onBack() }
+    DisposableEffect(webView) {
+        onDispose {
+            webView?.apply { stopLoading(); webChromeClient = null; removeAllViews(); destroy() }
+        }
+    }
+
+    Column(Modifier.fillMaxSize().imePadding()) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = onBack) { Text("← Más") }
+            Text("CineFlow completo", modifier = Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
+            TextButton(onClick = { webView?.reload() }, enabled = hasLoaded) { Text("↻") }
+        }
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            AndroidView(
+                modifier = Modifier.fillMaxSize(),
+                factory = { viewContext ->
+                    WebView(viewContext).apply {
+                        webView = this
+                        setBackgroundColor(android.graphics.Color.rgb(16, 13, 25))
+                        isVerticalScrollBarEnabled = false
+                        overScrollMode = View.OVER_SCROLL_NEVER
+                        CookieManager.getInstance().setAcceptCookie(true)
+                        settings.apply {
+                            javaScriptEnabled = true
+                            domStorageEnabled = true
+                            databaseEnabled = true
+                            loadsImagesAutomatically = true
+                            allowFileAccess = false
+                            allowContentAccess = true
+                            javaScriptCanOpenWindowsAutomatically = false
+                            setSupportMultipleWindows(false)
+                            builtInZoomControls = false
+                            displayZoomControls = false
+                            mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
+                            cacheMode = WebSettings.LOAD_DEFAULT
+                            mediaPlaybackRequiresUserGesture = true
+                            userAgentString = "$userAgentString CineFlowAndroid/0.3.0"
+                        }
+                        webViewClient = object : WebViewClient() {
+                            override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
+                                pageError = null
+                            }
+                            override fun onPageFinished(view: WebView?, url: String?) { hasLoaded = true }
+                            override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
+                                if (request?.isForMainFrame == true) pageError = "No se pudo cargar CineFlow. Revisa tu conexión e inténtalo otra vez."
+                            }
+                            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest): Boolean {
+                                val uri = request.url
+                                val host = uri.host.orEmpty().lowercase(Locale.ROOT)
+                                if (uri.scheme == "https" && (host == CINEFLOW_WEB_HOST || host.endsWith(".supabase.co"))) return false
+                                return try {
+                                    if (uri.scheme in listOf("http", "https", "mailto", "tel")) context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+                                    true
+                                } catch (_: Exception) { true }
+                            }
+                        }
+                        webChromeClient = object : WebChromeClient() {
+                            override fun onShowFileChooser(view: WebView?, callback: ValueCallback<Array<Uri>>?, params: FileChooserParams?): Boolean {
+                                uploadCallback?.onReceiveValue(null)
+                                uploadCallback = callback
+                                val types = params?.acceptTypes?.filter { it.isNotBlank() }?.toTypedArray().orEmpty()
+                                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                                    addCategory(Intent.CATEGORY_OPENABLE)
+                                    type = types.singleOrNull() ?: "*/*"
+                                    if (types.size > 1) putExtra(Intent.EXTRA_MIME_TYPES, types)
+                                    putExtra(Intent.EXTRA_ALLOW_MULTIPLE, params?.mode == FileChooserParams.MODE_OPEN_MULTIPLE)
+                                }
+                                return try { filePicker.launch(intent); true } catch (_: Exception) {
+                                    uploadCallback?.onReceiveValue(null); uploadCallback = null; false
+                                }
+                            }
+                        }
+                        setDownloadListener(DownloadListener { url, agent, disposition, type, _ ->
+                            enqueueCineFlowDownload(context, url, agent, disposition, type)
+                        })
+                        loadUrl(CINEFLOW_WEB_URL)
+                    }
+                },
+                update = { if (it.url == null) it.loadUrl(CINEFLOW_WEB_URL) },
+            )
+            if (!hasLoaded || pageError != null) {
+                Surface(Modifier.fillMaxSize(), color = Ink.copy(alpha = 0.98f)) {
+                    Column(Modifier.fillMaxSize().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                        if (pageError == null) {
+                            CircularProgressIndicator(color = Accent)
+                            Text("Abriendo CineFlow…", modifier = Modifier.padding(top = 12.dp), color = Muted)
+                        } else {
+                            Text(pageError.orEmpty(), color = Muted)
+                            Button(modifier = Modifier.padding(top = 12.dp), onClick = { pageError = null; hasLoaded = false; webView?.loadUrl(CINEFLOW_WEB_URL) }) { Text("Reintentar") }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun enqueueCineFlowDownload(context: Context, url: String, userAgent: String?, contentDisposition: String?, mimeType: String?) {
+    try {
+        val fileName = URLUtil.guessFileName(url, contentDisposition, mimeType)
+        val request = DownloadManager.Request(Uri.parse(url))
+            .setTitle(fileName)
+            .setDescription("Descargando desde CineFlow")
+            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+        CookieManager.getInstance().getCookie(url)?.let { request.addRequestHeader("Cookie", it) }
+        userAgent?.let { request.addRequestHeader("User-Agent", it) }
+        (context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager).enqueue(request)
+        Toast.makeText(context, "Descarga iniciada", Toast.LENGTH_SHORT).show()
+    } catch (_: Exception) {
+        Toast.makeText(context, "No se pudo iniciar la descarga", Toast.LENGTH_LONG).show()
     }
 }
 
