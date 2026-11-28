@@ -20,6 +20,17 @@ data class Project(val id: String, val name: String, val type: String, val stage
 data class Review(val id: String, val kind: String, val project: String, val person: String)
 data class Organization(val id: String, val name: String)
 data class WorkSession(val id: String, val clockIn: String, val clockOut: String?, val note: String, val deleted: Boolean)
+data class TeamProject(val id: String, val name: String, val role: String)
+data class TeamMember(
+    val id: String,
+    val organizationName: String,
+    val companyRole: String,
+    val name: String,
+    val bio: String,
+    val cinematicRole: String?,
+    val cinematicRoleStatus: String?,
+    val projects: List<TeamProject>,
+)
 
 class CineFlowModel : ViewModel() {
     var signedIn by mutableStateOf(false)
@@ -37,6 +48,8 @@ class CineFlowModel : ViewModel() {
     var organizations by mutableStateOf(emptyList<Organization>())
         private set
     var workSessions by mutableStateOf(emptyList<WorkSession>())
+        private set
+    var teamMembers by mutableStateOf(emptyList<TeamMember>())
         private set
     var openProjectId by mutableStateOf<String?>(null)
         private set
@@ -63,6 +76,7 @@ class CineFlowModel : ViewModel() {
         inbox = emptyList()
         organizations = emptyList()
         workSessions = emptyList()
+        teamMembers = emptyList()
         closeProject()
     }
 
@@ -71,6 +85,7 @@ class CineFlowModel : ViewModel() {
         if (id == null) {
             loadProjects()
             loadAttendance()
+            loadTeam()
         } else loadTracking(id)
     }
 
@@ -190,6 +205,24 @@ class CineFlowModel : ViewModel() {
                 clockOut = row.nullableString("clock_out"),
                 note = row.optString("note").takeUnless { it == "null" }.orEmpty(),
                 deleted = !row.isNull("deleted_at"),
+            )
+        }
+    }
+
+    private suspend fun loadTeam() {
+        val credential = token ?: return
+        val response = call("team", credential)
+        teamMembers = response.getJSONArray("members").objects { row ->
+            val projects = row.optJSONArray("projects") ?: JSONArray()
+            TeamMember(
+                id = row.getString("id"),
+                organizationName = row.optString("organizationName", "Productora"),
+                companyRole = row.optString("companyRole", "member"),
+                name = row.optString("name", "Integrante"),
+                bio = row.optString("bio").takeUnless { it == "null" }.orEmpty(),
+                cinematicRole = row.nullableString("cinematicRole"),
+                cinematicRoleStatus = row.nullableString("cinematicRoleStatus"),
+                projects = projects.objects { project -> TeamProject(project.getString("id"), project.getString("name"), project.getString("role")) },
             )
         }
     }
