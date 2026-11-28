@@ -67,8 +67,10 @@ open class CineFlowActivity : ComponentActivity() {
 }
 
 private enum class Destination(val title: String, val glyph: String) {
-    Home("Inicio", ""), Projects("Proyectos", "?"), Requests("Solicitudes", "V"), WorkHours("Jornada", "?"), Profile("Perfil", "?")
+    Home("Inicio", ""), Projects("Proyectos", "?"), WorkHours("Jornada", "?"), Team("Equipo", "?"), More("M�s", ""), Requests("Solicitudes", "V"), Profile("Perfil", "?")
 }
+
+private val bottomDestinations = listOf(Destination.Home, Destination.Projects, Destination.WorkHours, Destination.Team, Destination.More)
 
 @Composable
 private fun CineFlow(model: CineFlowModel) {
@@ -99,10 +101,11 @@ private fun CineFlow(model: CineFlowModel) {
         containerColor = Ink,
         bottomBar = {
             NavigationBar(containerColor = Panel, tonalElevation = 0.dp) {
-                Destination.entries.forEach { item ->
-                    val badge = item == Destination.Requests && model.inbox.isNotEmpty()
+                bottomDestinations.forEach { item ->
+                    val badge = item == Destination.More && model.inbox.isNotEmpty()
+                    val isCurrent = destination == item || (item == Destination.More && destination in listOf(Destination.Requests, Destination.Profile))
                     NavigationBarItem(
-                        selected = destination == item,
+                        selected = isCurrent,
                         onClick = { selected = item.name },
                         icon = {
                             BadgedBox(badge = { if (badge) Badge(containerColor = Lime, contentColor = Ink) { Text(model.inbox.size.toString()) } }) {
@@ -131,6 +134,8 @@ private fun CineFlow(model: CineFlowModel) {
                     confirmation = { model.act(request.id, request.kind, action) }
                 }
                 Destination.WorkHours -> AttendanceScreen(model)
+                Destination.Team -> TeamScreen(model)
+                Destination.More -> MoreScreen(model, onOpenRequests = { selected = Destination.Requests.name }, onOpenProfile = { selected = Destination.Profile.name })
                 Destination.Profile -> ProfileScreen(model)
             }
         }
@@ -144,6 +149,97 @@ private fun CineFlow(model: CineFlowModel) {
             dismissButton = { TextButton(onClick = { confirmation = null }) { Text("Cancelar") } },
         )
     }
+}
+
+@Composable
+private fun MoreScreen(model: CineFlowModel, onOpenRequests: () -> Unit, onOpenProfile: () -> Unit) {
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        item {
+            Text("M�s opciones", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+            Text("Solicitudes del proyecto y tu cuenta", color = Muted)
+        }
+        item { MoreCard("Solicitudes", "${model.inbox.size} pendientes de revisi�n", "V", onOpenRequests, highlight = model.inbox.isNotEmpty()) }
+        item { MoreCard("Mi perfil", "Cuenta y opciones de sesi�n", "?", onOpenProfile) }
+        item {
+            Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(18.dp)) {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Sincronizaci�n autom�tica", fontWeight = FontWeight.SemiBold)
+                    Text("Proyectos, solicitudes y jornadas se actualizan mientras CineFlow est� abierto.", color = Muted, style = MaterialTheme.typography.bodySmall)
+                    TextButton(onClick = model::refresh, enabled = !model.busy) { Text("Actualizar ahora") }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MoreCard(title: String, detail: String, glyph: String, onClick: () -> Unit, highlight: Boolean = false) {
+    Card(onClick = onClick, colors = CardDefaults.cardColors(containerColor = if (highlight) Color(0xFF27331D) else Panel), shape = RoundedCornerShape(18.dp)) {
+        Row(Modifier.fillMaxWidth().padding(18.dp), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(42.dp).background(PanelRaised, CircleShape), contentAlignment = Alignment.Center) { Text(glyph, color = Lime) }
+            Column(Modifier.weight(1f)) {
+                Text(title, fontWeight = FontWeight.SemiBold)
+                Text(detail, color = Muted, style = MaterialTheme.typography.bodySmall)
+            }
+            Text(">", color = Lime, style = MaterialTheme.typography.headlineMedium)
+        }
+    }
+}
+
+@Composable
+private fun TeamScreen(model: CineFlowModel) {
+    Column(Modifier.fillMaxSize()) {
+        ScreenHeader("Equipo", "Personas y responsabilidades en tus productoras", model.busy, model::refresh)
+        if (model.error != null) ErrorCard(model.error!!, Modifier.padding(horizontal = 20.dp))
+        if (model.teamMembers.isEmpty() && model.loaded) {
+            EmptyState("No hay equipo disponible", "El directorio muestra integrantes de las productoras vinculadas a tu cuenta.", "?", Modifier.fillMaxSize().padding(24.dp))
+        } else {
+            LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                items(model.teamMembers, key = { "${it.organizationName}-${it.id}" }) { member ->
+                    Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(18.dp)) {
+                        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Box(Modifier.size(42.dp).background(PanelRaised, CircleShape), contentAlignment = Alignment.Center) {
+                                    Text(member.name.firstOrNull()?.uppercase() ?: "C", color = Lime, fontWeight = FontWeight.Bold)
+                                }
+                                Column {
+                                    Text(member.name, fontWeight = FontWeight.SemiBold)
+                                    Text(member.organizationName, color = Muted, style = MaterialTheme.typography.bodySmall)
+                                }
+                            }
+                            Text("Acceso: ${companyRoleLabel(member.companyRole)}", color = Muted, style = MaterialTheme.typography.bodySmall)
+                            member.cinematicRole?.let { role ->
+                                Text(if (member.cinematicRoleStatus == "pending") "Puesto pendiente: ${cineRoleLabel(role)}" else "Puesto: ${cineRoleLabel(role)}", color = Lime, style = MaterialTheme.typography.bodySmall)
+                            }
+                            if (member.bio.isNotBlank()) Text(member.bio, color = Muted, style = MaterialTheme.typography.bodySmall, maxLines = 3)
+                            member.projects.takeIf { it.isNotEmpty() }?.let { projects ->
+                                Text("Proyectos: ${projects.joinToString { it.name }}", style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun companyRoleLabel(role: String) = when (role) {
+    "owner" -> "Due�o de productora"
+    "admin" -> "Administrador"
+    "producer" -> "Productor"
+    "viewer" -> "Solo lectura"
+    else -> "Colaborador"
+}
+
+private fun cineRoleLabel(role: String) = when (role) {
+    "director" -> "Direcci�n"
+    "producer" -> "Producci�n"
+    "screenwriter" -> "Guion"
+    "director-of-photography" -> "Direcci�n de fotograf�a"
+    "camera-operator" -> "Operaci�n de c�mara"
+    "editor" -> "Montaje / Edici�n"
+    "vfx-artist" -> "Efectos visuales / VFX"
+    else -> role.replace('-', ' ').replaceFirstChar { it.uppercase() }
 }
 
 @Composable
