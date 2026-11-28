@@ -110,8 +110,9 @@ internal fun ProjectTracking(model: CineFlowModel) {
     }
 
     if (editing) {
-        var name by rememberSaveable { mutableStateOf(project.getString("name")) }
-        var description by rememberSaveable { mutableStateOf(project.optString("description").takeUnless { it == "null" } ?: "") }
+        val editableProject = requireNotNull(project)
+        var name by rememberSaveable { mutableStateOf(editableProject.getString("name")) }
+        var description by rememberSaveable { mutableStateOf(editableProject.optString("description").takeUnless { it == "null" } ?: "") }
         AlertDialog(
             onDismissRequest = { if (!model.busy) editing = false },
             title = { Text("Editar proyecto") },

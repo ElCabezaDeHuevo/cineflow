@@ -593,7 +593,7 @@ private fun StatusPill(label: String) {
 }
 
 @Composable
-private fun EmptyState(title: String, description: String, glyph: String, modifier: Modifier = Modifier) {
+internal fun EmptyState(title: String, description: String, glyph: String, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth().padding(vertical = 28.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Box(Modifier.size(58.dp).background(PanelRaised, CircleShape), contentAlignment = Alignment.Center) {
             Text(glyph, style = MaterialTheme.typography.headlineMedium, color = Lime)
@@ -604,7 +604,7 @@ private fun EmptyState(title: String, description: String, glyph: String, modifi
 }
 
 @Composable
-private fun ErrorCard(message: String, modifier: Modifier = Modifier) {
+internal fun ErrorCard(message: String, modifier: Modifier = Modifier) {
     Surface(modifier.fillMaxWidth(), color = Color(0xFF3A2227), shape = RoundedCornerShape(14.dp)) {
         Text(message, Modifier.padding(14.dp), color = Color(0xFFFFB6B8), style = MaterialTheme.typography.bodyMedium)
     }
